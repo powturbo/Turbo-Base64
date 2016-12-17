@@ -36,18 +36,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CONF_H
 //------------------------- Compiler ------------------------------------------
   #if defined(__GNUC__)
-#if __GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ >= 8
-#define bswap16(x) __builtin_bswap16(x)
-#else
-static inline unsigned short bswap16(unsigned short x) { return __builtin_bswap32(x << 16); }
-#endif
 #define bswap32(x) __builtin_bswap32(x)
 #define bswap64(x) __builtin_bswap64(x)
 
   #elif _MSC_VER //----------------------------------------------------
 #define __builtin_prefetch(x) //_mm_prefetch(x, _MM_HINT_NTA)
 
-#define bswap16(x) _byteswap_ushort(x)
 #define bswap32(x) _byteswap_ulong(x)
 #define bswap64(x) _byteswap_uint64(x)
 
@@ -62,7 +56,6 @@ static inline unsigned short bswap16(unsigned short x) { return __builtin_bswap3
     defined(__ARM_ARCH_4__) || defined(__ARM_ARCH_4T__) || \
     defined(__ARM_ARCH_5__) || defined(__ARM_ARCH_5T__) || defined(__ARM_ARCH_5TE__) || defined(__ARM_ARCH_5TEJ__) || \
     defined(__ARM_ARCH_6__) || defined(__ARM_ARCH_6J__) || defined(__ARM_ARCH_6K__)  || defined(__ARM_ARCH_6T2__) || defined(__ARM_ARCH_6Z__)   || defined(__ARM_ARCH_6ZK__)
-#define ctou16(_cp_) (*(unsigned short *)(_cp_))
 #define ctou32(_cp_) (*(unsigned       *)(_cp_))
 
     #if defined(__i386__) || defined(__x86_64__) || defined(__powerpc__)
@@ -73,19 +66,13 @@ struct _PACKED longu     { unsigned long long l; };
     #endif
 
   #elif defined(__ARM_ARCH_7__) || defined(__ARM_ARCH_7A__) || defined(__ARM_ARCH_7M__) || defined(__ARM_ARCH_7R__) || defined(__ARM_ARCH_7S__)
-struct _PACKED shortu    { unsigned short     s; };
 struct _PACKED unsignedu { unsigned           u; };
 struct _PACKED longu     { unsigned long long l; };
 
-#define ctou16(_cp_) ((struct shortu    *)(_cp_))->s
 #define ctou32(_cp_) ((struct unsignedu *)(_cp_))->u
 #define ctou64(_cp_) ((struct longu     *)(_cp_))->l
   #else
 #error "unknown cpu"	  
-  #endif
-
-  #ifndef ctou16
-static inline unsigned short     ctou16(const void *cp) { unsigned short     x; memcpy(&x, cp, sizeof(x)); return x; }
   #endif
 
   #ifndef ctou32
@@ -95,8 +82,5 @@ static inline unsigned           ctou32(const void *cp) { unsigned           x; 
   #ifndef ctou64
 static inline unsigned long long ctou64(const void *cp) { unsigned long long x; memcpy(&x, cp, sizeof(x)); return x; }
   #endif
-
-#define ctou24(_cp_) (ctou32(_cp_) & 0xffffff)
-#define ctou48(_cp_) (ctou64(_cp_) & 0xffffffffffffull)
-#define ctou8(_cp_) (*_cp_)
+#endif
 

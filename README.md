@@ -20,8 +20,8 @@ CPU: Skylake at 3.7GHz, gcc 6.2, ubuntu 16.10
 
 |C Size|ratio%|C MB/s|D MB/s|Name|Descrition
 |--------:|-----:|--------:|--------:|----------------|----------------|------------------------|
-|42603868|133.3|**3025.39**|**2531.27**|[**TurboB64**](https://github.com/lemire/TurboBase64)|**TurboBase64**|
-|42603868|133.3|1715.36|1956.14|[TurboB64s](https://github.com/lemire/TurboBase64)|**TurboBase64**|
+|42603868|133.3|**3025.39**|**2531.27**|[**TurboB64**](https://github.com/powturbo/TurboBase64)|**TurboBase64**|
+|42603868|133.3|1715.36|1956.14|[TurboB64s](https://github.com/powturbo/TurboBase64)|**TurboBase64**|
 |42603868|133.3|1262.20|1375.18|[fb64chromium](https://github.com/lemire/fastbase64)|**Google Chromium base64**|
 |42603868|133.3|1674.74|1167.17|[fb64scalar](https://github.com/lemire/fastbase64)|**Scalar FastBase64**|
 |43269553|135.4| 902.80|170.56|[fb64linux](https://github.com/lemire/fastbase64)|**Linux base64**|

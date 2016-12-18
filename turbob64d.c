@@ -113,8 +113,8 @@ static const unsigned lut3[] = {
 #undef _
 
 #define DU32(_u_) (lut0[(unsigned char)(_u_)] | lut1[(unsigned char)(_u_>>8)] | lut2[(unsigned char)(_u_>>16)] | lut3[(unsigned char)(_u_>>24)])
-#define DI32(_ip_,_op_,_i_) { unsigned _u = ctou32(_ip_+_i_*8);  _u = DU32(_u);\
-                              unsigned _v = ctou32(_ip_+_i_*8+4);_v = DU32(_v); ctou32(_op_+ _i_*6  ) = _u; ctou32(_op_+ _i_*6+3) = _v; }
+#define DI32(_ip_,_op_,_i_) { unsigned _u = ctou32(_ip_+_i_*8);\
+                              unsigned _v = ctou32(_ip_+_i_*8+4); ctou32(_op_+ _i_*6  ) = DU32(_u); ctou32(_op_+ _i_*6+3) = DU32(_v); }
 
 unsigned turbob64dec(unsigned char *in, unsigned inlen, unsigned char *out) {
   unsigned char *ip,*op;
@@ -149,14 +149,15 @@ static const unsigned char lut[] = {
 #undef _
 
 #define LU32(_u_) bswap32(lut[(unsigned char)(_u_)]<<26 | lut[(unsigned char)(_u_>>8)]<<20 | lut[(unsigned char)(_u_>>16)]<<14 | lut[(unsigned char)(_u_>>24)]<<8)
-#define LI32(_ip_,_op_,_i_) { unsigned _u = ctou32(_ip_+_i_*8);  _u = LU32(_u);\
-                              unsigned _v = ctou32(_ip_+_i_*8+4);_v = LU32(_v); ctou32(_op_+ _i_*6  ) = _u; ctou32(_op_+ _i_*6+3) = _v; }
+#define LI32(_ip_,_op_,_i_) { unsigned _u = ctou32(_ip_+_i_*8);   _u = LU32(_u);\
+                              unsigned _v = ctou32(_ip_+_i_*8+4); _v = LU32(_v); ctou32(_op_+ _i_*6  ) = _u; ctou32(_op_+ _i_*6+3) = _v; }
+
 unsigned turbob64decs(unsigned char *in, unsigned inlen, unsigned char *out) {
   unsigned char *ip,*op;
   for(ip = in,op = out; ip != in+(inlen&~(32-1)); ip+=32, op += 24) { 
     LI32(ip,op,0); LI32(ip,op,1); LI32(ip,op,2); LI32(ip,op,3);
 	__builtin_prefetch(ip+256, 0); 
-  } 
+  }
   for(; ip < in+inlen; ip+=4, op += 3) { unsigned u = ctou32(ip);  ctou32(op) = LU32(u); } 
   return inlen;
 }

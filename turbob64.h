@@ -40,7 +40,7 @@ static inline unsigned turbob64len(unsigned n) { return TURBOB64LEN(n); }
 
 // Encode input buffer into base64 string 
 unsigned turbob64enc( unsigned char *in, unsigned inlen, unsigned char *out);
-// Deecode base64 string into out buffer 
+// Decode base64 string into out buffer 
 unsigned turbob64dec( unsigned char *in, unsigned inlen, unsigned char *out);
 
 // Space efficient but slower version

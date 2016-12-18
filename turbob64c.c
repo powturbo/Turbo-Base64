@@ -291,35 +291,32 @@ static const unsigned short lut2[1<<12] = {
 0x672f,0x682f,0x692f,0x6a2f,0x6b2f,0x6c2f,0x6d2f,0x6e2f,0x6f2f,0x702f,0x712f,0x722f,0x732f,0x742f,0x752f,0x762f,
 0x772f,0x782f,0x792f,0x7a2f,0x302f,0x312f,0x322f,0x332f,0x342f,0x352f,0x362f,0x372f,0x382f,0x392f,0x2b2f,0x2f2f };
 
-#define LUT2( u,b,o) lut2[(u>>(b*12+o))&0xfff]
-#define EU64(_u_) ((unsigned long long)(LUT2(_u_,0,16)<<16 | LUT2(_u_,1,16))<<32 | LUT2(_u_,2,16)<<16 | LUT2(_u_,3,16))
-#define EI64(_ip_,_op_,_i_) { unsigned long long _u = bswap64(ctou64(_ip_+_i_*12  )); _u = EU64(_u); \
-                              unsigned long long _v = bswap64(ctou64(_ip_+_i_*12+6)); _v = EU64(_v); ctou64(_op_+_i_*16  ) = _u; ctou64(_op_+_i_*16+8) = _v; }
-
-#define LUT1( u,b,o) lut1[(u>>(b* 6+o))&0x3f] 
-#define EU32(_u_) (LUT1(_u_,0,8)<<24 | LUT1(_u_,1,8)<<16 | LUT1(_u_,2,8)<<8 | LUT1(_u_,3,8))
-#define EI32(_ip_,_op_,_i_) { unsigned           _u = bswap32(ctou32(_ip_+_i_*6   ));\
-                              unsigned           _v = bswap32(ctou32(_ip_+_i_*6 +3)); _u = EU32(_u); _v = EU32(_v); ctou32(_op_+_i_*8   ) = _u; ctou32(_op_+_i_*8 +4) = _v; }
+#define EU32(_u_) (lut2[(_u_>>8)&0xfff]<<16 | lut2[_u_>>20])
+#define EI32(_ip_,_op_,_i_) { unsigned _u = bswap32(ctou32(_ip_+_i_*6  )); \
+                              unsigned _v = bswap32(ctou32(_ip_+_i_*6+3)); _u = EU32(_u); _v = EU32(_v); ctou32(_op_+_i_*8) = _u; ctou32(_op_+_i_*8+4) = _v; }				  
 							  
 unsigned turbob64enc(unsigned char *in, unsigned inlen, unsigned char *out) { 
-  static const unsigned char lut1[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";	
   unsigned char *ip,*op;
   if(inlen>=24)
     for(ip = in,op = out; ip < in+inlen-24; ip+=24, op += 32) { 
-      EI64(ip,op,0); EI64(ip,op,1); 							
+	  EI32(ip,op,0); EI32(ip,op,1); EI32(ip,op,2); EI32(ip,op,3); 							
 	  __builtin_prefetch(ip+256, 0);  
     }
   for(; ip < in+inlen; op+=4, ip += 3) { unsigned u = bswap32(ctou32(ip)); u = EU32(u); ctou32(op) = u; }
   return op - out;
 }
 
+#define LU32(_u_) (lut1[(_u_>>8)&0x3f]<<24 | lut1[(_u_>>14)&0x3f]<<16 | lut1[(_u_>>20)&0x3f]<<8 | lut1[(_u_>>26)&0x3f])
+#define LI32(_ip_,_op_,_i_) { unsigned _u = bswap32(ctou32(_ip_+_i_*6   ));\
+                              unsigned _v = bswap32(ctou32(_ip_+_i_*6 +3)); _u = LU32(_u); _v = LU32(_v); ctou32(_op_+_i_*8) = _u; ctou32(_op_+_i_*8 +4) = _v; }
+							  
 unsigned turbob64encs(unsigned char *in, unsigned inlen, unsigned char *out) {
   unsigned char lut1[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",*ip,*op;
   if(inlen>=24)
     for(ip = in,op = out; ip < in+inlen-24; ip+=24, op += 32) { 
-      EI32(ip,op,0); EI32(ip,op,1); EI32(ip,op,2); EI32(ip,op,3); 
+      LI32(ip,op,0); LI32(ip,op,1); LI32(ip,op,2); LI32(ip,op,3); 
 	  __builtin_prefetch(ip+256, 0); 
     }
-  for(; ip < in+inlen; op+=4, ip += 3) { unsigned u = bswap32(ctou32(ip)); u = EU32(u); ctou32(op) = u; }
+  for(; ip < in+inlen; op+=4, ip += 3) { unsigned u = bswap32(ctou32(ip)); u = LU32(u); ctou32(op) = u; }
   return op - out;
 }

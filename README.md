@@ -5,8 +5,8 @@ TurboBase64: Turbo Base64 Encoding [![Build Status](https://travis-ci.org/powtur
 - 100% C (C++ compatible headers), without inline assembly
 <p>
 - No other scalar base64 library encode or decode faster
-- Encode or decode more than 2,5x faster as other libraries
-- Up to 3 GB/s, saturates the fastest SSD drives
+- Encode or decode more than **3 times** faster as other libraries
+- More than 3 GB/s, saturates the fastest SSD drives
 <p>
 
 
@@ -18,9 +18,9 @@ CPU: Skylake at 3.7GHz, gcc 6.2, ubuntu 16.10
 - Single thread
 - Realistic and practical benchmark with large binary game assets corpus [pd3d](http://www.cbloom.com/pd3d.7z)
 
-|C Size|ratio%|C MB/s|D MB/s|Name|Descrition
+|C Size|ratio%|C MB/s|D MB/s|Name|Description
 |--------:|-----:|--------:|--------:|----------------|----------------|------------------------|
-|42603868|133.3|**3025.39**|**2531.27**|[**TurboB64**](https://github.com/powturbo/TurboBase64)|**TurboBase64**|
+|42603868|133.3|**3469.46**|**3126.72**|[**TurboB64**](https://github.com/powturbo/TurboBase64)|**TurboBase64**|
 |42603868|133.3|1715.36|1956.14|[TurboB64s](https://github.com/powturbo/TurboBase64)|**TurboBase64**|
 |42603868|133.3|1262.20|1375.18|[fb64chromium](https://github.com/lemire/fastbase64)|**Google Chromium base64**|
 |42603868|133.3|1674.74|1167.17|[fb64scalar](https://github.com/lemire/fastbase64)|**Scalar FastBase64**|
@@ -48,4 +48,4 @@ CPU: Skylake at 3.7GHz, gcc 6.2, ubuntu 16.10
 - Windows: MinGW
 - Windows: Visual Studio 2015
 
-Last update: 17 DEC 2016
+Last update: 18 DEC 2016

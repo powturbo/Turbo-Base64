@@ -294,29 +294,41 @@ static const unsigned short lut2[1<<12] = {
 #define EU32(_u_) (lut2[(_u_>>8)&0xfff]<<16 | lut2[_u_>>20])
 #define EI32(_ip_,_op_,_i_) { unsigned _u = bswap32(ctou32(_ip_+_i_*6  )); \
                               unsigned _v = bswap32(ctou32(_ip_+_i_*6+3)); _u = EU32(_u); _v = EU32(_v); ctou32(_op_+_i_*8) = _u; ctou32(_op_+_i_*8+4) = _v; }				  
-							  
-unsigned turbob64enc(unsigned char *in, unsigned inlen, unsigned char *out) { 
-  unsigned char *ip,*op;
-  if(inlen>=24)
-    for(ip = in,op = out; ip < in+inlen-24; ip+=24, op += 32) { 
-	  EI32(ip,op,0); EI32(ip,op,1); EI32(ip,op,2); EI32(ip,op,3); 							
-	  __builtin_prefetch(ip+256, 0);  
-    }
-  for(; ip < in+inlen; op+=4, ip += 3) { unsigned u = bswap32(ctou32(ip)); u = EU32(u); ctou32(op) = u; }
-  return op - out;
-}
 
 #define LU32(_u_) (lut1[(_u_>>8)&0x3f]<<24 | lut1[(_u_>>14)&0x3f]<<16 | lut1[(_u_>>20)&0x3f]<<8 | lut1[(_u_>>26)&0x3f])
+							  
+#define REST() {\
+  if(inlen -= (ip-in)) { *op++ = lut1[(ip[0]>>2)&0x3f];\
+    if(inlen==2) *op++ = lut1[(op[0] & 3) << 4 | (op[1] & 0xf0) >> 4], *op++ = lut1[(op[1] & 0xf) << 2];\
+    else         *op++ = lut1[(ip[0] & 3) << 4], *op++ = '=';\
+    *op++ = '=';\
+  } *op = 0;\
+}
+
+unsigned turbob64enc(unsigned char *in, unsigned inlen, unsigned char *out) {
+  static unsigned char lut1[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  unsigned char *ip,*op;
+  unsigned outlen = TURBOB64LEN(inlen);
+  for(ip = in,op = out; op < out+(outlen&~(32-1)); op += 32, ip+=24) {
+    EI32(ip,op,0); EI32(ip,op,1); EI32(ip,op,2); EI32(ip,op,3);
+    __builtin_prefetch(ip+256, 0);
+  }
+  for(; op < out+(outlen&~(4-1)); op += 4, ip+= 3) { unsigned u = bswap32(ctou32(ip)); u = EU32(u); ctou32(op) = u; } 
+  REST(); 
+  return outlen;
+}
+
 #define LI32(_ip_,_op_,_i_) { unsigned _u = bswap32(ctou32(_ip_+_i_*6   ));\
                               unsigned _v = bswap32(ctou32(_ip_+_i_*6 +3)); _u = LU32(_u); _v = LU32(_v); ctou32(_op_+_i_*8) = _u; ctou32(_op_+_i_*8 +4) = _v; }
 							  
 unsigned turbob64encs(unsigned char *in, unsigned inlen, unsigned char *out) {
   unsigned char lut1[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",*ip,*op;
-  if(inlen>=24)
-    for(ip = in,op = out; ip < in+inlen-24; ip+=24, op += 32) { 
-      LI32(ip,op,0); LI32(ip,op,1); LI32(ip,op,2); LI32(ip,op,3); 
-	  __builtin_prefetch(ip+256, 0); 
-    }
-  for(; ip < in+inlen; op+=4, ip += 3) { unsigned u = bswap32(ctou32(ip)); u = LU32(u); ctou32(op) = u; }
-  return op - out;
+  unsigned outlen = TURBOB64LEN(inlen);
+  for(ip = in,op = out; op < out+(outlen&~(32-1)); op += 32, ip+=24) {
+    LI32(ip,op,0); LI32(ip,op,1); LI32(ip,op,2); LI32(ip,op,3);
+    __builtin_prefetch(ip+256, 0); 
+  }
+  for(; op < out+(outlen&~(4-1)); op += 4, ip+= 3) { unsigned u = bswap32(ctou32(ip)); u = LU32(u); ctou32(op) = u; } 
+  REST();
+  return outlen;
 }

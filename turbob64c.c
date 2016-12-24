@@ -302,7 +302,7 @@ static const unsigned short lut2[1<<12] = {
     if(inlen==2) *op++ = lut1[(op[0] & 3) << 4 | (op[1] & 0xf0) >> 4], *op++ = lut1[(op[1] & 0xf) << 2];\
     else         *op++ = lut1[(ip[0] & 3) << 4], *op++ = '=';\
     *op++ = '=';\
-  } *op = 0;\
+  }\
 }
 
 unsigned turbob64enc(unsigned char *in, unsigned inlen, unsigned char *out) {

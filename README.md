@@ -23,13 +23,13 @@ CPU: Skylake at 3.7GHz, gcc 6.2
 
 |C Size|ratio%|C MB/s|D MB/s|Name|Description
 |--------:|-----:|--------:|--------:|----------------|----------------|------------------------|
-|42603868|133.3|**3557**|**3081**|[**TurboB64**](https://github.com/powturbo/TurboBase64)|**TurboBase64**|
+|42603868|133.3|**3557**|**3082**|[**TurboB64**](https://github.com/powturbo/TurboBase64)|**TurboBase64**|
 |42603868|133.3|1715|1956|[TurboB64s](https://github.com/powturbo/TurboBase64)|**TurboBase64**|
 |42603868|133.3|1262|1375|[fb64chromium](https://github.com/lemire/fastbase64)|**Google Chromium base64**|
 |42603868|133.3|1675|1167|[fb64scalar](https://github.com/lemire/fastbase64)|**Scalar FastBase64**|
 |43269553|135.4| 903|171|[fb64linux](https://github.com/lemire/fastbase64)|**Linux base64**|
 |52024524|162.8|1122|816|[fb64quicktime](https://github.com/lemire/fastbase64)|**Apple Quicktime base64**|
-|31952900|100.0|**13397.48**|**14447.93**|**memcpy**|
+|31952900|100.0|**13398**|**14448**|**memcpy**|
 
 (**bold** = pareto)  MB=1.000.000
 

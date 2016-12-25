@@ -113,6 +113,23 @@ static const unsigned lut3[] = {
 #undef _
 
 #define DU32(_u_) (lut0[(unsigned char)(_u_)] | lut1[(unsigned char)(_u_>>8)] | lut2[(unsigned char)(_u_>>16)] | lut3[(unsigned char)(_u_>>24)])
+#define DI32(_ip_,_op_,_i_) { unsigned _u = ux; ux = ctou32(_ip_+8+_i_*8);   ctou32(_op_+ _i_*6  ) = DU32(_u); \
+                              unsigned _v = vx; vx = ctou32(_ip_+8+_i_*8+4); ctou32(_op_+ _i_*6+3) = DU32(_v); }
+
+unsigned turbob64dec(unsigned char *in, unsigned inlen, unsigned char *out) {
+  unsigned char *ip=in,*op=out;
+  if(inlen >= 64) {
+    unsigned ux = ctou32(ip), vx = ctou32(ip+4);
+    for(; ip != in+(inlen&~(64-1))-64; ip+=64, op += 48) { 
+      DI32(ip,op,0); DI32(ip,op,1); DI32(ip,op,2); DI32(ip,op,3);DI32(ip,op,4); DI32(ip,op,5); DI32(ip,op,6); DI32(ip,op,7);
+	  __builtin_prefetch(ip+768, 0); 
+    } 
+  }
+  for(; ip < in+inlen; ip+=4, op += 3) { unsigned u = ctou32(ip); ctou32(op) = DU32(u); } 
+  return inlen;
+}
+
+  #if 0
 #define DI32(_ip_,_op_,_i_) { unsigned _u = ctou32(_ip_+_i_*8);\
                               unsigned _v = ctou32(_ip_+_i_*8+4); ctou32(_op_+ _i_*6  ) = DU32(_u); ctou32(_op_+ _i_*6+3) = DU32(_v); }
 
@@ -125,7 +142,7 @@ unsigned turbob64dec(unsigned char *in, unsigned inlen, unsigned char *out) {
   for(; ip < in+inlen; ip+=4, op += 3) { unsigned u = ctou32(ip); ctou32(op) = DU32(u); } 
   return inlen;
 }
-
+  #endif
 //-------------------
 #define _ 0xff
 static const unsigned char lut[] = {

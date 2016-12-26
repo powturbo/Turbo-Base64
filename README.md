@@ -23,9 +23,11 @@ CPU: Skylake at 3.7GHz, gcc 6.2
 
 |C Size|ratio%|C MB/s|D MB/s|Name|Description
 |--------:|-----:|--------:|--------:|----------------|----------------|------------------------|
-|42603868|133.3|**3557**|**3082**|[**TurboB64**](https://github.com/powturbo/TurboBase64)|**TurboBase64**|
-|42603868|133.3|1715|1956|[TurboB64s](https://github.com/powturbo/TurboBase64)|**TurboBase64**|
+|42603868|133.3|**3557**|**3082**|[**TurboB64**](https://github.com/powturbo/TurboBase64)|**TurboBase64 scalar**|
+|42603868|133.3|**5533**|2822|[fbase64_sse41](https://github.com/aklomp/base64)|**Base64 SIMD sse41**|
+|42603868|133.3|1715|1956|[TurboB64s](https://github.com/powturbo/TurboBase64)|**TurboBase64 scalar**|
 |42603868|133.3|1262|1375|[fb64chromium](https://github.com/lemire/fastbase64)|**Google Chromium base64**|
+|42603868|133.3|1674|1250|[fbase64_plain](https://github.com/aklomp/base64)|Base64 plain|
 |42603868|133.3|1675|1167|[fb64scalar](https://github.com/lemire/fastbase64)|**Scalar FastBase64**|
 |42603869|162.8|1122|816|[fb64quicktime](https://github.com/lemire/fastbase64)|**Apple Quicktime base64**|
 |43269553|135.4| 903|171|[fb64linux](https://github.com/lemire/fastbase64)|**Linux base64**|

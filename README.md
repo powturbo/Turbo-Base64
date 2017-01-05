@@ -24,7 +24,7 @@ CPU: Skylake at 3.7GHz, gcc 6.2
 |C Size|ratio%|C MB/s|D MB/s|Name|Description
 |--------:|-----:|--------:|--------:|----------------|----------------|------------------------|
 |42603868|133.3|**3557**|**3082**|[**TurboB64**](https://github.com/powturbo/TurboBase64)|**TurboBase64 scalar**|
-|42603868|133.3|**5533**|2822|[fbase64_sse41](https://github.com/aklomp/base64)|Base64 SIMD sse41|
+|42603868|133.3|**5533**|2822|[base64_sse41](https://github.com/aklomp/base64)|Base64 SIMD sse41|
 |42603868|133.3|1715|1956|[TurboB64s](https://github.com/powturbo/TurboBase64)|**TurboBase64 scalar**|
 |42603868|133.3|1262|1375|[fb64chromium](https://github.com/lemire/fastbase64)|Google Chromium base64|
 |42603868|133.3|1674|1250|[fbase64_plain](https://github.com/aklomp/base64)|Base64 plain|
@@ -58,4 +58,4 @@ CPU: Skylake at 3.7GHz, gcc 6.2
 - [base64simd](https://github.com/WojciechMula/base64simd)
 - [base64](https://github.com/aklomp/base64)
 
-Last update: 25 DEC 2016
+Last update: 05 JAN 2017

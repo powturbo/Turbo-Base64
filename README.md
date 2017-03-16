@@ -15,7 +15,7 @@ TurboBase64: Turbo Base64 Encoding [![Build Status](https://travis-ci.org/powtur
 ------------------------------------------------------------------------
 
 ## Benchmark:
-CPU: Skylake at 3.7GHz, gcc 6.2
+CPU: Skylake at 3.4GHz, gcc 6.2
 - with [TurboBench](https://github.com/powturbo/TurboBench)
 - Single thread
 - Realistic and practical benchmark with large binary game assets corpus [pd3d](http://www.cbloom.com/pd3d.7z)

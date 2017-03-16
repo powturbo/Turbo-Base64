@@ -4,12 +4,12 @@ TurboBase64: Turbo Base64 Encoding [![Build Status](https://travis-ci.org/powtur
 ###### **Turbo Base64** Encoding library
 - 100% C (C++ compatible headers), without inline assembly
 <p>
-- No other scalar base64 library encode or decode faster
-- Encode or decode more than **3 times** faster as other libraries
-- More than 3 GB/s, saturates the fastest SSD drives
-- :new: more faster
-- Portable library, both 32 and 64 bits supported
-- Ready and simple to use library, no hassless dependencies
+  * No other scalar base64 library encode or decode faster
+  * Encode or decode more than **3 times** faster as other libraries
+  * More than 3 GB/s, saturates the fastest SSD drives
+  * :new: more faster
+  * Portable library, both 32 and 64 bits supported
+  * Ready and simple to use library, no hassless dependencies
 <p>
 
 
@@ -22,7 +22,7 @@ CPU: Skylake at 3.7GHz, gcc 6.2
 - Realistic and practical benchmark with large binary game assets corpus [pd3d](http://www.cbloom.com/pd3d.7z)
 
 |C Size|ratio%|C MB/s|D MB/s|Name|Description
-|--------:|-----:|--------:|--------:|----------------|----------------|------------------------|
+|--------:|-----:|--------:|--------:|----------------|----------------|
 |42603868|133.3|**3557**|**3082**|[**TurboB64**](https://github.com/powturbo/TurboBase64)|**TurboBase64 scalar**|
 |42603868|133.3|**5533**|2822|[base64_sse41](https://github.com/aklomp/base64)|Base64 SIMD sse41|
 |42603868|133.3|1715|1956|[TurboB64s](https://github.com/powturbo/TurboBase64)|**TurboBase64 scalar**|

@@ -2,14 +2,13 @@ TurboBase64: Turbo Base64 Encoding [![Build Status](https://travis-ci.org/powtur
 ===================================
 
 ###### **Turbo Base64** Encoding library
-- 100% C (C++ compatible headers), without inline assembly
-<p>
-  * No other scalar base64 library encode or decode faster
-  * Encode or decode more than **3 times** faster as other libraries
-  * More than 3 GB/s, saturates the fastest SSD drives
-  * :new: more faster
-  * Portable library, both 32 and 64 bits supported
-  * Ready and simple to use library, no hassless dependencies
+ * 100% C (C++ compatible headers), without inline assembly
+ * No other scalar base64 library encode or decode faster
+ * Encode or decode more than **3 times** faster as other libraries
+ * More than 3 GB/s, saturates the fastest SSD drives
+ * :new: more faster
+ * Portable library, both 32 and 64 bits supported
+ * Ready and simple to use library, no hassless dependencies
 <p>
 
 

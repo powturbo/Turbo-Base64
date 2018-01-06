@@ -1,4 +1,4 @@
-# powturbo  (c) Copyright 2016-2017
+# powturbo  (c) Copyright 2016-2018
 CC ?= gcc
 CXX ?= g++
 #CC=clang

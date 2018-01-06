@@ -57,4 +57,4 @@ CPU: Skylake at 3.4GHz, gcc 6.2
 - [base64simd](https://github.com/WojciechMula/base64simd)
 - [base64](https://github.com/aklomp/base64)
 
-Last update: 16 MAR 2017
+Last update: 06 Jan 2018

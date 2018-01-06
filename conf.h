@@ -1,5 +1,5 @@
 /**
-Copyright (c) 2016-2017, Powturbo
+Copyright (c) 2016-2018, Powturbo
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     - email    : powturbo [_AT_] gmail [_DOT_] com
 **/
 
-//	   conf.h - config & common 
+//   conf.h - config & common 
 #ifndef CONF_H
 #define CONF_H
 //------------------------- Compiler ------------------------------------------

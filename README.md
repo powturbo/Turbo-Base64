@@ -5,24 +5,24 @@ TurboBase64: Turbo Base64 Encoding [![Build Status](https://travis-ci.org/powtur
  * 100% C (C++ compatible headers), without inline assembly
  * No other scalar base64 library encode or decode faster
  * Encode or decode more than **3 times** faster as other libraries
- * More than 3 GB/s, saturates the fastest SSD drives
- * :new: more faster
+ * **2 times** faster on ARM than the next fastest simd neon base64
+ * Only non portable AVX2 based libraries are faster
+ * More than 4 GB/s, saturates the fastest SSD drives
  * Portable library, both 32 and 64 bits supported
  * Ready and simple to use library, no hassless dependencies
 <p>
 
-
 ------------------------------------------------------------------------
 
 ## Benchmark:
-CPU: Skylake at 3.4GHz, gcc 6.2
 - with [TurboBench](https://github.com/powturbo/TurboBench)
 - Single thread
-- Realistic and practical benchmark with large binary game assets corpus [pd3d](http://www.cbloom.com/pd3d.7z)
+- Realistic and practical benchmark with large binary game assets corpus pd3d.tar (32 MB)
 
-|C Size|ratio%|C MB/s|D MB/s|Name|Description
+###### Benchmark Intel CPU: Skylake i7-6700 3.4GHz gcc 9.2
+|C Size|ratio%|C MB/s|D MB/s|Name|Description 2019.11|
 |--------:|-----:|--------:|--------:|----------------|----------------|
-|42603868|133.3|**3557**|**3082**|[**TurboB64**](https://github.com/powturbo/TurboBase64)|**TurboBase64 scalar**|
+|42603868|133.3|**3894**|**3133**|[**TurboB64**](https://github.com/powturbo/TurboBase64)|**TurboBase64 scalar**|
 |42603868|133.3|**5533**|2822|[base64_sse41](https://github.com/aklomp/base64)|Base64 SIMD sse41|
 |42603868|133.3|1715|1956|[TurboB64s](https://github.com/powturbo/TurboBase64)|**TurboBase64 scalar**|
 |42603868|133.3|1262|1375|[fb64chromium](https://github.com/lemire/fastbase64)|Google Chromium base64|
@@ -32,7 +32,19 @@ CPU: Skylake at 3.4GHz, gcc 6.2
 |43269553|135.4| 903|171|[fb64linux](https://github.com/lemire/fastbase64)|Linux base64|
 |31952900|100.0|**13398**|**14448**|**memcpy**|
 
+###### Benchmark ARM: ARMv8 A73-ODROID-N2 1.8GHz
+|C Size|ratio%|C MB/s|D MB/s|Name|Description 2019.11|
+|--------:|-----:|--------:|--------:|----------------|----------------|
+|42603868|133.3|**1234**|**725**|[**TurboB64**](https://github.com/powturbo/TurboBase64)|**TurboBase64 scalar**|
+|42603868|133.3|566|615|[fastbase neon](https://github.com/lemire/fastbase64))|FastBase64 SIMD Neon|
+|42603868|133.3|686|604|[TurboB64s](https://github.com/powturbo/TurboBase64)|**TurboBase64 scalar**|
+|42603868|133.3|565|460|[fb64chromium](https://github.com/lemire/fastbase64)|Google Chromium base64|
+|42603868|133.3|506|412|[fb64scalar](https://github.com/lemire/fastbase64)|FastBase64 Scalar|
+|43269553|135.4|314|91|[fb64linux](https://github.com/lemire/fastbase64)|Linux base64|
+|31952900|100.0|**4050**|**4105**|**memcpy**|
+
 (**bold** = pareto)  MB=1.000.000
+
 
 <p>
 
@@ -47,14 +59,17 @@ CPU: Skylake at 3.4GHz, gcc 6.2
 ### Environment:
 
 ###### OS/Compiler (32 + 64 bits):
-- Linux: GNU GCC (>=4.6)
-- clang (>=3.2) 
-- Windows: MinGW
-- Windows: Visual Studio 2015
+- Windows: MinGW-w64 makefile
+- Linux amd/intel: GNU GCC (>=4.6)
+- Linux amd/intel: Clang (>=3.2) 
+- Linux arm: aarch64 ARMv8:  gcc (>=6.3)
+- MaxOS: XCode (>=9)
+- PowerPC ppc64le: gcc (>=8.0)
 
 ###### References:
 - [fastbase](https://github.com/lemire/fastbase64)
 - [base64simd](https://github.com/WojciechMula/base64simd)
 - [base64](https://github.com/aklomp/base64)
 
-Last update: 07 Apr 2018
+Last update: 23 Oct 2019
+

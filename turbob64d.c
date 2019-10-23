@@ -1,5 +1,5 @@
 /**
-Copyright (c) 2016-2018, Powturbo
+Copyright (c) 2016-2019, Powturbo
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

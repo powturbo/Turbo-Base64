@@ -10,7 +10,6 @@ branches:
 
 script:
   - make
-  - uname -s
   - ./turbob64 turbob64c.c
 
 matrix:

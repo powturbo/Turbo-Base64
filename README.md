@@ -36,7 +36,7 @@ TurboBase64: Turbo Base64 Encoding [![Build Status](https://travis-ci.org/powtur
 |C Size|ratio%|C MB/s|D MB/s|Name|Description 2019.11|
 |--------:|-----:|--------:|--------:|----------------|----------------|
 |42603868|133.3|**1234**|**725**|[**TurboB64**](https://github.com/powturbo/TurboBase64)|**TurboBase64 scalar**|
-|42603868|133.3|566|615|[fastbase neon](https://github.com/lemire/fastbase64))|FastBase64 SIMD Neon|
+|42603868|133.3|566|615|[fastbase neon](https://github.com/lemire/fastbase64)|FastBase64 SIMD Neon|
 |42603868|133.3|686|604|[TurboB64s](https://github.com/powturbo/TurboBase64)|**TurboBase64 scalar**|
 |42603868|133.3|565|460|[fb64chromium](https://github.com/lemire/fastbase64)|Google Chromium base64|
 |42603868|133.3|506|412|[fb64scalar](https://github.com/lemire/fastbase64)|FastBase64 Scalar|

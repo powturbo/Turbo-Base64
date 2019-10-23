@@ -1,10 +1,37 @@
 language: c
-compiler: gcc
+
+compiler: 
+  - gcc
+  - clang
 
 branches:
   only:
-    - master
+    - master 
+
 script:
-    - make
-os:
-  - linux
+  - make
+  - ./turbobe64 turbob64c.c
+
+matrix:
+  include:
+    - name: Linux arm
+      os: linux
+      arch: arm64
+      compiler: gcc
+
+    - name: Windows-MinGW
+      os: windows
+      script: 
+        - mingw32-make
+        - ./turbobe64 turbob64c.c
+
+    - name: macOS, xcode
+      os: osx
+
+#    - name: Linux amd64
+#      os: linux
+#      arch: amd64
+#    - name: Power ppc64le
+#      os: linux-ppc64le
+#      compiler: gcc     
+

@@ -34,8 +34,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "conf.h"
 #include "turbob64.h"
 
-// Pre shifted lookup table: 3k+256 bytes
-#define _ 0xff
+#if defined(__i386__) || defined(__x86_64__) || defined(__powerpc__)
+#define PREFETCH(_ip_,_i_,_rw_) __builtin_prefetch(_ip_+(_i_),_rw_)
+  #else
+#define PREFETCH(_ip_,_i_,_rw_) __builtin_prefetch(_ip_+(_i_),_rw_)
+  #endif
+
+//------------ Pre shifted lookup table: 3k+256 bytes for fast decoding --------------------------------
+#define _ 0xff // invalid entry
 static const unsigned char lut0[] = { 
    _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,
    _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,
@@ -56,7 +62,7 @@ static const unsigned char lut0[] = {
 };
 #undef _
 
-#define _ 0xffffff
+#define _ 0xffffff // invalid entry
 static const unsigned lut1[] = {
      _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,
      _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,
@@ -115,39 +121,33 @@ static const unsigned lut3[] = {
 };
 #undef _
 
-#define DU32(_u_) (lut0[(unsigned char)(_u_)] | lut1[(unsigned char)(_u_>>8)] | lut2[(unsigned char)(_u_>>16)] | lut3[(unsigned char)(_u_>>24)])
-#define DI32(_ip_,_op_,_i_) { unsigned _u = ux; ux = ctou32(_ip_+8+_i_*8);   ctou32(_op_+ _i_*6  ) = DU32(_u); \
-                              unsigned _v = vx; vx = ctou32(_ip_+8+_i_*8+4); ctou32(_op_+ _i_*6+3) = DU32(_v); }
+#define DU32(_u_) (lut0[(unsigned char)(_u_    )] |\
+                   lut1[(unsigned char)(_u_>> 8)] |\
+				   lut2[(unsigned char)(_u_>>16)] |\
+				   lut3[(unsigned char)(_u_>>24)])
+				   
+#define DI32(_i_) { unsigned _u = ux; ux = ctou32(ip+8+_i_*8);   ctou32(op+ _i_*6  ) = DU32(_u); \
+                    unsigned _v = vx; vx = ctou32(ip+8+_i_*8+4); ctou32(op+ _i_*6+3) = DU32(_v); }
 
 unsigned turbob64dec(unsigned char *in, unsigned inlen, unsigned char *out) {
-  unsigned char *ip=in,*op=out;
-  if(inlen >= 64) {
+  unsigned char *ip = in, *op = out;
+  
+  if(inlen >= 64) { // 8x loop unrolling: decode 64->48 bytes
     unsigned ux = ctou32(ip), vx = ctou32(ip+4);
-    for(; ip != in+(inlen&~(64-1))-64; ip+=64, op += 48) { 
-      DI32(ip,op,0); DI32(ip,op,1); DI32(ip,op,2); DI32(ip,op,3);DI32(ip,op,4); DI32(ip,op,5); DI32(ip,op,6); DI32(ip,op,7);
-	  __builtin_prefetch(ip+768, 0); 
-    } 
+    for(; ip != in+(inlen&~(64-1))-64; ip+=64, op += 48) {  
+      DI32(0); DI32(1); DI32(2); DI32(3); DI32(4); DI32(5); DI32(6); DI32(7);	  PREFETCH(ip,512, 0);  
+    }
   }
-  for(; ip < in+inlen; ip+=4, op += 3) { unsigned u = ctou32(ip); ctou32(op) = DU32(u); } 
-  return inlen;
-}
-
-  #if 0
-#define DI32(_ip_,_op_,_i_) { unsigned _u = ctou32(_ip_+_i_*8);\
-                              unsigned _v = ctou32(_ip_+_i_*8+4); ctou32(_op_+ _i_*6  ) = DU32(_u); ctou32(_op_+ _i_*6+3) = DU32(_v); }
-
-unsigned turbob64dec(unsigned char *in, unsigned inlen, unsigned char *out) {
-  unsigned char *ip,*op;
-  for(ip = in,op = out; ip != in+(inlen&~(32-1)); ip+=32, op += 24) { 
-    DI32(ip,op,0); DI32(ip,op,1); DI32(ip,op,2); DI32(ip,op,3);
-	__builtin_prefetch(ip+256, 0); 
+  for(; ip < in+inlen; ip+=4, op += 3) { // decode the rest
+    unsigned u = ctou32(ip); 
+	ctou32(op) = DU32(u); 
   } 
-  for(; ip < in+inlen; ip+=4, op += 3) { unsigned u = ctou32(ip); ctou32(op) = DU32(u); } 
   return inlen;
 }
-  #endif
-//-------------------
-#define _ 0xff
+  
+//--------------------- decoding with small lut (only 64 bytes used)------------------------------------
+
+#define _ 0xff // invald entry
 static const unsigned char lut[] = {
  _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _,
  _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _,
@@ -168,16 +168,27 @@ static const unsigned char lut[] = {
 };
 #undef _
 
-#define LU32(_u_) bswap32(lut[(unsigned char)(_u_)]<<26 | lut[(unsigned char)(_u_>>8)]<<20 | lut[(unsigned char)(_u_>>16)]<<14 | lut[(unsigned char)(_u_>>24)]<<8)
-#define LI32(_ip_,_op_,_i_) { unsigned _u = ctou32(_ip_+_i_*8);   _u = LU32(_u);\
-                              unsigned _v = ctou32(_ip_+_i_*8+4); _v = LU32(_v); ctou32(_op_+ _i_*6  ) = _u; ctou32(_op_+ _i_*6+3) = _v; }
+#define LU32(_u_) bswap32(lut[(unsigned char)(_u_    )] << 26 |\
+                          lut[(unsigned char)(_u_>> 8)] << 20 |\
+						  lut[(unsigned char)(_u_>>16)] << 14 |\
+						  lut[(unsigned char)(_u_>>24)] <<  8)
+
+#define LI32(_i_) { \
+  unsigned _u = ctou32(ip+_i_*8);    _u = LU32(_u);\
+  unsigned _v = ctou32(ip+_i_*8+4);  _v = LU32(_v);\
+  ctou32(op+ _i_*6  ) = _u;\
+  ctou32(op+ _i_*6+3) = _v;\
+}
 
 unsigned turbob64decs(unsigned char *in, unsigned inlen, unsigned char *out) {
   unsigned char *ip,*op;
-  for(ip = in,op = out; ip != in+(inlen&~(32-1)); ip+=32, op += 24) { 
-    LI32(ip,op,0); LI32(ip,op,1); LI32(ip,op,2); LI32(ip,op,3);
-	__builtin_prefetch(ip+256, 0); 
+  
+  for(ip = in,op = out; ip != in+(inlen&~(64-1)); ip+=64, op += 48) { // 8x loop unrolling: decode 32->24 bytes
+    LI32(0); LI32(1); LI32(2); LI32(3);	LI32(4); LI32(5); LI32(6); LI32(7);								PREFETCH(ip,384, 0); 
   }
-  for(; ip < in+inlen; ip+=4, op += 3) { unsigned u = ctou32(ip);  ctou32(op) = LU32(u); } 
+  for(; ip < in+inlen; ip+=4, op += 3) { //decode rest
+    unsigned u = ctou32(ip);  
+	ctou32(op) = LU32(u); 
+  } 
   return inlen;
 }

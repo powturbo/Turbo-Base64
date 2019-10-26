@@ -73,9 +73,9 @@ unsigned argtoi(char *s) {
      case 'k': f = 1000;       break;
      case 'm': f = 1000000;    break;
      case 'g': f = 1000000000; break;
-     case 'K': f = 1<<10; 	   break;
-     case 'M': f = 1<<20; 	   break;
-     case 'G': f = 1<<30; 	   break;
+     case 'K': f = 1<<10;      break;
+     case 'M': f = 1<<20;      break;
+     case 'G': f = 1<<30;      break;
   }
   return n*f;
 }
@@ -89,22 +89,22 @@ void check(const unsigned char *in, unsigned char *cpy, unsigned n) { int i;
 int main(int argc, char *argv[]) {
   unsigned reps = 1<<30, trips = 3,cmp=0, b = 1 << 30;
   int c, digit_optind = 0, this_option_optind = optind ? optind : 1, option_index = 0;
-  static struct option long_options[] = { {"blocsize", 	0, 0, 'b'}, {0,0, 0, 0}  };
+  static struct option long_options[] = { {"blocsize",  0, 0, 'b'}, {0,0, 0, 0}  };
   for(;;) {
     if((c = getopt_long(argc, argv, "cb:r:R:", long_options, &option_index)) == -1) break;
     switch(c) {
-      case  0 : printf("Option %s", long_options[option_index].name); if(optarg) printf (" with arg %s", optarg);  printf ("\n"); break;								
+      case  0 : printf("Option %s", long_options[option_index].name); if(optarg) printf (" with arg %s", optarg);  printf ("\n"); break;                                
       case 'r': reps  = atoi(optarg); break;
       case 'R': trips = atoi(optarg); break;
       case 'b': b = argtoi(optarg);   break;
-      case 'c': cmp++; 				  break;
+      case 'c': cmp++;                break;
     }
   }
   if(argc - optind < 1) { fprintf(stderr, "File not specified\n"); exit(-1); }
 
   unsigned char *in,*out,*cpy;
   char *inname = argv[optind];  
-  FILE *fi = fopen(inname, "rb"); if(!fi ) perror(inname), exit(1);  							
+  FILE *fi = fopen(inname, "rb"); if(!fi ) perror(inname), exit(1);                             
   fseek(fi, 0, SEEK_END); long long flen = ftell(fi); fseek(fi, 0, SEEK_SET);
   if(flen > b) flen = b;
   int n = flen; 
@@ -113,11 +113,11 @@ int main(int argc, char *argv[]) {
   if(cmp && !(cpy = (unsigned char*)malloc(n+1024)))        { fprintf(stderr, "malloc error\n"); exit(-1); }
   n = fread(in, 1, n, fi);
   fclose(fi);
-  if(n <= 0) exit(0); 																printf("'%s' %u\n", inname, n);
+  if(n <= 0) exit(0);                                                               printf("'%s' %u\n", inname, n);
     
   unsigned l;
   TMDEF; memcpy(out, in,  n); memcpy(out,cpy,n);
-  TMBEG l = turbob64enc( in, n, out); 		  TMEND; printf("%10u ", l); TMPRINT(""); TMBEG turbob64dec( out, l, cpy);	TMEND; if(cmp) check(in,cpy,n); TMPRINT("TurboB64\n");
-  TMBEG l = turbob64encs(in, n, out); 		  TMEND; printf("%10u ", l); TMPRINT(""); TMBEG turbob64decs(out, l, cpy);	TMEND; if(cmp) check(in,cpy,n); TMPRINT("TurboB64\n");
-  TMBEG memcpy(out, in,  n);   				  TMEND; printf("%10u ", n); TMPRINT(""); TMBEG memcpy(cpy,out, n); 		TMEND; if(cmp) check(in,cpy,n); TMPRINT("memcpy\n"); 
+  TMBEG l = turbob64enc( in, n, out);         TMEND; printf("%10u ", l); TMPRINT(""); TMBEG turbob64dec( out, l, cpy);  TMEND; if(cmp) check(in,cpy,n); TMPRINT("TurboB64\n");
+  TMBEG l = turbob64encs(in, n, out);         TMEND; printf("%10u ", l); TMPRINT(""); TMBEG turbob64decs(out, l, cpy);  TMEND; if(cmp) check(in,cpy,n); TMPRINT("TurboB64\n");
+  TMBEG memcpy(out, in,  n);                  TMEND; printf("%10u ", n); TMPRINT(""); TMBEG memcpy(cpy,out, n);         TMEND; if(cmp) check(in,cpy,n); TMPRINT("memcpy\n"); 
 }

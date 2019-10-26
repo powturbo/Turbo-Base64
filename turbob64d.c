@@ -123,9 +123,9 @@ static const unsigned lut3[] = {
 
 #define DU32(_u_) (lut0[(unsigned char)(_u_    )] |\
                    lut1[(unsigned char)(_u_>> 8)] |\
-				   lut2[(unsigned char)(_u_>>16)] |\
-				   lut3[(unsigned char)(_u_>>24)])
-				   
+                   lut2[(unsigned char)(_u_>>16)] |\
+                   lut3[(unsigned char)(_u_>>24)])
+                   
 #define DI32(_i_) { unsigned _u = ux; ux = ctou32(ip+8+_i_*8);   ctou32(op+ _i_*6  ) = DU32(_u); \
                     unsigned _v = vx; vx = ctou32(ip+8+_i_*8+4); ctou32(op+ _i_*6+3) = DU32(_v); }
 
@@ -135,12 +135,12 @@ unsigned turbob64dec(unsigned char *in, unsigned inlen, unsigned char *out) {
   if(inlen >= 64) { // 8x loop unrolling: decode 64->48 bytes
     unsigned ux = ctou32(ip), vx = ctou32(ip+4);
     for(; ip != in+(inlen&~(64-1))-64; ip+=64, op += 48) {  
-      DI32(0); DI32(1); DI32(2); DI32(3); DI32(4); DI32(5); DI32(6); DI32(7);	  PREFETCH(ip,512, 0);  
+      DI32(0); DI32(1); DI32(2); DI32(3); DI32(4); DI32(5); DI32(6); DI32(7);     PREFETCH(ip,512, 0);  
     }
   }
   for(; ip < in+inlen; ip+=4, op += 3) { // decode the rest
     unsigned u = ctou32(ip); 
-	ctou32(op) = DU32(u); 
+    ctou32(op) = DU32(u); 
   } 
   return inlen;
 }
@@ -170,8 +170,8 @@ static const unsigned char lut[] = {
 
 #define LU32(_u_) bswap32(lut[(unsigned char)(_u_    )] << 26 |\
                           lut[(unsigned char)(_u_>> 8)] << 20 |\
-						  lut[(unsigned char)(_u_>>16)] << 14 |\
-						  lut[(unsigned char)(_u_>>24)] <<  8)
+                          lut[(unsigned char)(_u_>>16)] << 14 |\
+                          lut[(unsigned char)(_u_>>24)] <<  8)
 
 #define LI32(_i_) { \
   unsigned _u = ctou32(ip+_i_*8);    _u = LU32(_u);\
@@ -184,11 +184,11 @@ unsigned turbob64decs(unsigned char *in, unsigned inlen, unsigned char *out) {
   unsigned char *ip,*op;
   
   for(ip = in,op = out; ip != in+(inlen&~(64-1)); ip+=64, op += 48) { // 8x loop unrolling: decode 32->24 bytes
-    LI32(0); LI32(1); LI32(2); LI32(3);	LI32(4); LI32(5); LI32(6); LI32(7);								PREFETCH(ip,384, 0); 
+    LI32(0); LI32(1); LI32(2); LI32(3); LI32(4); LI32(5); LI32(6); LI32(7);                             PREFETCH(ip,384, 0); 
   }
   for(; ip < in+inlen; ip+=4, op += 3) { //decode rest
     unsigned u = ctou32(ip);  
-	ctou32(op) = LU32(u); 
+    ctou32(op) = LU32(u); 
   } 
   return inlen;
 }

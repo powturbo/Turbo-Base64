@@ -35,7 +35,7 @@ extern "C" {
 #endif
 
 // Base64 output length after encoding 
-#define TURBOB64LEN(_n_) ((_n_ + 2)/ 3 * 4)
+#define TURBOB64LEN(_n_) ((_n_ + 2)/ 3 * 4 )
 static inline unsigned turbob64len(unsigned n) { return TURBOB64LEN(n); }
 
 // Encode input buffer into base64 string 

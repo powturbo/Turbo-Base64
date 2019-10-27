@@ -8,6 +8,8 @@ DDEBUG=-DNDEBUG -s
 
 ifneq (,$(filter Windows%,$(OS)))
   OS := Windows
+CC=gcc
+CXX=g++
 else
   OS := $(shell uname -s)
   ARCH := $(shell uname -m)
@@ -22,7 +24,16 @@ endif
 ifeq ($(ARCH),ppc64le)
 CFLAGS=-mcpu=power9 -mtune=power9
 else
+ifeq ($(ARCH),aarch64)
+CFLAGS+=-march=armv8-a
+ifneq (,$(findstring clang, $(CC)))
+CFLAGS+=-mcpu=cortex-a72 -falign-loops -fomit-frame-pointer
+else
+CFLAGS+=-mcpu=cortex-a72 
+endif
+else
 CFLAGS=-march=native
+endif
 endif
 
 ifeq ($(OS),$(filter $(OS),Linux GNU/kFreeBSD GNU OpenBSD FreeBSD DragonFly NetBSD MSYS_NT Haiku))
@@ -35,7 +46,7 @@ turbob64: turbob64c.o turbob64d.o turbob64.o
 	$(CC) turbob64c.o turbob64d.o turbob64.o $(LDFLAGS) -o turbob64
  
 .c.o:
-	$(CC) -O3 $(CFLAGS) $< -c -o $@
+	$(CC) -O3 $(CFLAGS) $(MARCH) $< -c -o $@
 
 clean:
 	@find . -type f -name "*\.o" -delete -or -name "*\~" -delete -or -name "core" -delete -or -name "turbob64"

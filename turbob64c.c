@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     - twitter  : https://twitter.com/powturbo
     - email    : powturbo [_AT_] gmail [_DOT_] com
 **/
+//------------- TurboBase64 : Base64 encoding ----------------------
 #include "conf.h"
 #include "turbob64.h"
 
@@ -38,6 +39,49 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   #else
 #define PREFETCH(_ip_,_i_,_rw_) __builtin_prefetch(_ip_+(_i_),_rw_)
   #endif
+
+//------------------------------------------------------------------------------------------------
+#define ETAIL() {\
+  if(inlen -= (ip-in)) { \
+    *op++ = lut1[(ip[0]>>2)&0x3f];\
+    if(inlen == 2) *op++ = lut1[(op[0] & 0x3) << 4 | (op[1] & 0xf0) >> 4],\
+                   *op++ = lut1[(op[1] & 0xf) << 2];\
+    else           *op++ = lut1[(ip[0] & 0x3) << 4], *op++ = '=';\
+    *op++ = '=';\
+  }\
+}
+
+#define LU32(_u_) (lut1[(_u_>> 8) & 0x3f] << 24 |\
+                   lut1[(_u_>>14) & 0x3f] << 16 |\
+                   lut1[(_u_>>20) & 0x3f] <<  8 |\
+                   lut1[(_u_>>26) & 0x3f])
+
+//----------------------- small 64 bytes lut encoding ---------------------------------------
+#define LI32(_i_) { \
+  unsigned _u = bswap32(ctou32(ip+_i_*6    ));\
+  unsigned _v = bswap32(ctou32(ip+_i_*6 + 3)); \
+  _u = LU32(_u);\
+  _v = LU32(_v); \
+  ctou32(op+_i_*8    ) = _u;\
+  ctou32(op+_i_*8 + 4) = _v;\
+}
+                              
+unsigned turbob64encs(unsigned char *in, unsigned inlen, unsigned char *out) {
+  static unsigned char lut1[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+         unsigned char *ip, *op;
+  unsigned             outlen = TURBOB64LEN(inlen);
+  
+  for(op = out, ip = in; op != out+(outlen&~(64-1)); op += 64, ip += 48) { // unrolling 48 bytes
+    LI32(0); LI32(1); LI32(2); LI32(3); LI32(4); LI32(5); LI32(6); LI32(7);         PREFETCH(ip,256, 0); 
+  }
+  for(; op != out+(outlen&~(4-1)); op += 4, ip += 3) {
+    unsigned u          = bswap32(ctou32(ip)); 
+             u          = LU32(u); 
+             ctou32(op) = u; 
+  } 
+  ETAIL();
+  return outlen;
+}
 
 //---------------------- Fast encoding with 4k LUT ------------------------------------------------------------
 static const unsigned short lut2[1<<12] = { 
@@ -300,32 +344,18 @@ static const unsigned short lut2[1<<12] = {
 
 #define EU32(_u_) (lut2[(_u_ >>  8) & 0xfff] << 16 |\
                    lut2[ _u_ >> 20])
-
-#define LU32(_u_) (lut1[(_u_>> 8) & 0x3f] << 24 |\
-                   lut1[(_u_>>14) & 0x3f] << 16 |\
-                   lut1[(_u_>>20) & 0x3f] <<  8 |\
-                   lut1[(_u_>>26) & 0x3f])
-                              
-#define REST() {\
-  if(inlen -= (ip-in)) { \
-    *op++ = lut1[(ip[0]>>2)&0x3f];\
-    if(inlen==2) *op++ = lut1[(op[0] &   3) << 4 | (op[1] & 0xf0) >> 4],\
-                 *op++ = lut1[(op[1] & 0xf) << 2];\
-    else         *op++ = lut1[(ip[0] &   3) << 4], *op++ = '=';\
-    *op++ = '=';\
-  }\
-}
-
+                             
 #define EI32(_i_) { \
   unsigned _u = ux; ux = bswap32(ctou32(ip+6+_i_*6  )); _u = EU32(_u); \
-  unsigned _v = vx; vx = bswap32(ctou32(ip+6+_i_*6+3)); _v = EU32(_v); ctou32(op+_i_*8) = _u; ctou32(op+_i_*8+4) = _v; }                  
+  unsigned _v = vx; vx = bswap32(ctou32(ip+6+_i_*6+3)); _v = EU32(_v); ctou32(op+_i_*8) = _u; ctou32(op+_i_*8+4) = _v;\
+}                  
 
 unsigned turbob64enc(unsigned char *in, unsigned inlen, unsigned char *out) {
   static unsigned char lut1[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
   unsigned char        *ip = in, *op = out;
   unsigned             outlen = TURBOB64LEN(inlen);
   
-  if(outlen >= 32) {
+  if(outlen >= 64) {
     unsigned ux = bswap32(ctou32(ip  )),\
              vx = bswap32(ctou32(ip+3));
     
@@ -337,33 +367,8 @@ unsigned turbob64enc(unsigned char *in, unsigned inlen, unsigned char *out) {
     unsigned u          = bswap32(ctou32(ip)); 
              u          = EU32(u); 
              ctou32(op) = u;
-  } 
-  REST(); 
+  }
+  ETAIL(); 
   return outlen;
 }
 
-//----------------------- small lut encoding ---------------------------------------
-#define LI32(_i_) { \
-  unsigned _u = bswap32(ctou32(ip+_i_*6    ));\
-  unsigned _v = bswap32(ctou32(ip+_i_*6 + 3)); \
-  _u = LU32(_u);\
-  _v = LU32(_v); \
-  ctou32(op+_i_*8    ) = _u;\
-  ctou32(op+_i_*8 + 4) = _v;\
-}
-                              
-unsigned turbob64encs(unsigned char *in, unsigned inlen, unsigned char *out) {
-  unsigned char lut1[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", *ip, *op;
-  unsigned      outlen = TURBOB64LEN(inlen);
-  
-  for(ip = in,op = out; op < out+(outlen&~(64-1)); op += 64, ip += 48) { // unrolling 48 bytes
-    LI32(0); LI32(1); LI32(2); LI32(3); LI32(4); LI32(5); LI32(6); LI32(7);         PREFETCH(ip,256, 0); 
-  }
-  for(; op < out+(outlen&~(4-1)); op += 4, ip += 3) { 
-    unsigned u          = bswap32(ctou32(ip)); 
-             u          = LU32(u); 
-             ctou32(op) = u; 
-  } 
-  REST();
-  return outlen;
-}

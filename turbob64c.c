@@ -340,7 +340,7 @@ static const unsigned short lut2[1<<12] = {
 0x512f,0x522f,0x532f,0x542f,0x552f,0x562f,0x572f,0x582f,0x592f,0x5a2f,0x612f,0x622f,0x632f,0x642f,0x652f,0x662f,
 0x672f,0x682f,0x692f,0x6a2f,0x6b2f,0x6c2f,0x6d2f,0x6e2f,0x6f2f,0x702f,0x712f,0x722f,0x732f,0x742f,0x752f,0x762f,
 0x772f,0x782f,0x792f,0x7a2f,0x302f,0x312f,0x322f,0x332f,0x342f,0x352f,0x362f,0x372f,0x382f,0x392f,0x2b2f,0x2f2f };
-
+ 
 #define EU32(_u_) (lut2[(_u_ >>  8) & 0xfff] << 16 |\
                    lut2[ _u_ >> 20])
                              
@@ -354,14 +354,14 @@ unsigned turbob64enc(unsigned char *in, unsigned inlen, unsigned char *out) {
          unsigned char *ip = in, *op = out;
          unsigned      outlen = (inlen/3)*4;
   
-  if(outlen >= 64) {
+  /*if(outlen >= 64) {
     unsigned ux = bswap32(ctou32(ip  )),
              vx = bswap32(ctou32(ip+3));
     
     for(; op < out+(outlen-64); op += 64, ip += 48) { // unrolling 48 bytes
       EI32(0); EI32(1); EI32(2); EI32(3); EI32(4); EI32(5); EI32(6); EI32(7);      PREFETCH(ip,256, 0);
     }
-  }
+  }*/
   for(; op != out+(outlen&~(4-1)); op += 4, ip+= 3) { 
     unsigned u          = bswap32(ctou32(ip)); 
              ctou32(op) = LU32(u);

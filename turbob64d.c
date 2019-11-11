@@ -182,13 +182,13 @@ unsigned turbob64dec(unsigned char *in, unsigned inlen, unsigned char *out) {
   
   if(inlen >= 64) { // 8x loop unrolling: decode 64->48 bytes
     unsigned ux = ctou32(ip), vx = ctou32(ip+4);
-    for(; ip != in+(inlen&~(64-1))-64; ip+=64, op += 48) {  
+    for(; ip < in+(inlen-64); ip+=64, op += 48) {  
       DI32(0); DI32(1); DI32(2); DI32(3); DI32(4); DI32(5); DI32(6); DI32(7);     PREFETCH(ip,512, 0);  
     }
   }
   for(; ip < in+inlen; ip+=4, op += 3) { // decode the rest
     unsigned u = ctou32(ip); 
-    ctou32(op) = DU32(u); 
+    ctou32(op) = LU32(u); 
   }
   return inlen;
 }

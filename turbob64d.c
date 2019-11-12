@@ -75,13 +75,14 @@ static const unsigned char lut[] = {
   ctou32(op+ _i_*6+3) = _v;\
 }
 
-unsigned turbob64decs(unsigned char *in, unsigned inlen, unsigned char *out) { 
-  unsigned char *ip,*op;
+unsigned turbob64decs(unsigned char *in, unsigned inlen, unsigned char *out) {
+  unsigned char *ip, *op;
+  inlen &= ~(4-1);
   
-  for(ip = in,op = out; ip != in+(inlen&~(64-1)); ip+=64, op += 48) { // 8x loop unrolling: decode 32->24 bytes
-    LI32(0); LI32(1); LI32(2); LI32(3); LI32(4); LI32(5); LI32(6); LI32(7);                             PREFETCH(ip,384, 0); 
+  for(ip = in,op = out; ip != in+(inlen&~(64-1)); ip += 64, op += 48) { 		// 8x loop unrolling: decode 64->48 bytes
+    LI32(0); LI32(1); LI32(2); LI32(3); LI32(4); LI32(5); LI32(6); LI32(7);     PREFETCH(ip,384, 0); 
   }
-  for(; ip < in+inlen; ip+=4, op += 3) { //decode rest
+  for(; ip != in+inlen; ip+=4, op += 3) { 							 			//decode rest 4->3 bytes
     unsigned u = ctou32(ip);  
     ctou32(op) = LU32(u); 
   }
@@ -179,17 +180,19 @@ static const unsigned lut3[] = {
 
 unsigned turbob64dec(unsigned char *in, unsigned inlen, unsigned char *out) {
   unsigned char *ip = in, *op = out;
+  inlen &= ~(4-1);
   
-  if(inlen >= 64) { // 8x loop unrolling: decode 64->48 bytes
-    unsigned ux = ctou32(ip), vx = ctou32(ip+4);
-    for(; ip < in+(inlen-64); ip+=64, op += 48) {  
-      DI32(0); DI32(1); DI32(2); DI32(3); DI32(4); DI32(5); DI32(6); DI32(7);     PREFETCH(ip,512, 0);  
+  if(inlen >= 64+4) { 															// 8x loop unrolling: decode 64->48 bytes
+    unsigned ux = ctou32(ip), 
+	         vx = ctou32(ip+4);
+	
+    for(; ip < in+(inlen-(64+4)); ip += 64, op += 48) {
+      DI32(0); DI32(1); DI32(2); DI32(3); DI32(4); DI32(5); DI32(6); DI32(7);   PREFETCH(ip,512, 0);  
     }
   }
-  for(; ip < in+inlen; ip+=4, op += 3) { // decode the rest
+  for(; ip != in+inlen; ip += 4, op += 3) { 										// decode the rest 4->3
     unsigned u = ctou32(ip); 
     ctou32(op) = LU32(u); 
   }
   return inlen;
 }
-  

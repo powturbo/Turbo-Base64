@@ -354,14 +354,14 @@ unsigned turbob64enc(unsigned char *in, unsigned inlen, unsigned char *out) {
          unsigned char *ip = in, *op = out;
          unsigned      outlen = (inlen/3)*4;
   
-  /*if(outlen >= 64) {
+  if(outlen >= 64) {
     unsigned ux = bswap32(ctou32(ip  )),
              vx = bswap32(ctou32(ip+3));
     
     for(; op < out+(outlen-64); op += 64, ip += 48) { // unrolling 48 bytes
       EI32(0); EI32(1); EI32(2); EI32(3); EI32(4); EI32(5); EI32(6); EI32(7);      PREFETCH(ip,256, 0);
     }
-  }*/
+  }
   for(; op != out+(outlen&~(4-1)); op += 4, ip+= 3) { 
     unsigned u          = bswap32(ctou32(ip)); 
              ctou32(op) = LU32(u);

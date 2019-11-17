@@ -22,9 +22,9 @@ TurboBase64: Turbo Base64 Encoding [![Build Status](https://travis-ci.org/powtur
 ###### Benchmark Intel CPU: Skylake i7-6700 3.4GHz gcc 9.2
 |C Size|ratio%|C MB/s|D MB/s|Name|Description 2019.11|
 |--------:|-----:|--------:|--------:|----------------|----------------|
-|42603868|133.3|**3894**|**3157**|[**TurboB64**](https://github.com/powturbo/TurboBase64)|**TurboBase64 scalar**|
+|42603868|133.3|**3910**|**3391**|[**TurboB64**](https://github.com/powturbo/TurboBase64)|**TurboBase64 scalar**|
 |42603868|133.3|**5533**|2822|[base64_sse41](https://github.com/aklomp/base64)|Base64 SIMD sse41|
-|42603868|133.3|1899|2120|[TurboB64s](https://github.com/powturbo/TurboBase64)|**TurboBase64 scalar**|
+|42603868|133.3|1904|2179|[TurboB64s](https://github.com/powturbo/TurboBase64)|**TurboBase64 scalar**|
 |42603868|133.3|1262|1375|[fb64chromium](https://github.com/lemire/fastbase64)|Google Chromium base64|
 |42603868|133.3|1674|1250|[fbase64_plain](https://github.com/aklomp/base64)|Base64 plain|
 |42603868|133.3|1675|1167|[fb64scalar](https://github.com/lemire/fastbase64)|Scalar FastBase64|
@@ -35,7 +35,7 @@ TurboBase64: Turbo Base64 Encoding [![Build Status](https://travis-ci.org/powtur
 ###### Benchmark ARM: ARMv8 A73-ODROID-N2 1.8GHz
 |C Size|ratio%|C MB/s|D MB/s|Name|Description 2019.11|
 |--------:|-----:|--------:|--------:|----------------|----------------|
-|42603868|133.3|**1286**|**734**|[**TurboB64**](https://github.com/powturbo/TurboBase64)|**TurboBase64 scalar**|
+|42603868|133.3|**1279**|**831**|[**TurboB64**](https://github.com/powturbo/TurboBase64)|**TurboBase64 scalar**|
 |42603868|133.3|702|639|[TurboB64s](https://github.com/powturbo/TurboBase64)|**TurboBase64 scalar**|
 |42603868|133.3|566|615|[fastbase neon](https://github.com/lemire/fastbase64)|FastBase64 SIMD Neon|
 |42603868|133.3|565|460|[fb64chromium](https://github.com/lemire/fastbase64)|Google Chromium base64|
@@ -71,5 +71,5 @@ TurboBase64: Turbo Base64 Encoding [![Build Status](https://travis-ci.org/powtur
 - [base64simd](https://github.com/WojciechMula/base64simd)
 - [base64](https://github.com/aklomp/base64)
 
-Last update: 23 Oct 2019
+Last update: 17 Nov 2019
 

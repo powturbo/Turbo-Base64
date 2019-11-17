@@ -364,10 +364,7 @@ unsigned turbob64enc(unsigned char *in, unsigned inlen, unsigned char *out) {
     
     for(; op < out+(outlen-N); op += N, ip += (N/4)*3) { // unrolling 96 bytes
       EI32(0); EI32(1); EI32( 2); EI32( 3); EI32( 4); EI32( 5); EI32( 6); EI32( 7);      
-        #if N == 128
-      EI32(8); EI32(9); EI32(10); EI32(11); EI32(12); EI32(13); EI32(14); EI32(15);      
-        #endif
-      PREFETCH(ip,256, 0);
+      EI32(8); EI32(9); EI32(10); EI32(11); EI32(12); EI32(13); EI32(14); EI32(15);      PREFETCH(ip,256, 0);
     }
   }
   for(; op != out+(outlen&~(4-1)); op += 4, ip+= 3) { 

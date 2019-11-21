@@ -71,5 +71,5 @@ TurboBase64: Turbo Base64 Encoding [![Build Status](https://travis-ci.org/powtur
 - [base64simd](https://github.com/WojciechMula/base64simd)
 - [base64](https://github.com/aklomp/base64)
 
-Last update: 17 Nov 2019
+Last update: 21 Nov 2019
 

@@ -6,7 +6,6 @@ TurboBase64: Turbo Base64 Encoding [![Build Status](https://travis-ci.org/powtur
  * No other scalar base64 library encode or decode faster
  * Encode or decode more than **3 times** faster than other libraries
  * can be faster than other SSE or ARM Neon based base64 libraries
- * Only the non portable AVX2 based libraries are faster
  * More than 4 GB/s, saturates the fastest SSD drives
  * Portable library, both 32 and 64 bits supported
  * Ready and simple to use library, no hassless dependencies
@@ -22,8 +21,9 @@ TurboBase64: Turbo Base64 Encoding [![Build Status](https://travis-ci.org/powtur
 ###### Benchmark Intel CPU: Skylake i7-6700 3.4GHz gcc 9.2
 |C Size|ratio%|C MB/s|D MB/s|Name|Description 2019.11|
 |--------:|-----:|--------:|--------:|----------------|----------------|
-|42603868|133.3|**3910**|**3391**|[**TurboB64**](https://github.com/powturbo/TurboBase64)|**TurboBase64 scalar**|
-|42603868|133.3|**5533**|2822|[base64_sse41](https://github.com/aklomp/base64)|Base64 SIMD sse41 (2017)|
+|42603868|133.3|**7809**|**7815**|[base64_sse](https://github.com/aklomp/base64)|Base64 SIMD AVX2|
+|42603868|133.3|6420|5560|[base64_sse](https://github.com/aklomp/base64)|Base64 SIMD sse41|
+|42603868|133.3|3914|3391|[**TurboB64**](https://github.com/powturbo/TurboBase64)|**TurboBase64 scalar**|
 |42603868|133.3|1904|2179|[TurboB64s](https://github.com/powturbo/TurboBase64)|**TurboBase64 scalar**|
 |42603868|133.3|1262|1375|[fb64chromium](https://github.com/lemire/fastbase64)|Google Chromium base64|
 |42603868|133.3|1674|1250|[fbase64_plain](https://github.com/aklomp/base64)|Base64 plain|

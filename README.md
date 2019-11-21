@@ -21,7 +21,7 @@ TurboBase64: Turbo Base64 Encoding [![Build Status](https://travis-ci.org/powtur
 ###### Benchmark Intel CPU: Skylake i7-6700 3.4GHz gcc 9.2
 |C Size|ratio%|C MB/s|D MB/s|Name|Description 2019.11|
 |--------:|-----:|--------:|--------:|----------------|----------------|
-|42603868|133.3|**7809**|**7815**|[base64_sse](https://github.com/aklomp/base64)|Base64 SIMD AVX2|
+|42603868|133.3|**7809**|**7815**|[base64_sse](https://github.com/aklomp/base64)|Base64 avx2|
 |42603868|133.3|6420|5560|[base64_sse](https://github.com/aklomp/base64)|Base64 SIMD sse41|
 |42603868|133.3|3914|3391|[**TurboB64**](https://github.com/powturbo/TurboBase64)|**TurboBase64 scalar**|
 |42603868|133.3|1904|2179|[TurboB64s](https://github.com/powturbo/TurboBase64)|**TurboBase64 scalar**|

@@ -30,13 +30,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     - twitter  : https://twitter.com/powturbo
     - email    : powturbo [_AT_] gmail [_DOT_] com
 **/
-// Turbase64: Benchmark app
+// Turbase64: TB64app.c - Benchmark app
 
 #include <string.h> 
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
-//#include "tb64test.c"
 
 #ifdef __APPLE__
 #include <sys/malloc.h>
@@ -107,7 +106,7 @@ void usage(char *pgm) {
   exit(0);
 } 
 
-int main(int argc, char* argv[]) {  							//testmain(); exit(0);
+int main(int argc, char* argv[]) {  							
   unsigned cmp=1, b = 1 << 30, esize=4, lz=0, fno,id=0;
   char     *scmd = NULL;
   tm_Rep  = 15;  

@@ -14,10 +14,15 @@ script:
 
 matrix:
   include:
-    - name: Linux arm
+    - name: Linux arm gcc
       os: linux
       arch: arm64
       compiler: gcc
+
+    - name: Linux arm clang
+      os: linux
+      arch: arm64
+      compiler: clang
 
     - name: Windows-MinGW
       os: windows

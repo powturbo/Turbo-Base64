@@ -10,7 +10,7 @@ branches:
 
 script:
   - make
-  - ./turbob64 turbob64c.c
+#  - ./turbob64 turbob64c.c
 
 matrix:
   include:

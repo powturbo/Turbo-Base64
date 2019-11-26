@@ -5,9 +5,9 @@ TurboBase64: Fastest Base64 SIMD/Neon Encoding[![Build Status](https://travis-ci
  * 100% C (C++ headers), as simple as memcpy. OS:Linux amd64, arm64, Power9, MacOs
  * No other base64 library encode or decode faster
  * :sparkles: Scalar can be faster than other SSE or ARM Neon based base64 libraries
- * :new: TurboBase64 SSE faster than other SSE/AVX/AVX2! base64 library
- * :new: Fastest **AVX2** implementation
- * :new: Fastest **ARM Neon** base64
+ * :new: (2019.11) TurboBase64 SSE faster than other SSE/AVX/AVX2! base64 library
+ * :new: (2019.11) Fastest **AVX2** implementation
+ * :new: (2019.11) Fastest **ARM Neon** base64
  * :+1: Dynamic CPU detection and **JIT scalar/sse/avx/avx2** switching
  * Base64 robust error checking
  * Portable library, 32/64 bits, SSE/AVX/AVX2, ARM Neon, Power9
@@ -105,9 +105,9 @@ TurboBase64: Fastest Base64 SIMD/Neon Encoding[![Build Status](https://travis-ci
 - PowerPC ppc64le: gcc (>=8.0)
 
 ###### References:
-- [fastbase](https://github.com/lemire/fastbase64)
+- [fastbase v2019.11](https://github.com/lemire/fastbase64)
+- [base64 v.0.4.0](https://github.com/aklomp/base64)
 - [base64simd](https://github.com/WojciechMula/base64simd)
-- [base64](https://github.com/aklomp/base64)
 
 Last update: 26 Nov 2019
 

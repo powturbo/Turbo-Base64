@@ -46,7 +46,7 @@ TurboBase64: Fastest Base64 SIMD/Neon Encoding[![Build Status](https://travis-ci
 |--------:|-----:|--------:|--------:|----------------|----------------|
 |42603868|133.3|**2026**|**1212**|[**TB64neon**](https://github.com/powturbo/TurboBase64)|**TurboBase64 Neon**|
 |42603868|133.3|1795|989|[b64neon](https://github.com/aklomp/base64)|Base64 Neon|
-|42603868|133.3|**1279**|**801**|[**TurboB64x**](https://github.com/powturbo/TurboBase64)|**TurboBase64 scalar**|
+|42603868|133.3|**1279**|**801**|[**TB64x**](https://github.com/powturbo/TurboBase64)|**TurboBase64 scalar**|
 |42603868|133.3|702|639|[TB64s](https://github.com/powturbo/TurboBase64)|**TurboBase64 scalar**|
 |42603868|133.3|512|615|[fb64neon](https://github.com/lemire/fastbase64)|Fastbase64 SIMD Neon|
 |42603868|133.3|565|460|[Chromium](https://github.com/lemire/fastbase64)|Google Chromium base64|

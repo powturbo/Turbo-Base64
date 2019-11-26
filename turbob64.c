@@ -75,8 +75,11 @@ void bench(unsigned char *in, unsigned n, unsigned char *out, unsigned char *cpy
     case 3:                    TMBENCH("",l=tb64enc(    in, n, out),n); pr(l,n); TMBENCH2("tb64(auto)", tb64dec(out, l, cpy), n);      break;
     case 4:if(cpuini(0)>=33) { TMBENCH("",l=tb64sseenc( in, n, out),n); pr(l,n); TMBENCH2("tb64sse",    tb64ssedec(out, l, cpy), n); } break;
       #if defined(__i386__) || defined(__x86_64__)
-    case 5:if(cpuini(0)>=52) { TMBENCH("",l=tb64avx2enc(in, n, out),n); pr(l,n); TMBENCH2("tb64avx2",   tb64avx2dec(out, l, cpy), n);} break;
+    case 5:if(cpuini(0)>=52) { TMBENCH("",l=tb64avx2enc(in, n, out),n); pr(l,n); TMBENCH2("tb64avx2",   tb64avx2dec(out, l, cpy), n);} else return;
+      #else
+    case 5:return;  
       #endif
+      break;
     case ID_MEMCPY:            TMBENCH( "", memcpy(out,in,n) ,n);       pr(n,n); TMBENCH2("memcpy",     memcpy( cpy,out,n) ,n);        break;
 	default: return;
   }
@@ -152,7 +155,7 @@ int main(int argc, char* argv[]) {  							//testmain(); exit(0);
       tb64ini(0); 
       printf("detected simd=%s\n\n", cpustr(cpuini(0))); 
 
-      printf("  E MB/s     D MB/s  function (size=%d )\n", esize);  
+      printf("  E MB/s    size     ratio    D MB/s   function\n");  
 	  char *p = scmd?scmd:"1-10"; 
 	  do { 
         unsigned id = strtoul(p, &p, 10),idx = id, i;    

@@ -3,9 +3,6 @@
 CC ?= gcc
 CXX ?= g++
 
-DDEBUG=-DNDEBUG -s
-#DDEBUG=-g
-
 #------- OS/ARCH -------------------
 ARCH=x86_64
 ifneq (,$(filter Windows%,$(OS)))
@@ -41,7 +38,7 @@ ifeq ($(OS),$(filter $(OS),Linux GNU/kFreeBSD GNU OpenBSD FreeBSD DragonFly NetB
 LDFLAGS+=-lrt
 endif
 
-all: turbob64
+all: tb64app
 
 ifneq ($(NSIMD),1)
 MSSE+=-DUSE_SSE
@@ -77,8 +74,8 @@ LIB+=turbob64avx.o turbob64avx2.o
 endif
 endif
 
-turbob64: $(LIB) turbob64.o
-	$(CC) $(LIB) turbob64.o $(LDFLAGS) -o turbob64
+tb64app: $(LIB) tb64app.o
+	$(CC) $(LIB) tb64app.o $(LDFLAGS) -o tb64app
  
 .c.o:
 	$(CC) -O3 $(CFLAGS)  $(MARCH) $< -c -o $@
@@ -88,3 +85,4 @@ clean:
 
 cleanw:
 	del /S *.o
+

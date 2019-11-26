@@ -109,5 +109,8 @@ TurboBase64: Fastest Base64 SIMD/Neon Encoding[![Build Status](https://travis-ci
 - [base64 v.0.4.0](https://github.com/aklomp/base64)
 - [base64simd](https://github.com/WojciechMula/base64simd)
 
+###### * **Base64 publications:**
+  * :green_book:[Faster Base64 Encoding and Decoding Using AVX2 Instructions](https://arxiv.org/abs/1704.00605)
+
 Last update: 26 Nov 2019
 

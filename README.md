@@ -66,7 +66,31 @@ TurboBase64: Fastest Base64 SIMD/Neon Encoding[![Build Status](https://travis-ci
 
 ## Usage: (Benchmark App)
 
-        ./turbob64 file
+        ./tb64app file
+
+## Function usage:
+
+>**static inline unsigned turbob64len(unsigned n)**<br />
+	Base64 output length after encoding
+
+>**unsigned tb64enc(const unsigned char *in, unsigned inlen, unsigned char *out)**<br />
+	Encode binary input 'in' buffer into base64 string 'out'<br />
+	with automatic cpu detection for avx2/sse4.1/scalar<br />
+	**in**          : Input buffer to encode<br />
+	**inlen**       : Length in bytes of input buffer<br />
+	**out**         : Output buffer<br />
+	**return value**: Length of output buffer<br />
+	**Remark**      : byte 'zero' is not written to end of output stream<br />
+    	         	  Caller must add 0 (out[outlen] = 0) for a null terminated string<br />
+
+
+>**unsigned tb64dec(const unsigned char *in, unsigned inlen, unsigned char *out)**<br />
+	Decode base64 input 'in' buffer into binary buffer 'out' <br />
+	**in**          : input buffer to decode<br />
+	**inlen**       : length in bytes of input buffer <br />
+	**out**         : output buffer<br />
+	**return value**: >0 output buffer length<br />
+                       0 Error (invalid base64 input or input length = 0)<br />
 
 ### Environment:
 

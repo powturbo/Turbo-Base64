@@ -30,10 +30,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     - twitter  : https://twitter.com/powturbo
     - email    : powturbo [_AT_] gmail [_DOT_] com
 **/
+// Turbase64: Benchmark app
+
 #include <string.h> 
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+//#include "tb64test.c"
 
 #ifdef __APPLE__
 #include <sys/malloc.h>
@@ -67,9 +70,14 @@ void bench(unsigned char *in, unsigned n, unsigned char *out, unsigned char *cpy
   
   memrcpy(cpy,in,n); 
   switch(id) {
-    case 1:         TMBENCH("",l=turbob64enc( in, n, out),n); pr(l,n); TMBENCH2("turbob64",     turbob64dec( out, l, cpy), n); break;
-    case 2:         TMBENCH("",l=turbob64encs(in, n, out),n); pr(l,n); TMBENCH2("turbob64decs", turbob64decs(out, l, cpy), n); break;
-    case ID_MEMCPY: TMBENCH( "", memcpy(out,in,n) ,n);        pr(n,n); TMBENCH2("memcpy",       memcpy( cpy,out,n) ,n);        break;
+    case 1:                    TMBENCH("",l=tb64senc(   in, n, out),n); pr(l,n); TMBENCH2("tb64s",      tb64sdec(out, l, cpy), n);     break;
+    case 2:                    TMBENCH("",l=tb64xenc(   in, n, out),n); pr(l,n); TMBENCH2("tb64x",      tb64xdec( out, l, cpy), n);    break;
+    case 3:                    TMBENCH("",l=tb64enc(    in, n, out),n); pr(l,n); TMBENCH2("tb64(auto)", tb64dec(out, l, cpy), n);      break;
+    case 4:if(cpuini(0)>=33) { TMBENCH("",l=tb64sseenc( in, n, out),n); pr(l,n); TMBENCH2("tb64sse",    tb64ssedec(out, l, cpy), n); } break;
+      #if defined(__i386__) || defined(__x86_64__)
+    case 5:if(cpuini(0)>=52) { TMBENCH("",l=tb64avx2enc(in, n, out),n); pr(l,n); TMBENCH2("tb64avx2",   tb64avx2dec(out, l, cpy), n);} break;
+      #endif
+    case ID_MEMCPY:            TMBENCH( "", memcpy(out,in,n) ,n);       pr(n,n); TMBENCH2("memcpy",     memcpy( cpy,out,n) ,n);        break;
 	default: return;
   }
   printf("\n");
@@ -77,25 +85,33 @@ void bench(unsigned char *in, unsigned n, unsigned char *out, unsigned char *cpy
 }
 
 void usage(char *pgm) {
-  fprintf(stderr, "\nTurboB64 Copyright (c) 2016-2019 Powturbo %s\n", __DATE__);
+  fprintf(stderr, "\nTurboBase64 Copyright (c) 2016-2019 Powturbo %s\n", __DATE__);
   fprintf(stderr, "Usage: %s [options] [file]\n", pgm);
   fprintf(stderr, " -e#      # = function ids separated by ',' or ranges '#-#' (default='1-%d')\n", ID_MEMCPY);
   fprintf(stderr, " -B#s     # = max. benchmark filesize (default 1GB) ex. -B4G\n");
-  fprintf(stderr, "          s = modifier s:K,M,G=(1000, 1.000.000, 1.000.000.000) s:k,m,h=(1024,1Mb,1Gb). (default m) ex. 64k or 64K\n");
+  fprintf(stderr, "          s = modifier s:B,K,M,G=(1, 1000, 1.000.000, 1.000.000.000) s:k,m,h=(1024,1Mb,1Gb). (default m) ex. 64k or 64K\n");
   fprintf(stderr, "Benchmark:\n");
   fprintf(stderr, " -i#/-j#  # = Minimum  de/compression iterations per run (default=auto)\n");
   fprintf(stderr, " -I#/-J#  # = Number of de/compression runs (default=3)\n");
   fprintf(stderr, " -e#      # = function id\n");
+  fprintf(stderr, " -q#      # = cpuid (33:sse, 50:avx, 52:avx2 default:auto detect). Only for tb64enc/tb64dec)\n");
+  fprintf(stderr, "Ex. turbob64 file\n");
+  fprintf(stderr, "    turbob64 -e3 file\n");
+  fprintf(stderr, "    turbob64 -q33 file\n");
+  fprintf(stderr, "    turbob64 -q33 file -I15 -J15\n");
   exit(0);
 } 
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {  							//testmain(); exit(0);
   unsigned cmp=1, b = 1 << 30, esize=4, lz=0, fno,id=0;
   char     *scmd = NULL;
+  tm_Rep  = 15;  
+  tm_Rep2 = 15;
+
   int      c, digit_optind = 0, this_option_optind = optind ? optind : 1, option_index = 0;
   static struct option long_options[] = { {"blocsize", 	0, 0, 'b'}, {0, 0, 0}  };
   for(;;) {
-    if((c = getopt_long(argc, argv, "B:ce:i:I:j:J:", long_options, &option_index)) == -1) break;
+    if((c = getopt_long(argc, argv, "B:ce:i:I:j:J:q:", long_options, &option_index)) == -1) break;
     switch(c) {
       case  0 : printf("Option %s", long_options[option_index].name); if(optarg) printf (" with arg %s", optarg);  printf ("\n"); break;								
       case 'B': b = argtoi(optarg,1); 	break;
@@ -105,12 +121,12 @@ int main(int argc, char* argv[]) {
       case 'I': if((tm_Rep  = atoi(optarg))<=0) tm_rep =tm_Rep=1; break;
       case 'j': if((tm_rep2 = atoi(optarg))<=0) tm_rep2=tm_Rep2=1; break;
       case 'J': if((tm_Rep2 = atoi(optarg))<=0) tm_rep2=tm_Rep2=1; break;
+	  case 'q': cpuini(atoi(optarg));  break;
       default: 
         usage(argv[0]);
         exit(0); 
     }
   }
-  
   if(argc - optind < 1) { fprintf(stderr, "File not specified\n"); exit(-1); }
   {
     unsigned char *in,*out,*cpy;
@@ -126,12 +142,16 @@ int main(int argc, char* argv[]) {
 	
       if(flen > b) flen = b;
       n = flen; 
-      if(!(in  =        (unsigned char*)malloc(n+1024)))                 { fprintf(stderr, "malloc error\n"); exit(-1); } cpy = in;
-      if(!(out =        (unsigned char*)malloc(turbob64len(flen)+1024))) { fprintf(stderr, "malloc error\n"); exit(-1); } 
-      if(cmp && !(cpy = (unsigned char*)malloc(n+1024)))                 { fprintf(stderr, "malloc error\n"); exit(-1); }
+      if(!(in  =        (unsigned char*)malloc(n+64)))                 { fprintf(stderr, "malloc error\n"); exit(-1); } cpy = in;
+      if(!(out =        (unsigned char*)malloc(turbob64len(flen)+64))) { fprintf(stderr, "malloc error\n"); exit(-1); } 
+      if(cmp && !(cpy = (unsigned char*)malloc(n+64)))                 { fprintf(stderr, "malloc error\n"); exit(-1); }
       n = fread(in, 1, n, fi);											 printf("File='%s' Length=%u\n", inname, n);			
       fclose(fi);
-      if(n <= 0) exit(0); 
+      if(n <= 0) exit(0);
+      tm_init(tm_Rep, tm_Rep2);  
+      tb64ini(0); 
+      printf("detected simd=%s\n\n", cpustr(cpuini(0))); 
+
       printf("  E MB/s     D MB/s  function (size=%d )\n", esize);  
 	  char *p = scmd?scmd:"1-10"; 
 	  do { 

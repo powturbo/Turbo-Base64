@@ -69,7 +69,7 @@ TurboBase64: Fastest Base64 SIMD/Neon Encoding[![Build Status](https://travis-ci
         ./tb64app file
 
 ## Function usage:
-
+<pre>
 >**static inline unsigned turbob64len(unsigned n)**<br />
 	Base64 output length after encoding
 
@@ -91,6 +91,7 @@ TurboBase64: Fastest Base64 SIMD/Neon Encoding[![Build Status](https://travis-ci
 	**out**         : output buffer<br />
 	**return value**: >0 output buffer length<br />
                        0 Error (invalid base64 input or input length = 0)<br />
+</pre>
 
 ### Environment:
 

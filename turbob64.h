@@ -30,23 +30,68 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     - twitter  : https://twitter.com/powturbo
     - email    : powturbo [_AT_] gmail [_DOT_] com
 **/
+#ifndef _TURBOB64_H_
+#define _TURBOB64_H_
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+//---------------------- base64 API functions ----------------------------------
 // Base64 output length after encoding 
-#define TURBOB64LEN(_n_) ((_n_ + 2)/ 3 * 4 )
+#define TURBOB64LEN(_n_) (((_n_ + 2) / 3) * 4)
 static inline unsigned turbob64len(unsigned n) { return TURBOB64LEN(n); }
 
-// Encode input buffer into base64 string 
-unsigned turbob64enc( unsigned char *in, unsigned inlen, unsigned char *out);
-// Decode base64 string into out buffer 
-unsigned turbob64dec( unsigned char *in, unsigned inlen, unsigned char *out);
+// Encode binary input 'in' buffer into base64 string 'out' 
+// with automatic cpu detection for avx2/sse4.1/scalar 
+// in          : Input buffer to encode
+// inlen       : Length in bytes of input buffer
+// out         : Output buffer
+// return value: Length of output buffer
+// Remark      : byte 'zero' is not written to end of output stream
+//               Caller must add 0 (out[outlen] = 0) for a null terminated string
+unsigned tb64enc(const unsigned char *in, unsigned inlen, unsigned char *out);
 
-// Space efficient but slower version
-unsigned turbob64encs(unsigned char *in, unsigned inlen, unsigned char *out);
-unsigned turbob64decs(unsigned char *in, unsigned inlen, unsigned char *out);
+// Decode base64 input 'in' buffer into binary buffer 'out' 
+// in          : input buffer to decode
+// inlen       : length in bytes of input buffer 
+// out         : output buffer
+// return value: >0 output buffer length
+//                0 Error (invalid base64 input or input length = 0)
+unsigned tb64dec(const unsigned char *in, unsigned inlen, unsigned char *out);
+
+//---------------------- base64 Internal functions ------------------------------
+// Space efficient scalar but (slower) version
+unsigned tb64senc(   const unsigned char *in, unsigned inlen, unsigned char *out);
+unsigned tb64sdec(   const unsigned char *in, unsigned inlen, unsigned char *out);
+
+// Fast scalar base64
+unsigned tb64xenc(   const unsigned char *in, unsigned inlen, unsigned char *out);
+unsigned tb64xdec(   const unsigned char *in, unsigned inlen, unsigned char *out);
+
+// ssse3 base64 
+unsigned tb64sseenc( const unsigned char *in, unsigned inlen, unsigned char *out);
+unsigned tb64ssedec( const unsigned char *in, unsigned inlen, unsigned char *out);
+
+// avx base64 
+unsigned tb64avxenc( const unsigned char *in, unsigned inlen, unsigned char *out);
+unsigned tb64avxdec( const unsigned char *in, unsigned inlen, unsigned char *out);
+
+// avx2 base 64
+unsigned tb64avx2enc(const unsigned char *in, unsigned inlen, unsigned char *out);
+unsigned tb64avx2dec(const unsigned char *in, unsigned inlen, unsigned char *out);
+
+void tb64ini(int id);  // detect cpu && set the default run time functions for tb64enc/tb64dec
+ 
+//------- CPU instruction set ----------------------
+// cpuisa  = 0: return current simd set, 
+// cpuisa != 0: set simd set 0:scalar, 20:sse2, 52:avx2
+int   cpuini(int cpuisa); 
+
+// convert simd set to string "sse3", "ssse3", "sse4.1", "avx", "avx2", "neon",... 
+// Ex.: printf("current cpu set=%s\n", cpustr(cpuini(0)) ); 
+char *cpustr(int cpuisa); 
 
 #ifdef __cplusplus
 }
+#endif
 #endif

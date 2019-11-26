@@ -78,8 +78,8 @@ void bench(unsigned char *in, unsigned n, unsigned char *out, unsigned char *cpy
     case 5:if(cpuini(0)>=50) { TMBENCH("",l=tb64avxenc( in, n, out),n); pr(l,n); TMBENCH2("tb64avx",    tb64avxdec( out, l, cpy), n);} else return;
     case 6:if(cpuini(0)>=52) { TMBENCH("",l=tb64avx2enc(in, n, out),n); pr(l,n); TMBENCH2("tb64avx2",   tb64avx2dec(out, l, cpy), n);} else return;
       #else
-    case 4:return;
-    case 5:return;  
+    case 5:
+    case 6:return;  
       #endif
       break;
     case ID_MEMCPY:            TMBENCH( "", memcpy(out,in,n) ,n);       pr(n,n); TMBENCH2("memcpy",     memcpy( cpy,out,n) ,n);        break;

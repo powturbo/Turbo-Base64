@@ -25,14 +25,14 @@ TurboBase64: Fastest Base64 SIMD/Neon Encoding[![Build Status](https://travis-ci
 ###### Benchmark Intel CPU: Skylake i7-6700 3.4GHz gcc 9.2
 |C Size|ratio%|C MB/s|D MB/s|Name|Description 2019.12|
 |--------:|-----:|--------:|--------:|----------------|----------------|
-|42603868|133.3|**8435**|**9011**|[TB64avx2](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx2**|
-|42603868|133.3|**8057**|**8564**|[TB64avx](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx**|
-|42603868|133.3|**7943**|**8017**|[TB64sse](https://github.com/powturbo/TurboBase64)|**Turbo Base64 sse**|
+|42603868|133.3|**8435**|**9011**|[**TB64avx2**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx2**|
+|42603868|133.3|**8057**|**8564**|[**TB64avx**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx**|
+|42603868|133.3|**7943**|**8017**|[**TB64sse**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 sse**|
 |42603868|133.3|7795|7860|[fb64avx2](https://github.com/lemire/fastbase64)|Fastbase64 avx2|
 |42603868|133.3|7809|7815|[b64avx2](https://github.com/aklomp/base64)|Base64 avx2|
 |42603868|133.3|7161|6510|[b64avx](https://github.com/aklomp/base64)|Base64 avx|
 |42603868|133.3|6420|5560|[b64sse](https://github.com/aklomp/base64)|Base64 sse41|
-|42603868|133.3|**3925**|**3143**|[TB64x](https://github.com/powturbo/TurboBase64)|**Turbo Base64 scalar**|
+|42603868|133.3|**3925**|**3143**|[**TB64x**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 scalar**|
 |42603868|133.3|1872|2490|[b64plain](https://github.com/aklomp/base64)|Base64 plain|
 |42603868|133.3|1907|2179|[TB64s](https://github.com/powturbo/TurboBase64)|**Turbo Base64 scalar**|
 |42603868|133.3|1262|1375|[chromium](https://github.com/lemire/fastbase64)|Google Chromium base64|
@@ -55,7 +55,7 @@ TurboBase64: Fastest Base64 SIMD/Neon Encoding[![Build Status](https://travis-ci
 |43269553|135.4|314|91|[Linux](https://github.com/lemire/fastbase64)|Linux base64|
 |31952900|100.0|**4050**|**4105**|**memcpy**|
 
-(**bold** = pareto)  MB=1.000.000
+(**bold** = pareto in category)  MB=1.000.000
 
 
 <p>

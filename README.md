@@ -1,4 +1,4 @@
-TurboBase64: Fastest Base64 SIMD/Neon Encoding[![Build Status](https://travis-ci.org/powturbo/TurboBase64.svg?branch=master)](https://travis-ci.org/powturbo/TurboBase64)
+Turbo Base64: Fastest Base64 SIMD/Neon Encoding[![Build Status](https://travis-ci.org/powturbo/TurboBase64.svg?branch=master)](https://travis-ci.org/powturbo/TurboBase64)
 ===================================
 
 ###### **Fastest Base64 SIMD** Encoding library
@@ -62,7 +62,7 @@ TurboBase64: Fastest Base64 SIMD/Neon Encoding[![Build Status](https://travis-ci
 
 <p>
 
-## Compile: (Download or clone TurboBase64)
+## Compile: (Download or clone Turbo Base64)
         git clone git://github.com/powturbo/TurboBase64.git
         make
 

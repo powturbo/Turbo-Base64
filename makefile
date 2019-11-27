@@ -35,7 +35,7 @@ else
   CFLAGS+=-march=armv8-a
 endif
   MSSE=-march=armv8-a
-ifeq ($(ARCH),$(filter $(ARCH),x86_64 ppc64le))
+else ifeq ($(ARCH),$(filter $(ARCH),x86_64 ppc64le))
   CFLAGS=-march=native
   MSSE=-mssse3
 endif

@@ -258,8 +258,8 @@ unsigned TEMPLATE2(FUNPREF, enc)(const unsigned char* in, unsigned inlen, unsign
 
 //-------------------------------------------------------------------------------------------------------------------
 #if !defined(__AVX__) 
-  #if defined(__ARM_NEON) || defined(__SSE__) //include only 1 time
 static int _cpuisa;
+  #if defined(__ARM_NEON) || defined(__SSE__) //include only 1 time
 //--------------------- CPU detection -------------------------------------------
   #if defined(__i386__) || defined(__x86_64__)
     #if _MSC_VER >=1300

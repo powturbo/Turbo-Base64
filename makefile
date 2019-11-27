@@ -14,6 +14,8 @@ ifneq (,$(filter Windows%,$(OS)))
 else
   OS := $(shell uname -s)
   ARCH := $(shell uname -m)
+echo 'ARCH'
+echo $(ARCH)
 ifneq (,$(findstring aarch64,$(CC)))
   ARCH = aarch64
 else ifneq (,$(findstring powerpc64le,$(CC)))
@@ -37,6 +39,7 @@ else
   CFLAGS=-march=native
   MSSE=-mssse3
 endif
+
 
 ifeq ($(OS),$(filter $(OS),Linux GNU/kFreeBSD GNU OpenBSD FreeBSD DragonFly NetBSD MSYS_NT Haiku))
 LDFLAGS+=-lrt

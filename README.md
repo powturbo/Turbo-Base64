@@ -57,7 +57,7 @@ Turbo Base64: Fastest Base64 SIMD/Neon Encoding[![Build Status](https://travis-c
 |43269553|135.4|314|91|[Linux](https://github.com/lemire/fastbase64)|Linux base64|
 |31952900|100.0|4050|4105|memcpy|raw data|
 
-(**bold** = pareto in category)  MB=1.000.000
+(**bold** = pareto in category)  MB=1.000.000<br />
 (E/D) : Encode/Decode
 
 <p>

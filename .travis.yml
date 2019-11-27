@@ -45,7 +45,7 @@ matrix:
       os: linux
       arch: aarch64
       before_install:
-        - sudo add-apt-repository -y ppa:adrozdoff/llvm-xenial
+        - sudo add-apt-repository -y 'deb http://apt.llvm.org/ trusty main'
         - sudo apt-get -y update
         - sudo apt-get -y install clang-8
 

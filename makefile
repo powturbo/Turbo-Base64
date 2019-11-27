@@ -65,9 +65,9 @@ turbob64avx2.o: turbob64avx2.c
 	$(CC) -O3 -march=haswell -fstrict-aliasing -falign-loops $< -c -o $@ 
 
 LIB=turbob64c.o turbob64d.o 
-ifeq ($(ARCH),$(filter $(ARCH),x86_64 aarch64 ppc64le))
+#ifeq ($(ARCH),$(filter $(ARCH),x86_64 aarch64 ppc64le))
 LIB+=turbob64sse.o
-endif
+#endif
 ifeq ($(ARCH),x86_64)
 LIB+=turbob64avx.o turbob64avx2.o
 endif

@@ -17,7 +17,7 @@ branches:
 script:
 # cd src
   - make
-#  - ./tb64app turbob64c.c
+  - ./tb64app turbob64c.c
 
 matrix:
   include:
@@ -40,14 +40,14 @@ matrix:
         - sudo apt-get -y update
         - sudo apt-get -y install gcc-9
 
-    - name: Linux-aarch64-clang-8
-      env: CC=clang-8
-      os: linux
-      arch: aarch64
-      before_install:
-        - sudo add-apt-repository -y 'deb http://apt.llvm.org/ trusty main'
-        - sudo apt-get -y update
-        - sudo apt-get -y install clang-8
+#    - name: Linux-aarch64-clang-8
+#      env: CC=clang-8
+#      os: linux
+#      arch: aarch64
+#      before_install:
+#        - sudo add-apt-repository -y 'deb http://apt.llvm.org/ trusty main'
+#        - sudo apt-get -y update
+#        - sudo apt-get -y install clang-8
 
     - name: Windows-MinGW
       arch: amd64 
@@ -59,10 +59,4 @@ matrix:
     - name: macOS, xcode
       os: osx
 
-#    - name: Linux amd64
-#      os: linux
-#      arch: amd64
-#    - name: Power ppc64le
-#      os: linux-ppc64le
-#      compiler: gcc     
 

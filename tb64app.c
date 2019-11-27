@@ -157,6 +157,7 @@ int main(int argc, char* argv[]) {
       fclose(fi);
       if(n <= 0) exit(0);
       tm_init(tm_Rep, tm_Rep2);  
+
       tb64ini(0); 
       printf("detected simd=%s\n\n", cpustr(cpuini(0))); 
 

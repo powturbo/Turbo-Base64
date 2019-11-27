@@ -148,7 +148,7 @@ static inline double round(double num) { return (num > 0.0) ? floor(num + 0.5) :
 /*# || defined(i386) || defined(_X86_) || defined(__THW_INTEL)*/
   #if defined(__i386__) || defined(__x86_64__) || \
     defined(_M_IX86) || defined(_M_AMD64) || _MSC_VER ||\
-    defined(__powerpc__) ||\
+    defined(__powerpc__) || defined(__s390__) ||\
     defined(__ARM_FEATURE_UNALIGNED) || defined(__aarch64__) || defined(__arm__) ||\
     defined(__ARM_ARCH_4__) || defined(__ARM_ARCH_4T__) || \
     defined(__ARM_ARCH_5__) || defined(__ARM_ARCH_5T__) || defined(__ARM_ARCH_5TE__) || defined(__ARM_ARCH_5TEJ__) || \
@@ -193,7 +193,7 @@ static inline unsigned short     ctou16(void *cp) { unsigned short     x; memcpy
   #ifdef ctou32
 //#define utoc32(_x_,_cp_) ctou32(_cp_) = _x_
   #else
-static inline unsigned           ctou32(unsigned char *cp) { unsigned           x; memcpy(void *)&x, cp, (unsigned int)sizeof(x)); return x; }
+static inline unsigned           ctou32(void *cp) { unsigned           x; memcpy(void *)&x, cp, (unsigned int)sizeof(x)); return x; }
 //static inline               void utoc32(unsigned           x, void *cp ) { memcpy(cp, &x, sizeof(x)); }
   #endif
 

@@ -66,8 +66,9 @@ void pr(unsigned l, unsigned n) { double r = (double)l*100.0/n; if(r>0.1) printf
 #define ID_MEMCPY 7
 void bench(unsigned char *in, unsigned n, unsigned char *out, unsigned char *cpy, int id) { 
   unsigned l;
-  
+    #ifndef _MSC_VER
   memrcpy(cpy,in,n); 
+    #endif
   switch(id) {
     case 1:                    TMBENCH("",l=tb64senc(   in, n, out),n); pr(l,n); TMBENCH2("tb64s",      tb64sdec(out, l, cpy), n);     break;
     case 2:                    TMBENCH("",l=tb64xenc(   in, n, out),n); pr(l,n); TMBENCH2("tb64x",      tb64xdec( out, l, cpy), n);    break;
@@ -133,7 +134,7 @@ int main(int argc, char* argv[]) {
   }
   if(argc - optind < 1) { fprintf(stderr, "File not specified\n"); exit(-1); }
   {
-    unsigned char *in,*out,*cpy;
+    unsigned char *in=NULL,*out=NULL,*cpy=NULL;
     uint64_t totlen=0,tot[3]={0};
     for(fno = optind; fno < argc; fno++) {
       uint64_t flen;
@@ -148,7 +149,7 @@ int main(int argc, char* argv[]) {
       n = flen; 
       if(!(in  =        (unsigned char*)malloc(n+64)))                 { fprintf(stderr, "malloc error\n"); exit(-1); } cpy = in;
       if(!(out =        (unsigned char*)malloc(turbob64len(flen)+64))) { fprintf(stderr, "malloc error\n"); exit(-1); } 
-      if(cmp && !(cpy = (unsigned char*)malloc(n+64)))                 { fprintf(stderr, "malloc error\n"); exit(-1); }
+      if(/*cmp &&*/ !(cpy = (unsigned char*)malloc(n+64)))                 { fprintf(stderr, "malloc error\n"); exit(-1); }
       n = fread(in, 1, n, fi);											 printf("File='%s' Length=%u\n", inname, n);			
       fclose(fi);
       if(n <= 0) exit(0);
@@ -165,6 +166,10 @@ int main(int argc, char* argv[]) {
           bench(in,n,out,cpy,i);    
 	  } while(*p++);
     }
+	if (in) free(in);
+	if (out) free(out);
+	if (cpy) free(cpy);
   }
+
 }
 

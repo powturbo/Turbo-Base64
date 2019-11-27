@@ -158,7 +158,7 @@ unsigned tb64sseenc(const unsigned char* in, unsigned inlen, unsigned char *out)
   return TURBOB64LEN(inlen);
 }
 
-#else //----------------- SSSE3 / SSE4.1 / AVX (derived from the AVX2 functions ) -----------------------------------------------------------------
+#elif defined(__SSSE3__) //----------------- SSSE3 / SSE4.1 / AVX (derived from the AVX2 functions ) -----------------------------------------------------------------
 
 #define DEC_RESHUFFLE(v) {\
   const __m128i merge_ab_and_bc = _mm_maddubs_epi16(v,            _mm_set1_epi32(0x01400140));  /*/dec_reshuffle: https://arxiv.org/abs/1704.00605 P.17*/\
@@ -257,7 +257,8 @@ unsigned TEMPLATE2(FUNPREF, enc)(const unsigned char* in, unsigned inlen, unsign
 #endif
 
 //-------------------------------------------------------------------------------------------------------------------
-#if defined(__ARM_NEON) || defined(__SSE__) && !defined(__AVX__) //include only 1 time
+#if !defined(__AVX__) 
+  #if defined(__ARM_NEON) || defined(__SSE__) //include only 1 time
 static int _cpuisa;
 //--------------------- CPU detection -------------------------------------------
   #if defined(__i386__) || defined(__x86_64__)
@@ -312,7 +313,7 @@ int cpuisa(void) {
       cpuid(c, 7);                                    
       if(c[1] & (1 << 5))   _cpuisa = 52; // AVX2
     }}}}}}}}} 
-	#elif defined(__ppc64le__ )
+	#elif defined(__ppc64le__)
   _cpuisa = 35; // power9 
     #elif defined(__ARM_NEON)
   _cpuisa = 34; // ARM_NEON 
@@ -338,6 +339,7 @@ char *cpustr(int cpuisa) {
   else if(cpuisa >= 10) return "sse";
   else return "none";
 }
+#endif
 
 //---------------------------------------------------------------------------------
 typedef unsigned (*TPFUNC)(const unsigned char *in, unsigned n, unsigned char *out);

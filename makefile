@@ -14,8 +14,8 @@ ifneq (,$(filter Windows%,$(OS)))
 else
   OS := $(shell uname -s)
   ARCH := $(shell uname -m)
-  @echo 'ARCH'
-  @echo $(ARCH)
+$(info ARCH="$(ARCH)")
+
 ifneq (,$(findstring aarch64,$(CC)))
   ARCH = aarch64
 else ifneq (,$(findstring powerpc64le,$(CC)))

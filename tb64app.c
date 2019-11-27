@@ -72,14 +72,17 @@ void bench(unsigned char *in, unsigned n, unsigned char *out, unsigned char *cpy
   switch(id) {
     case 1:                    TMBENCH("",l=tb64senc(   in, n, out),n); pr(l,n); TMBENCH2("tb64s",      tb64sdec(out, l, cpy), n);     break;
     case 2:                    TMBENCH("",l=tb64xenc(   in, n, out),n); pr(l,n); TMBENCH2("tb64x",      tb64xdec( out, l, cpy), n);    break;
+      #if defined(__i386__) || defined(__x86_64__) || defined(__ARM_NEON) || defined(_ARCH_PWR9)
     case 3:                    TMBENCH("",l=tb64enc(    in, n, out),n); pr(l,n); TMBENCH2("tb64(auto)", tb64dec(out, l, cpy), n);      break;
     case 4:if(cpuini(0)>=33) { TMBENCH("",l=tb64sseenc( in, n, out),n); pr(l,n); TMBENCH2("tb64sse",    tb64ssedec(out, l, cpy), n); } break;
+      #else
+    case 3: case 4:return;  
+      #endif
       #if defined(__i386__) || defined(__x86_64__)
     case 5:if(cpuini(0)>=50) { TMBENCH("",l=tb64avxenc( in, n, out),n); pr(l,n); TMBENCH2("tb64avx",    tb64avxdec( out, l, cpy), n); break; } else return;
     case 6:if(cpuini(0)>=52) { TMBENCH("",l=tb64avx2enc(in, n, out),n); pr(l,n); TMBENCH2("tb64avx2",   tb64avx2dec(out, l, cpy), n); break; } else return;
       #else
-    case 5:
-    case 6:return;  
+    case 5: case 6:return;  
       #endif
       break;
     case ID_MEMCPY:            TMBENCH( "", memcpy(out,in,n) ,n);       pr(n,n); TMBENCH2("memcpy",     memcpy( cpy,out,n) ,n);        break;

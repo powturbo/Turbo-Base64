@@ -3,7 +3,7 @@
 CC ?= gcc
 CXX ?= g++
 
-#CC=powerpc64le-linux-gnu-gcc
+CC=powerpc64le-linux-gnu-gcc
 
 #------- OS/ARCH -------------------
 ifneq (,$(filter Windows%,$(OS)))

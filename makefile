@@ -44,13 +44,6 @@ endif
 
 all: tb64app
 
-ifneq ($(NSIMD),1)
-MSSE+=-DUSE_SSE
-ifeq ($(ARCH),x86_64)
-MSSE+=-DUSE_AVX -DUSE_AVX2
-endif
-endif
-
 ifeq ($(FULLCHECK),1)
 DEFS+=-DB64CHECK
 endif

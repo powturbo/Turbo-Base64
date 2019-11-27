@@ -1,5 +1,11 @@
 language: c
 
+arch:
+  - amd64
+  - arm64
+  - ppc64le
+  - s390x
+
 compiler: 
   - gcc
   - clang
@@ -9,22 +15,24 @@ branches:
     - master 
 
 script:
+# cd src
   - make
 #  - ./tb64app turbob64c.c
 
 matrix:
   include:
-    - name: Linux arm gcc
-      os: linux
-      arch: arm64
-      compiler: gcc
+#    - name: Linux arm gcc
+#      os: linux
+#      arch: arm64
+#      compiler: gcc
 
-    - name: Linux arm clang
-      os: linux
-      arch: arm64
-      compiler: clang
+#    - name: Linux arm clang
+#      os: linux
+#      arch: arm64
+#      compiler: clang
 
     - name: Windows-MinGW
+      arch: amd64 
       os: windows
       script: 
         - mingw32-make

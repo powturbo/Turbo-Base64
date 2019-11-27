@@ -6,7 +6,7 @@ TurboBase64: Fastest Base64 SIMD/Neon Encoding[![Build Status](https://travis-ci
  * No other base64 library encode or decode faster
  * :sparkles: **Scalar** can be faster than other SSE or ARM Neon based base64 libraries
  * :new: Turbo Base64 **SSE** faster than other SSE/AVX/AVX2! base64 library
- * :new: Fastest **AVX2** implementation (90% memcpy)
+ * :new: Fastest **AVX2** implementation 
  * :new: Fastest **ARM Neon** base64
  * :+1: Dynamic CPU detection and **JIT scalar/sse/avx/avx2** switching
  * Base64 robust **error checking**
@@ -26,7 +26,6 @@ TurboBase64: Fastest Base64 SIMD/Neon Encoding[![Build Status](https://travis-ci
 ###### Benchmark Intel CPU: Skylake i7-6700 3.4GHz gcc 9.2
 |E Size|ratio%|E MB/s|D MB/s|Name|Description 2019.12|
 |--------:|-----:|--------:|--------:|----------------|----------------|
-|42603868|133.3|10650|10836|memcpy|base64 stream|
 |42603868|133.3|**8435**|**9011**|[**TB64avx2**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx2**|
 |42603868|133.3|**8057**|**8564**|[**TB64avx**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx**|
 |42603868|133.3|**7943**|**8017**|[**TB64sse**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 sse**|
@@ -47,7 +46,6 @@ TurboBase64: Fastest Base64 SIMD/Neon Encoding[![Build Status](https://travis-ci
 ###### Benchmark ARM: ARMv8 A73-ODROID-N2 1.8GHz (clang 6.0)
 |E Size|ratio%|E MB/s|D MB/s|Name|Description 2019.12|
 |--------:|-----:|--------:|--------:|----------------|----------------|
-|42603868|133.3|3037|3078|memcpy|base64 stream|
 |42603868|133.3|**2026**|**1212**|[**TB64neon**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 Neon**|
 |42603868|133.3|1795|989|[b64neon](https://github.com/aklomp/base64)|Base64 Neon|
 |42603868|133.3|**1279**|**801**|[**TB64x**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 scalar**|

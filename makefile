@@ -35,7 +35,7 @@ else
   CFLAGS+=-march=armv8-a
 endif
   MSSE=-march=armv8-a
-else
+else ifeq ($(ARCH),x86_64)
   CFLAGS=-march=native
   MSSE=-mssse3
 endif

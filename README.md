@@ -10,7 +10,7 @@ Turbo Base64: Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/pow
  * :new: Fastest **ARM Neon** base64
  * :+1: Dynamic CPU detection and **JIT scalar/sse/avx/avx2** switching
  * Base64 robust **error checking**
- * Portable library, 32/64 bits, **SSE/AVX/AVX2**, **ARM Neon**, **Power9**
+ * Portable library, 32/64 bits, **SSE/AVX/AVX2**, **ARM Neon**, **Power9 Altivec**
  * Ready and simple to use library, no hassles dependencies
 <p>
 

@@ -229,8 +229,8 @@ static ALWAYS_INLINE __m128i enc_reshuffle(__m128i v) {
 }
 
 unsigned TEMPLATE2(FUNPREF, enc)(const unsigned char* in, unsigned inlen, unsigned char *out) { 
-  const unsigned char *ip; 
-        unsigned char *op;
+  const unsigned char *ip=in; 
+        unsigned char *op=out;
         unsigned      outlen = (inlen/3)*4;
 
   const __m128i shuf    = _mm_set_epi8(10,11,  9, 10,  7,  8,  6,  7,    4,  5,  3,  4,  1,  2,  0,  1);
@@ -258,7 +258,7 @@ unsigned TEMPLATE2(FUNPREF, enc)(const unsigned char* in, unsigned inlen, unsign
 
 //-------------------------------------------------------------------------------------------------------------------
 #if defined(__ARM_NEON) || defined(__SSE__) && !defined(__AVX__) //include only 1 time
-static int _cpuisa;                                  
+static int _cpuisa;
 //--------------------- CPU detection -------------------------------------------
   #if defined(__i386__) || defined(__x86_64__)
     #if _MSC_VER >=1300
@@ -352,19 +352,21 @@ void tb64ini(int id) {
   if(tb64set) return; 
   tb64set++;   
   i = id?id:cpuisa();
-    #ifdef USE_AVX2
+    #if defined(__i386__) || defined(__x86_64__)
+      #ifndef NO_AVX2
   if(i >= 52) {  
     _tb64e = tb64avx2enc; 
     _tb64d = tb64avx2dec;
   } else 
-    #endif
-    #ifdef USE_AVX
+      #endif
+      #ifndef NO_AVX
     if(i >= 50) {  
     _tb64e = tb64avxenc; 
     _tb64d = tb64avxdec;
   } else 
+      #endif
     #endif
-    #ifdef USE_SSE
+    #ifndef NO_SSE
   if(i >= 33) {  
     _tb64e = tb64sseenc; 
     _tb64d = tb64ssedec;

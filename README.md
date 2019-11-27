@@ -21,7 +21,7 @@ TurboBase64: Fastest Base64 SIMD/Neon Encoding[![Build Status](https://travis-ci
 - Single thread
 - Including base64 error checking
 - Realistic and practical (no PURE cache) benchmark with large binary game assets corpus pd3d.tar (32 MB)
-- Unlike other benchmarks, the best of best scalar+simd libraries are benchmarked
+- Unlike other benchmarks, the best of the best scalar+simd libraries are benchmarked
 
 ###### Benchmark Intel CPU: Skylake i7-6700 3.4GHz gcc 9.2
 |E Size|ratio%|E MB/s|D MB/s|Name|Description 2019.12|

@@ -10,7 +10,7 @@ branches:
 
 script:
   - make
-  - ./tb64app turbob64c.c
+#  - ./tb64app turbob64c.c
 
 matrix:
   include:
@@ -28,7 +28,7 @@ matrix:
       os: windows
       script: 
         - mingw32-make
-        - ./tb64app turbob64c.c
+#        - ./tb64app turbob64c.c
 
     - name: macOS, xcode
       os: osx

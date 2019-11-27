@@ -38,7 +38,7 @@ TurboBase64: Fastest Base64 SIMD/Neon Encoding[![Build Status](https://travis-ci
 |42603868|133.3|**3925**|**3143**|[**TB64x**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 scalar**|
 |42603868|133.3|1872|2490|[b64plain](https://github.com/aklomp/base64)|Base64 plain|
 |42603868|133.3|1907|2179|[TB64s](https://github.com/powturbo/TurboBase64)|**Turbo Base64 scalar**|
-|42603868|133.3|1262|1375|[chromium](https://github.com/lemire/fastbase64)|Google Chrome base64|
+|42603868|133.3|1262|1375|[chrome](https://github.com/lemire/fastbase64)|Google Chrome base64|
 |42603868|133.3|1675|1167|[fb64plain](https://github.com/lemire/fastbase64)|FastBase64 plain|
 |42603869|162.8|1122|816|[quicktime](https://github.com/lemire/fastbase64)|Apple Quicktime base64|
 |43269553|135.4| 903|171|[linux](https://github.com/lemire/fastbase64)|Linux base64|
@@ -53,7 +53,7 @@ TurboBase64: Fastest Base64 SIMD/Neon Encoding[![Build Status](https://travis-ci
 |42603868|133.3|**1279**|**801**|[**TB64x**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 scalar**|
 |42603868|133.3|702|639|[TB64s](https://github.com/powturbo/TurboBase64)|**Turbo Base64 scalar**|
 |42603868|133.3|512|615|[fb64neon](https://github.com/lemire/fastbase64)|Fastbase64 SIMD Neon|
-|42603868|133.3|565|460|[Chromium](https://github.com/lemire/fastbase64)|Google Chrome base64|
+|42603868|133.3|565|460|[Chrome](https://github.com/lemire/fastbase64)|Google Chrome base64|
 |42603868|133.3|641|459|[b64plain](https://github.com/aklomp/base64)|Base64 plain|
 |42603868|133.3|506|412|[fb64plain](https://github.com/lemire/fastbase64)|Fastbase64 plain|
 |43269553|135.4|314|91|[Linux](https://github.com/lemire/fastbase64)|Linux base64|

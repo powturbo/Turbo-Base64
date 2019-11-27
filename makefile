@@ -38,7 +38,6 @@ else ifeq ($(ARCH),$(filter $(ARCH),x86_64 ppc64le))
   CFLAGS=-march=native
   MSSE=-mssse3
 endif
-endif
 
 ifeq ($(OS),$(filter $(OS),Linux GNU/kFreeBSD GNU OpenBSD FreeBSD DragonFly NetBSD MSYS_NT Haiku))
 LDFLAGS+=-lrt

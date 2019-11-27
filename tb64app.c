@@ -30,7 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     - twitter  : https://twitter.com/powturbo
     - email    : powturbo [_AT_] gmail [_DOT_] com
 **/
-// Turbase64: TB64app.c - Benchmark app
+// Turbo Base64: TB64app.c - Benchmark app
 
 #include <string.h> 
 #include <stdio.h>

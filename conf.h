@@ -193,7 +193,7 @@ static inline unsigned short     ctou16(void *cp) { unsigned short     x; memcpy
   #ifdef ctou32
 //#define utoc32(_x_,_cp_) ctou32(_cp_) = _x_
   #else
-static inline unsigned           ctou32(void *cp) { unsigned           x; memcpy(void *)&x, cp, (unsigned int)sizeof(x)); return x; }
+static inline unsigned           ctou32(unsigned char *cp) { unsigned           x; memcpy(void *)&x, cp, (unsigned int)sizeof(x)); return x; }
 //static inline               void utoc32(unsigned           x, void *cp ) { memcpy(cp, &x, sizeof(x)); }
   #endif
 

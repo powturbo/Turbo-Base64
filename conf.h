@@ -157,7 +157,7 @@ static inline double round(double num) { return (num > 0.0) ? floor(num + 0.5) :
 #define ctou32(_cp_) (*(unsigned       *)(_cp_))
 #define ctof32(_cp_) (*(float          *)(_cp_))
 
-    #if defined(__i386__) || defined(__x86_64__) || defined(__powerpc__) || || defined(__s390__) || defined(_MSC_VER) 
+    #if defined(__i386__) || defined(__x86_64__) || defined(__powerpc__) || defined(__s390__) || defined(_MSC_VER) 
 #define ctou64(_cp_)       (*(uint64_t *)(_cp_))
 #define ctof64(_cp_)       (*(double   *)(_cp_))
     #elif defined(__ARM_FEATURE_UNALIGNED)

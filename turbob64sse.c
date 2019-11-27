@@ -289,6 +289,7 @@ static inline uint64_t xgetbv (int ctr) {
     #endif
 }
   #endif
+#endif
 
 int cpuisa(void) {
   int c[4] = {0};                               
@@ -339,7 +340,6 @@ char *cpustr(int cpuisa) {
   else if(cpuisa >= 10) return "sse";
   else return "none";
 }
-#endif
 
 //---------------------------------------------------------------------------------
 typedef unsigned (*TPFUNC)(const unsigned char *in, unsigned n, unsigned char *out);
@@ -368,11 +368,13 @@ void tb64ini(int id) {
   } else 
       #endif
     #endif
-    #ifndef NO_SSE
+    #if defined(__i386__) || defined(__x86_64__) || defined(__ARM_NEON) || defined(_ARCH_PWR9)
+      #ifndef NO_SSE
   if(i >= 33) {  
     _tb64e = tb64sseenc; 
     _tb64d = tb64ssedec;
   }
+      #endif
     #endif
 }
 

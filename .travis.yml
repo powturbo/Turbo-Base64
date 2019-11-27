@@ -22,7 +22,7 @@ matrix:
     - name: Linux arm clang
       os: linux
       arch: arm64
-      compiler: clang
+      compiler: clang-6
 
     - name: Windows-MinGW
       os: windows

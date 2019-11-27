@@ -6,11 +6,11 @@ CXX ?= g++
 #CC=powerpc64le-linux-gnu-gcc
 
 #------- OS/ARCH -------------------
-ARCH=x86_64
 ifneq (,$(filter Windows%,$(OS)))
   OS := Windows
   CC=gcc
   CXX=g++
+  ARCH=x86_64
 else
   OS := $(shell uname -s)
   ARCH := $(shell uname -m)

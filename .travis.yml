@@ -4,7 +4,6 @@ arch:
   - amd64
   - arm64
   - s390x
-#  - ppc64le only gcc>=8.0
 
 compiler: 
   - gcc
@@ -16,22 +15,9 @@ branches:
 
 script:
   - make
-  - clang -v
-  - ./tb64app turbob64c.c
 
 matrix:
   include:
-    - name: linux-arm64-clang-6
-      dist: bionic 
-      arch: arm64
-      compiler: clang
-#      script:
-#        - make
-#        - clang -v
-#        - clang -O3 -S -march=armv8-a turbob64sse.c
-#        - cat turbob64sse.s
-#        - ./tb64app turbob64c.c
-
     - name: linux-ppc64le-gcc-9
       env: CC=gcc-9
       os: linux
@@ -46,7 +32,6 @@ matrix:
       os: windows
       script: 
         - mingw32-make
-        - ./tb64app turbob64c.c
 
     - name: macOS, xcode
       os: osx

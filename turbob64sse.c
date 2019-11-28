@@ -368,7 +368,7 @@ void tb64ini(int id) {
   } else 
       #endif
     #endif
-    #if defined(__i386__) || defined(__x86_64__) || defined(__ARM_NEON) || defined(_ARCH_PWR9)
+    #if defined(__i386__) || defined(__x86_64__) || defined(__ARM_NEON) || defined(__powerpc64__)
       #ifndef NO_SSE
   if(i >= 33) {  
     _tb64e = tb64sseenc; 

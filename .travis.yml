@@ -31,7 +31,7 @@ matrix:
 #          update: true
 #          sources: *apt_sources
 #          packages: [*apt_packages, 'clang-6']
-#      env: CC=clang-6
+      env: CC=clang-6
 
     - name: linux-ppc64le-gcc-9
       env: CC=gcc-9

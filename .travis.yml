@@ -49,16 +49,16 @@ matrix:
 #        - sudo apt-get -y update
 #        - sudo apt-get -y install clang-8
 
-    - name: Linux-aarch64-clang-6
-      distr: bionic 
+    - name: Linux-aarch64-clang-7
+#      distr: bionic 
       os: linux
       arch: aarch64
-      addons:
-        apt:
-          update: true
-          sources: *apt_sources
-          packages: [*apt_packages, 'clang-6']
-      env: CC=clang-6
+#      addons:
+#        apt:
+#          update: true
+#          sources: *apt_sources
+#          packages: [*apt_packages, 'clang-6']
+      env: CC=clang-7
 
 
     - name: Windows-MinGW

@@ -24,6 +24,17 @@ script:
 
 matrix:
   include:
+    - name: Linux-Arm64-clang-7
+#      dist: bionic 
+       os: linux
+       arch: aarch64
+#      addons:
+#        apt:
+#          update: true
+#          sources: *apt_sources
+#          packages: [*apt_packages, 'clang-6']
+       env: CC=clang-7
+
     - name: Linux-ppc64le-gcc-8
       env: CC=gcc-8
       os: linux
@@ -33,16 +44,6 @@ matrix:
         - sudo apt-get -y update
         - sudo apt-get -y install gcc-8
 
-    - name: Linux-Arm64-clang-7
-#      dist: bionic 
-#      os: linux
-       arch: aarch64
-#      addons:
-#        apt:
-#          update: true
-#          sources: *apt_sources
-#          packages: [*apt_packages, 'clang-6']
-       env: CC=clang-7
 
     - name: Windows-MinGW
       arch: amd64 

@@ -1,7 +1,6 @@
 language: c
 
-dist:
-  - bionic
+dist: bionic
 
 arch:
   - amd64
@@ -29,15 +28,15 @@ matrix:
       env: CC=gcc-8
       os: linux
       arch: ppc64le
-#      before_install:
-#        - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-#        - sudo apt-get -y update
-#        - sudo apt-get -y install gcc-9
+      before_install:
+        - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+        - sudo apt-get -y update
+        - sudo apt-get -y install gcc-8
 
     - name: Linux-Arm64-clang-7
 #      dist: bionic 
 #      os: linux
-       arch: arm64
+       arch: aarch64
 #      addons:
 #        apt:
 #          update: true

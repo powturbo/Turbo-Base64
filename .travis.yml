@@ -49,10 +49,10 @@ matrix:
 #        - sudo apt-get -y update
 #        - sudo apt-get -y install clang-8
 
-    - name: Linux-aarch64-clang-7
+    - name: Linux-Arm64-clang-7
 #      distr: bionic 
-      os: linux
-      arch: aarch64
+#      os: linux
+#      arch: aarch64
 #      addons:
 #        apt:
 #          update: true

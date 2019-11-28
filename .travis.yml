@@ -34,16 +34,16 @@ matrix:
 #        - sudo apt-get -y update
 #        - sudo apt-get -y install gcc-9
 
-#    - name: Linux-Arm64-clang-7
+    - name: Linux-Arm64-clang-7
 #      dist: bionic 
 #      os: linux
-#      arch: aarch64
+       arch: arm64
 #      addons:
 #        apt:
 #          update: true
 #          sources: *apt_sources
 #          packages: [*apt_packages, 'clang-6']
-#      env: CC=clang-7
+       env: CC=clang-7
 
     - name: Windows-MinGW
       arch: amd64 

@@ -52,7 +52,7 @@ matrix:
     - name: Linux-Arm64-clang-7
 #      distr: bionic 
 #      os: linux
-#      arch: aarch64
+      arch: arm64
 #      addons:
 #        apt:
 #          update: true

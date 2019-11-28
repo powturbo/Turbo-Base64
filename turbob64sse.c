@@ -43,7 +43,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define __SSE__   1
 #define __SSE2__  1
 #define __SSE3__  1
-#define -DNO_WARN_X86_INTRINSICS
+#define NO_WARN_X86_INTRINSICS 1
     #endif
 #define FUNPREF tb64sse
 #include <tmmintrin.h>

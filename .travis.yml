@@ -26,14 +26,14 @@ matrix:
   include:
     - name: Linux-Arm64-clang-7
 #      dist: bionic 
-       os: linux
-       arch: arm64
+      os: linux
+      arch: arm64
 #      addons:
 #        apt:
 #          update: true
 #          sources: *apt_sources
 #          packages: [*apt_packages, 'clang-6']
-       env: CC=clang-7
+      env: CC=clang-7
 
     - name: Linux-ppc64le-gcc-8
       env: CC=gcc-8

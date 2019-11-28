@@ -24,7 +24,7 @@ endif
 
 ifeq ($(ARCH),ppc64le)
   CFLAGS=-mcpu=power9 -mtune=power9
-  MSSE=-D__SSE__ -D__SSE2__ -D__SSE3__ -D__SSSE3__ -DNO_WARN_X86_INTRINSICS
+  MSSE=-D__SSSE3__
 else ifeq ($(ARCH),aarch64)
   CFLAGS+=-march=armv8-a
 ifneq (,$(findstring clang, $(CC)))
@@ -38,7 +38,7 @@ else ifeq ($(ARCH),$(filter $(ARCH),x86_64 ppc64le))
   MSSE=-mssse3
 endif
 
-$(info ARCH="$(ARCH)")
+#$(info ARCH="$(ARCH)")
 
 ifeq ($(OS),$(filter $(OS),Linux GNU/kFreeBSD GNU OpenBSD FreeBSD DragonFly NetBSD MSYS_NT Haiku))
 LDFLAGS+=-lrt

@@ -1,9 +1,9 @@
 language: c
 
 arch:
-  - amd64
-  - arm64
-  - s390x
+#  - amd64
+#  - arm64
+#  - s390x
 #  - ppc64le only gcc>=8.0
 
 compiler: 
@@ -35,6 +35,7 @@ matrix:
       script:
         - make
         - clang -v
+        - clang -S -march=armv8-a turbob64sse.c
         - ./tb64app turbob64c.c
 
     - name: linux-ppc64le-gcc-9

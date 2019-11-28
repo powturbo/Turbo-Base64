@@ -314,7 +314,7 @@ int cpuisa(void) {
       cpuid(c, 7);                                    
       if(c[1] & (1 << 5))   _cpuisa = 52; // AVX2
     }}}}}}}}} 
-	#elif defined(__ppc64le__)
+	#elif defined(_ARCH_PWR9)
   _cpuisa = 35; // power9 
     #elif defined(__ARM_NEON)
   _cpuisa = 34; // ARM_NEON 

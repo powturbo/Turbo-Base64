@@ -15,7 +15,6 @@ branches:
     - master 
 
 script:
-# cd src
   - make
   - ./tb64app turbob64c.c
 
@@ -33,7 +32,7 @@ matrix:
     - name: Linux-Arm64-clang-7
 #      distr: bionic 
 #      os: linux
-      arch: arm64
+      arch: aarch64
 #      addons:
 #        apt:
 #          update: true

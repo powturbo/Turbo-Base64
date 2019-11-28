@@ -36,6 +36,7 @@ matrix:
         - make
         - clang -v
         - clang -S -march=armv8-a turbob64sse.c
+        - cat turbob64sse.s
         - ./tb64app turbob64c.c
 
     - name: linux-ppc64le-gcc-9

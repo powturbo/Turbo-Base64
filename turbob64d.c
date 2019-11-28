@@ -314,7 +314,7 @@ unsigned tb64xdec(const unsigned char *in, unsigned inlen, unsigned char *out) {
     for(; ip < in+(inlen-(N+4)); ip += N, op += (N/4)*3) {
       DI32C(0); DI32(1); DI32( 2); DI32( 3); DI32( 4); DI32( 5); DI32( 6); DI32( 7); 
 	    #if N > 64
-	  DI32(8); DI32(9); DI32(10); DI32(11); DI32(12); DI32(13); DI32(14); DI32(15);
+	  DI32(8);  DI32(9); DI32(10); DI32(11); DI32(12); DI32(13); DI32(14); DI32(15);
 	    #endif
 																					PREFETCH(ip, 256, 0);  
     }

@@ -176,7 +176,7 @@ unsigned tb64sseenc(const unsigned char* in, unsigned inlen, unsigned char *out)
   #ifdef B64CHECK
 #define CHECK1
   #endif
-unsigned TEMPLATE2(FUNPREF, dec)(const unsigned char *in, unsigned inlen, unsigned char *out) { printf("#");
+unsigned TEMPLATE2(FUNPREF, dec)(const unsigned char *in, unsigned inlen, unsigned char *out) {
   const unsigned char *ip=in;
         unsigned char *op=out; 
   const __m128i lut_lo  = _mm_set_epi8( 26, 27, 27, 27, 26, 19, 17, 17,   17, 17, 17, 17, 17, 17, 17, 21),
@@ -228,7 +228,7 @@ static ALWAYS_INLINE __m128i enc_reshuffle(__m128i v) {
   return       _mm_or_si128(va, vb);						
 }
 
-unsigned TEMPLATE2(FUNPREF, enc)(const unsigned char* in, unsigned inlen, unsigned char *out) { printf("$");
+unsigned TEMPLATE2(FUNPREF, enc)(const unsigned char* in, unsigned inlen, unsigned char *out) { 
   const unsigned char *ip=in; 
         unsigned char *op=out;
         unsigned      outlen = (inlen/3)*4;

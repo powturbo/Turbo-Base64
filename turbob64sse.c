@@ -257,39 +257,39 @@ unsigned TEMPLATE2(FUNPREF, enc)(const unsigned char* in, unsigned inlen, unsign
 #endif
 
 //-------------------------------------------------------------------------------------------------------------------
-#if !defined(__AVX__) 
+#if !defined(__AVX__) //include only 1 time
 static int _cpuisa;
-  #if defined(__ARM_NEON) || defined(__SSE__) //include only 1 time
+  #if defined(__ARM_NEON) || defined(__SSE__) || defined(_ARCH_PWR9)
 //--------------------- CPU detection -------------------------------------------
-  #if defined(__i386__) || defined(__x86_64__)
-    #if _MSC_VER >=1300
+    #if defined(__i386__) || defined(__x86_64__)
+      #if _MSC_VER >=1300
 #include <intrin.h>
-    #elif defined (__INTEL_COMPILER)
+      #elif defined (__INTEL_COMPILER)
 #include <x86intrin.h>
-    #endif
+      #endif
 
 static inline void cpuid(int reg[4], int id) {  
-    #if defined (_MSC_VER) //|| defined (__INTEL_COMPILER)       
+      #if defined (_MSC_VER) //|| defined (__INTEL_COMPILER)       
   __cpuidex(reg, id, 0);                   
-    #elif defined(__i386__) || defined(__x86_64__) 
+      #elif defined(__i386__) || defined(__x86_64__) 
   __asm("cpuid" : "=a"(reg[0]),"=b"(reg[1]),"=c"(reg[2]),"=d"(reg[3]) : "a"(id),"c"(0) : );
-    #endif
+      #endif
 }
 
 static inline uint64_t xgetbv (int ctr) {   
-    #if(defined _MSC_VER && (_MSC_FULL_VER >= 160040219) || defined __INTEL_COMPILER)
+      #if(defined _MSC_VER && (_MSC_FULL_VER >= 160040219) || defined __INTEL_COMPILER)
   return _xgetbv(ctr);                                  
-    #elif defined(__i386__) || defined(__x86_64__)
+      #elif defined(__i386__) || defined(__x86_64__)
   unsigned a, d;
   __asm("xgetbv" : "=a"(a),"=d"(d) : "c"(ctr) : );
   return (uint64_t)d << 32 | a;
-    #else  
+      #else  
   unsigned a=0, d=0;
   return (uint64_t)d << 32 | a;
-    #endif
+      #endif
 }
+    #endif
   #endif
-#endif
 
 int cpuisa(void) {
   int c[4] = {0};                               

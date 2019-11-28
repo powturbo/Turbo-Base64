@@ -39,6 +39,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <smmintrin.h>
 #define FUNPREF tb64sse
   #elif defined(__SSSE3__)
+    #ifdef __powerpc64__
+#define __SSE__   1
+#define __SSE2__  1
+#define __SSE3__  1
+#define -DNO_WARN_X86_INTRINSICS
+    #endif
 #define FUNPREF tb64sse
 #include <tmmintrin.h>
   #elif defined(__SSE2__)

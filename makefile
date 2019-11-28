@@ -3,7 +3,7 @@
 CC ?= gcc
 CXX ?= g++
 
-#CC=powerpc64le-linux-gnu-gcc
+CC=powerpc64le-linux-gnu-gcc
 
 #------- OS/ARCH -------------------
 ifneq (,$(filter Windows%,$(OS)))
@@ -14,7 +14,6 @@ ifneq (,$(filter Windows%,$(OS)))
 else
   OS := $(shell uname -s)
   ARCH := $(shell uname -m)
-$(info ARCH="$(ARCH)")
 
 ifneq (,$(findstring aarch64,$(CC)))
   ARCH = aarch64
@@ -38,6 +37,8 @@ else ifeq ($(ARCH),$(filter $(ARCH),x86_64 ppc64le))
   CFLAGS=-march=native
   MSSE=-mssse3
 endif
+
+$(info ARCH="$(ARCH)")
 
 ifeq ($(OS),$(filter $(OS),Linux GNU/kFreeBSD GNU OpenBSD FreeBSD DragonFly NetBSD MSYS_NT Haiku))
 LDFLAGS+=-lrt

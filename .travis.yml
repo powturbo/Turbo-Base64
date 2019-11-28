@@ -1,9 +1,9 @@
 language: c
 
 arch:
-#  - amd64
-#  - arm64
-#  - s390x
+  - amd64
+  - arm64
+  - s390x
 #  - ppc64le only gcc>=8.0
 
 compiler: 

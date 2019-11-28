@@ -2,11 +2,11 @@ language: c
 
 #dist: bionic
 
-arch:
-  - amd64
-  - arm64
-#  - ppc64le
-  - s390x
+#arch:
+#  - amd64
+#  - arm64
+#  - s390x
+#  - ppc64le only gcc>=8.0
 
 compiler: 
   - gcc

@@ -259,7 +259,7 @@ unsigned TEMPLATE2(FUNPREF, enc)(const unsigned char* in, unsigned inlen, unsign
 //-------------------------------------------------------------------------------------------------------------------
 #if !defined(__AVX__) //include only 1 time
 static int _cpuisa;
-  #if defined(__ARM_NEON) || defined(__SSE__) || defined(_ARCH_PWR9)
+  #if defined(__ARM_NEON) || defined(__SSE__) || defined(__powerpc64__)
 //--------------------- CPU detection -------------------------------------------
     #if defined(__i386__) || defined(__x86_64__)
       #if _MSC_VER >=1300
@@ -295,7 +295,7 @@ int cpuisa(void) {
   int c[4] = {0};                               
   if(_cpuisa) return _cpuisa;                                   
   _cpuisa++;      
-    #if defined(__i386__) || defined(__x86_64__)                                 
+    #if defined(__i386__) || defined(__x86_64__)    
   cpuid(c, 0);                                        
   if(c[0]) {              
     cpuid(c, 1);                                       
@@ -313,8 +313,8 @@ int cpuisa(void) {
       if(c[2]& (1 << 25))   _cpuisa = 51; // +AES
       cpuid(c, 7);                                    
       if(c[1] & (1 << 5))   _cpuisa = 52; // AVX2
-    }}}}}}}}} 
-	#elif defined(_ARCH_PWR9)
+    }}}}}}}}}
+	#elif defined(__powerpc64__)
   _cpuisa = 35; // power9 
     #elif defined(__ARM_NEON)
   _cpuisa = 34; // ARM_NEON 

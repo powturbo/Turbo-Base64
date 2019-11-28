@@ -40,6 +40,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define PREFETCH(_ip_,_i_,_rw_) __builtin_prefetch(_ip_+(_i_),_rw_)
   #endif
 
+  #if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+#define BSWAP32(a) a 
+  #else
+#define BSWAP32(a) bswap32(a)
+  #endif  
+
 //--------------------------------------------------------------
 #define LU32(_u_) (lut1[(_u_>> 8) & 0x3f] << 24 |\
                    lut1[(_u_>>14) & 0x3f] << 16 |\
@@ -57,8 +63,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //----------------------- small 64 bytes lut encoding ---------------------------------------
 #define LI32(_i_) { \
-  unsigned _u = bswap32(ctou32(ip+_i_*6    ));\
-  unsigned _v = bswap32(ctou32(ip+_i_*6 + 3));\
+  unsigned _u = BSWAP32(ctou32(ip+_i_*6    ));\
+  unsigned _v = BSWAP32(ctou32(ip+_i_*6 + 3));\
   _u = LU32(_u);\
   _v = LU32(_v);\
   ctou32(op+_i_*8    ) = _u;\
@@ -76,7 +82,7 @@ unsigned tb64senc(const unsigned char *in, unsigned inlen, unsigned char *out) {
     LI32(8); LI32(9); LI32(10); LI32(11); LI32(12); LI32(13); LI32(14); LI32(15);         PREFETCH(ip,256, 0); 
   }
   for(; op != out+(outlen&~(4-1)); op += 4, ip+= 3) { 
-    unsigned u          = bswap32(ctou32(ip)); 
+    unsigned u          = BSWAP32(ctou32(ip)); 
              ctou32(op) = LU32(u);
   }
   ETAIL(); 
@@ -346,8 +352,8 @@ static const unsigned short lut2[1<<12] = {
                    lut2[ _u_ >> 20])
                              
 #define EI32(_i_) {\
-  unsigned _u = bswap32(ux); ux = ctou32(ip+6+_i_*6  );\
-  unsigned _v = bswap32(vx); vx = ctou32(ip+6+_i_*6+3);\
+  unsigned _u = BSWAP32(ux); ux = ctou32(ip+6+_i_*6  );\
+  unsigned _v = BSWAP32(vx); vx = ctou32(ip+6+_i_*6+3);\
   _u = EU32(_u); _v = EU32(_v); \
   ctou32(op+_i_*8) = _u; ctou32(op+_i_*8+4) = _v; \
 }                  
@@ -368,7 +374,7 @@ unsigned tb64xenc(const unsigned char *in, unsigned inlen, unsigned char *out) {
       EI32(8); EI32(9); EI32(10); EI32(11); EI32(12); EI32(13); EI32(14); EI32(15);      PREFETCH(ip,256, 0);
     }
   }
-  for(; op < out+(outlen&~(4-1)); op += 4, ip+=3) { unsigned u = bswap32(ctou32(ip)); ctou32(op) = LU32(u); }
+  for(; op < out+(outlen&~(4-1)); op += 4, ip+=3) { unsigned u = BSWAP32(ctou32(ip)); ctou32(op) = LU32(u); }
   ETAIL(); 
   return TURBOB64LEN(inlen);
 }

@@ -26,12 +26,6 @@ matrix:
       os: linux
       arch: arm64
       compiler: clang
-#      addons:
-#        apt:
-#          update: true
-#          sources: *apt_sources
-#          packages: [*apt_packages, 'clang-7']
-#      env: CC=clang
       script:
         - make
         - clang -v

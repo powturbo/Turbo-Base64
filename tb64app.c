@@ -85,7 +85,7 @@ void bench(unsigned char *in, unsigned n, unsigned char *out, unsigned char *cpy
     case 5: case 6:return;  
       #endif
       break;
-    case ID_MEMCPY:            TMBENCH( "", memcpy(out,in,n) ,n);       pr(n,n); TMBENCH2("memcpy",     memcpy( cpy,out,n) ,n);        break;
+    case ID_MEMCPY:            TMBENCH( "", memcpy(out,in,n) ,n);       pr(n,n); TMBENCH2("memcpy",     memcpy( cpy,out,n) ,n);       break;
 	default: return;
   }
   printf("\n");

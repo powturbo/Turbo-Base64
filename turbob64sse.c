@@ -104,29 +104,41 @@ static inline uint8x16x4_t vld1q_u8_x4(const uint8_t *lut) {
 	ov.val[2] = vorrq_u8(vshlq_n_u8(iv.val[2], 6),            iv.val[3]    );\
 }
 
+#define B64D1(iv, ov) {\
+    iv = vqtbx4_u8(vqtbl4_u8(vlut1, veorq_u8(iv, cv40)), vlut0, iv);\
+	ov = vorrq_u8(vshlq_n_u8(iv, 2), vshrq_n_u8(iv.val[1], 4));\
+}
+
 unsigned tb64ssedec(const unsigned char *in, unsigned inlen, unsigned char *out) {
+  if(inlen < 256) return tb64xdec(in, inlen, out);
   const unsigned char *ip;
         unsigned char *op; 
-      uint8x16x4_t vlut0 = vld1q_u8_x4( lut),
-                   vlut1 = vld1q_u8_x4(&lut[64]);
+  const uint8x16x4_t vlut0 = vld1q_u8_x4( lut),
+                     vlut1 = vld1q_u8_x4(&lut[64]);
   const uint8x16_t  cv40 = vdupq_n_u8(0x40);
         uint8x16_t    xv = vdupq_n_u8(0);
-		  
-  for(ip = in, op = out; ip != in+(inlen&~(128-1)); ip += 128, op += (128/4)*3) {
+	  
+  for(ip = in, op = out; ip != in+(inlen&~(128-1)); ip += 128, op += (128/4)*3) { PREFETCH(ip,256,0);	
     uint8x16x4_t iv0 = vld4q_u8(ip),
-                 iv1 = vld4q_u8(ip+64);                                   
+                 iv1 = vld4q_u8(ip+64);                                                    
 
 	uint8x16x3_t ov0; B64D(iv0,ov0);
 	CHECK0(xv = vorrq_u8(xv, vorrq_u8(vorrq_u8(iv0.val[0], iv0.val[1]), vorrq_u8(iv0.val[2], iv0.val[3]))));
-	uint8x16x3_t ov1; B64D(iv1,ov1);
+	uint8x16x3_t ov1; B64D(iv1,ov1);                                   
 
 	vst3q_u8(op,    ov0);       
-	vst3q_u8(op+48, ov1);                                                                                                                                                       
+	vst3q_u8(op+48, ov1);                                                                                                                                                                       
 	CHECK1(xv = vorrq_u8(xv, vorrq_u8(vorrq_u8(iv1.val[0], iv1.val[1]), vorrq_u8(iv1.val[2], iv1.val[3]))));
   }
-  if(vaddvq_u8(vshrq_n_u8(xv,7))) return 0;	
-  if(!tb64xdec(ip, inlen&(128-1), op)) return 0;
-  return inlen; 
+  if((inlen&~(128-1)) > 64) {
+    uint8x16x4_t iv = vld4q_u8(ip);
+	uint8x16x3_t ov; B64D(iv,ov);
+	vst3q_u8(op, ov);                                                                                                                          
+	CHECK0(xv = vorrq_u8(xv, vorrq_u8(vorrq_u8(iv.val[0], iv.val[1]), vorrq_u8(iv.val[2], iv.val[3]))));
+	ip += 64; op += (64/4)*3;
+  }
+  if(!(rc=tb64xdec(ip, inlen&(64-1), op)) || vaddvq_u8(vshrq_n_u8(xv,7))) return 0; //decode all
+  return (op-out)+rc; 
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -150,17 +162,24 @@ unsigned tb64sseenc(const unsigned char* in, unsigned inlen, unsigned char *out)
   const uint8x16x4_t vlut = vld1q_u8_x4(lut);
   const uint8x16_t   cv3f = vdupq_n_u8(0x3f);
   
-  for(ip = in, op = out; op != out+(outlen&~(128-1)); op += 128, ip += (128/4)*3) { 	 								
+  for(ip = in, op = out; op != out+(outlen&~(128-1)); op += 128, ip += (128/4)*3) { 								
     const uint8x16x3_t iv0 = vld3q_u8(ip);
-    const uint8x16x3_t iv1 = vld3q_u8(ip+48);
+    const uint8x16x3_t iv1 = vld3q_u8(ip+48);                   
    
     uint8x16x4_t ov0; B64E(iv0, ov0); 
-    uint8x16x4_t ov1; B64E(iv1, ov1);
+    uint8x16x4_t ov1; B64E(iv1, ov1);                                       
 
 	vst4q_u8(op,    ov0);                                                       
-	vst4q_u8(op+64, ov1);                                                       
+	vst4q_u8(op+64, ov1);                          	//PREFETCH(ip,256,0);                                              
   }
-  tb64xenc(ip, outlen&(128-1), op);
+  if((outlen&~(128-1)) > 64) { 
+    const uint8x16x3_t iv = vld3q_u8(ip);
+    uint8x16x4_t ov; B64E(iv, ov); 
+	vst4q_u8(op,ov);                                                       
+    op += 64; 
+	ip += (64/4)*3;
+  } 
+  tb64xenc(ip, outlen&(64-1), op);
   return TURBOB64LEN(inlen);
 }
 
@@ -183,26 +202,34 @@ unsigned tb64sseenc(const unsigned char* in, unsigned inlen, unsigned char *out)
 #define CHECK1
   #endif
 unsigned TEMPLATE2(FUNPREF, dec)(const unsigned char *in, unsigned inlen, unsigned char *out) {
-  const unsigned char *ip=in;
-        unsigned char *op=out; 
-  const __m128i lut_lo  = _mm_set_epi8( 26, 27, 27, 27, 26, 19, 17, 17,   17, 17, 17, 17, 17, 17, 17, 21),
-                lut_hi  = _mm_set_epi8( 16, 16, 16, 16, 16, 16, 16, 16,    8,  4,  8,  4,  2,  1, 16, 16),
-               lut_roll = _mm_set_epi8(  0,  0,  0,  0,  0,  0,  0,  0,  -71,-71,-65,-65,  4, 19, 16,  0),			                             
-                    cpv = _mm_set_epi8( -1, -1, -1, -1, 12, 13, 14,  8,    9, 10,  4,  5,  6,  0,  1,  2), 
-                   cv2f = _mm_set1_epi8(0x2f);
-  __m128i vx = _mm_setzero_si128();
-  
-  if(inlen >= 32+4) {
-	const unsigned char *ie = in+(inlen-(32+4));
-    for(op = out; ip < ie; ip += 32, op += (32/4)*3) {  	
+  const unsigned char *ip = in;
+        unsigned char *op = out; 
+        unsigned rc0 = 0;
+    #ifdef __AVX__
+  #define ND 64
+    #else
+  #define ND 32
+    #endif
+  if(inlen >= ND+4) {
+    const __m128i lut_lo  = _mm_set_epi8( 26, 27, 27, 27, 26, 19, 17, 17,   17, 17, 17, 17, 17, 17, 17, 21),
+                  lut_hi  = _mm_set_epi8( 16, 16, 16, 16, 16, 16, 16, 16,    8,  4,  8,  4,  2,  1, 16, 16),
+                 lut_roll = _mm_set_epi8(  0,  0,  0,  0,  0,  0,  0,  0,  -71,-71,-65,-65,  4, 19, 16,  0),			                             
+                      cpv = _mm_set_epi8( -1, -1, -1, -1, 12, 13, 14,  8,    9, 10,  4,  5,  6,  0,  1,  2), 
+                     cv2f = _mm_set1_epi8(0x2f);
+    __m128i vx = _mm_setzero_si128();
+    for(; ip < in+(inlen-(ND+4)); ip += ND, op += (ND/4)*3) {  	
       __m128i iv0 = _mm_loadu_si128((__m128i *) ip);
       __m128i iv1 = _mm_loadu_si128((__m128i *)(ip+16));				
                 																
       __m128i hi_nibbles0, lo_nibbles0, ov0;    ASCII2BIN(hi_nibbles0, lo_nibbles0, iv0,ov0); DEC_RESHUFFLE(ov0);
       __m128i hi_nibbles1, lo_nibbles1, ov1;    ASCII2BIN(hi_nibbles1, lo_nibbles1, iv1,ov1); DEC_RESHUFFLE(ov1);
 	
-      _mm_storeu_si128((__m128i*) op,     ov0);											         
+  	  _mm_storeu_si128((__m128i*) op,     ov0);											         
       _mm_storeu_si128((__m128i*)(op+12), ov1);												PREFETCH(ip,1024,0);										
+	    #if ND > 32
+      __m128i iv2 = _mm_loadu_si128((__m128i *)(ip+32));
+      __m128i iv3 = _mm_loadu_si128((__m128i *)(ip+48));				
+		#endif
       
         #ifdef CHECK0
 	  hi_nibbles0 = _mm_shuffle_epi8(lut_hi, hi_nibbles0);    lo_nibbles0 = _mm_shuffle_epi8(lut_lo, lo_nibbles0);										
@@ -212,11 +239,31 @@ unsigned TEMPLATE2(FUNPREF, dec)(const unsigned char *in, unsigned inlen, unsign
       hi_nibbles1 = _mm_shuffle_epi8(lut_hi, hi_nibbles1);    lo_nibbles1 = _mm_shuffle_epi8(lut_lo, lo_nibbles1);
       vx = _mm_or_si128(vx, _mm_and_si128(lo_nibbles1, hi_nibbles1));
         #endif
+
+		#if ND > 32
+      {
+      __m128i ov2,ov3; 	      
+      __m128i hi_nibbles2, lo_nibbles2;    ASCII2BIN(hi_nibbles2, lo_nibbles2, iv2,ov2); DEC_RESHUFFLE(ov2);
+      __m128i hi_nibbles3, lo_nibbles3;    ASCII2BIN(hi_nibbles3, lo_nibbles3, iv3,ov3); DEC_RESHUFFLE(ov3);
+	
+  	  _mm_storeu_si128((__m128i*)(op+24), ov2);											         
+      _mm_storeu_si128((__m128i*)(op+36), ov3);																					
+      
+          #ifdef CHECK0
+	  hi_nibbles2 = _mm_shuffle_epi8(lut_hi, hi_nibbles2);    lo_nibbles2 = _mm_shuffle_epi8(lut_lo, lo_nibbles2);										
+      vx = _mm_or_si128(vx, _mm_and_si128(lo_nibbles2, hi_nibbles2));
+          #endif
+          #ifdef CHECK1
+      hi_nibbles3 = _mm_shuffle_epi8(lut_hi, hi_nibbles3);    lo_nibbles3 = _mm_shuffle_epi8(lut_lo, lo_nibbles3);
+      vx = _mm_or_si128(vx, _mm_and_si128(lo_nibbles3, hi_nibbles3));
+          #endif		
+      }
+	    #endif
     }
-    if(_mm_movemask_epi8(_mm_cmpgt_epi8(vx, _mm_setzero_si128()))) return 0;
+    rc0 = _mm_movemask_epi8(_mm_cmpgt_epi8(vx, _mm_setzero_si128()));
   }
   unsigned rc;
-  if(!(rc = tb64xdec(ip, inlen-(ip-in), op))) return 0;
+  if(!(rc = tb64xdec(ip, inlen-(ip-in), op)) || rc0) return 0;
   return (op-out)+rc; 
 }
 
@@ -241,21 +288,39 @@ unsigned TEMPLATE2(FUNPREF, enc)(const unsigned char* in, unsigned inlen, unsign
 
   const __m128i shuf    = _mm_set_epi8(10,11,  9, 10,  7,  8,  6,  7,    4,  5,  3,  4,  1,  2,  0,  1);
   const __m128i offsets = _mm_set_epi8( 0, 0,-16,-19, -4, -4, -4, -4,   -4, -4, -4, -4, -4, -4, 71, 65);
-  
-  if(outlen >= 32+4)
-    for(ip = in, op = out; op <= out+(outlen-(32+4)); op += 32, ip += (32/4)*3) { 	 					PREFETCH(ip,1024,0);			
+    #ifdef __AVX__
+  #define NE 64
+    #else
+  #define NE 32
+    #endif
+  if(outlen >= NE+4)
+    for(ip = in, op = out; op <= out+(outlen-(NE+4)); op += NE, ip += (NE/4)*3) { 	 					PREFETCH(ip,1024,0);			
 	  __m128i v0 = _mm_loadu_si128((__m128i*)ip);      
 	  __m128i v1 = _mm_loadu_si128((__m128i*)(ip+12)); 
-
+        #if NE > 32
+	  __m128i v2 = _mm_loadu_si128((__m128i*)(ip+24));      
+	  __m128i v3 = _mm_loadu_si128((__m128i*)(ip+36)); 
+		#endif
               v0 = _mm_shuffle_epi8(v0, shuf);
               v1 = _mm_shuffle_epi8(v1, shuf);
 	          v0 = enc_reshuffle(v0);
 			  v1 = enc_reshuffle(v1);
               v0 = bin2ascii(v0);
               v1 = bin2ascii(v1);
-			  
       _mm_storeu_si128((__m128i*) op,     v0);											
       _mm_storeu_si128((__m128i*)(op+16), v1);											
+                #if NE > 32
+              v2 = _mm_shuffle_epi8(v2, shuf);
+              v3 = _mm_shuffle_epi8(v3, shuf);
+	          v2 = enc_reshuffle(v2);
+			  v3 = enc_reshuffle(v3);
+              v2 = bin2ascii(v2);
+              v3 = bin2ascii(v3);
+		        #endif			  
+        #if NE > 32
+      _mm_storeu_si128((__m128i*)(op+32), v2);											
+      _mm_storeu_si128((__m128i*)(op+48), v3);											
+		#endif			  
     }
   tb64xenc(ip, inlen-(ip-in), op);
   return TURBOB64LEN(inlen);

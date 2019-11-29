@@ -336,6 +336,6 @@ unsigned tb64xdec(const unsigned char *in, unsigned inlen, unsigned char *out) {
     case 2: u = lut0[ip[0]] | lut1[ip[1]];               *op++ = up[0];                               cu |= u; break; // 2->1 byte
     case 1: u = lut0[ip[0]];                             *op++ = up[0];                               cu |= u; break; // 1->1 byte
   }
-  return (cu > 0xffffff)?0:(op-out);
+  return (cu == -1)?0:(op-out);
 }
 

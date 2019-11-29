@@ -36,6 +36,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+  #if !defined(_WIN32)  
+#include <sys/mman.h>
+#include <sys/resource.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/param.h>
+  #else
+#include <io.h> 
+#include <fcntl.h>
+  #endif
 
 #ifdef __APPLE__
 #include <sys/malloc.h>
@@ -48,8 +58,41 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <getopt.h> 
 #endif
 
+#include "conf.h"
 #include "turbob64.h"
 #include "time_.h"
+
+//------------------------------- malloc ------------------------------------------------
+#define USE_MMAP
+  #if __WORDSIZE == 64
+#define MAP_BITS 30
+  #else
+#define MAP_BITS 28
+  #endif
+
+void *_valloc(size_t size, unsigned a) {
+  if(!size) return NULL;
+    #if defined(_WIN32)
+  return VirtualAlloc(NULL, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    #elif defined(USE_MMAP)
+  void *ptr = mmap(NULL/*0(size_t)a<<MAP_BITS*/, size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+  if(ptr == MAP_FAILED) return NULL;														
+  return ptr;
+    #else
+  return malloc(size); 
+    #endif
+}
+
+void _vfree(void *p, size_t size) {
+  if(!p) return;
+    #if defined(_WIN32)
+  VirtualFree(p, 0, MEM_RELEASE);
+    #elif defined(USE_MMAP)
+  munmap(p, size);
+    #else
+  free(p);
+    #endif
+} 
 
 int memcheck(unsigned char *in, unsigned n, unsigned char *cpy) { 
   int i;
@@ -63,9 +106,9 @@ int memcheck(unsigned char *in, unsigned n, unsigned char *cpy) {
 
 void pr(unsigned l, unsigned n) { double r = (double)l*100.0/n; if(r>0.1) printf("%10u %6.2f%% ", l, r);else printf("%10u %7.3f%%", l, r); fflush(stdout); }
 
-#define ID_MEMCPY 7
+#define ID_MEMCPY 12
 void bench(unsigned char *in, unsigned n, unsigned char *out, unsigned char *cpy, int id) { 
-  unsigned l;
+  unsigned l=0;
     #ifndef _MSC_VER
   memrcpy(cpy,in,n); 
     #endif
@@ -111,7 +154,7 @@ void usage(char *pgm) {
 } 
 
 int main(int argc, char* argv[]) {  							
-  unsigned cmp=1, b = 1 << 30, esize=4, lz=0, fno,id=0;
+  unsigned cmp=1, b = 1 << 30, esize=4, lz=0, fno,id=0,fuzz=3;
   char     *scmd = NULL;
   tm_Rep  = 15;  
   tm_Rep2 = 15;
@@ -119,15 +162,14 @@ int main(int argc, char* argv[]) {
   int      c, digit_optind = 0, this_option_optind = optind ? optind : 1, option_index = 0;
   static struct option long_options[] = { {"blocsize", 	0, 0, 'b'}, {0, 0, 0}  };
   for(;;) {
-    if((c = getopt_long(argc, argv, "B:ce:i:I:j:J:q:", long_options, &option_index)) == -1) break;
+    if((c = getopt_long(argc, argv, "B:ce:f:I:J:q:", long_options, &option_index)) == -1) break;
     switch(c) {
       case  0 : printf("Option %s", long_options[option_index].name); if(optarg) printf (" with arg %s", optarg);  printf ("\n"); break;								
       case 'B': b = argtoi(optarg,1); 	break;
       case 'c': cmp++; 				  	break;
+	  case 'f': fuzz   = atoi(optarg); break;
 	  case 'e': scmd   = optarg; break;
-      case 'i': if((tm_rep  = atoi(optarg))<=0) tm_rep =tm_Rep=1; break;
       case 'I': if((tm_Rep  = atoi(optarg))<=0) tm_rep =tm_Rep=1; break;
-      case 'j': if((tm_rep2 = atoi(optarg))<=0) tm_rep2=tm_Rep2=1; break;
       case 'J': if((tm_Rep2 = atoi(optarg))<=0) tm_rep2=tm_Rep2=1; break;
 	  case 'q': cpuini(atoi(optarg));  break;
       default: 
@@ -135,10 +177,47 @@ int main(int argc, char* argv[]) {
         exit(0); 
     }
   }
-  if(argc - optind < 1) { fprintf(stderr, "File not specified\n"); exit(-1); }
+
+      tm_init(tm_Rep, tm_Rep2);  
+
+      tb64ini(0); 
+      printf("detected simd=%s\n\n", cpustr(cpuini(0))); 
+      printf("  E MB/s    size     ratio    D MB/s   function\n");  
+
+  
+  if(argc - optind < 1) { //fprintf(stderr, "File not specified\n"); exit(-1);     
+    unsigned sizes[] = { 10000, 100000, 1000000, 10000000, 100000000, 0 }, n = 100*1024*1024;
+	int fuzz = 3;
+	unsigned insize   = n;
+    unsigned outsize  = turbob64len(insize)*2;
+	unsigned char *_in;
+    if(!(_in = _valloc(insize,1))) die("malloc error in size=%u\n", insize); //_in[insize]=0;
+  
+    unsigned char *_cpy = _in, *cpy=_cpy, *in = _in, *_out = (unsigned char*)_valloc(outsize,2),*out=_out;  if(!_out) die("malloc error out size=%u\n", outsize);
+    if(cmp && !(_cpy = _valloc(insize,3))) die("malloc error cpy size=%u\n", insize);
+
+	for(int s = 0; sizes[s]; s++) {
+	  n = sizes[s];  if(b!=(1<<30) && n<b) continue;
+      
+	  if(fuzz & 1) { in  = (_in +insize)-n; }  //in[n]=0;
+	  if(fuzz & 2) { out = (_out+outsize)-turbob64len(n); cpy = (_cpy+insize)-n; } 
+      srand(0); for(int i = 0; i < n; i++) in[i] = rand()&0xff;
+	  if(n>=1000000) printf("size=%uMb (Mb=1.000.000)\n", n/1000000);
+      else           printf("size=%uKb (Kb=1.000)\n", n/1000);
+	  char *p = scmd?scmd:"1-10"; 
+	  do { 
+        unsigned id = strtoul(p, &p, 10),idx = id, i;    
+	    while(isspace(*p)) p++; if(*p == '-') { if((idx = strtoul(p+1, &p, 10)) < id) idx = id; if(idx > ID_MEMCPY) idx = ID_MEMCPY; } 
+	    for(i = id; i <= idx; i++)
+          bench(in,n,out,cpy,i);    
+	  } while(*p++);
+    }
+    //_vfree(_in); free(_out); if(cpy) free(cpy);	
+	exit(0);
+  }
+  
   {
-    unsigned char *in=NULL,*out=NULL,*cpy=NULL;
-    uint64_t totlen=0,tot[3]={0};
+    unsigned char *in = NULL, *out = NULL, *cpy = NULL;
     for(fno = optind; fno < argc; fno++) {
       uint64_t flen;
       int n,i;	  
@@ -152,7 +231,7 @@ int main(int argc, char* argv[]) {
       n = flen; 
       if(!(in  =        (unsigned char*)malloc(n+64)))                 { fprintf(stderr, "malloc error\n"); exit(-1); } cpy = in;
       if(!(out =        (unsigned char*)malloc(turbob64len(flen)+64))) { fprintf(stderr, "malloc error\n"); exit(-1); } 
-      if(/*cmp &&*/ !(cpy = (unsigned char*)malloc(n+64)))                 { fprintf(stderr, "malloc error\n"); exit(-1); }
+      if(cmp && !(cpy = (unsigned char*)malloc(n+64)))                 { fprintf(stderr, "malloc error\n"); exit(-1); }
       n = fread(in, 1, n, fi);											 printf("File='%s' Length=%u\n", inname, n);			
       fclose(fi);
       if(n <= 0) exit(0);
@@ -162,7 +241,7 @@ int main(int argc, char* argv[]) {
       printf("detected simd=%s\n\n", cpustr(cpuini(0))); 
 
       printf("  E MB/s    size     ratio    D MB/s   function\n");  
-	  char *p = scmd?scmd:"1-10"; 
+	  char *p = scmd?scmd:"1-12"; 
 	  do { 
         unsigned id = strtoul(p, &p, 10),idx = id, i;    
 	    while(isspace(*p)) p++; if(*p == '-') { if((idx = strtoul(p+1, &p, 10)) < id) idx = id; if(idx > ID_MEMCPY) idx = ID_MEMCPY; } 

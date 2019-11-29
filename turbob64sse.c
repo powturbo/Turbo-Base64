@@ -137,6 +137,7 @@ unsigned tb64ssedec(const unsigned char *in, unsigned inlen, unsigned char *out)
 	CHECK0(xv = vorrq_u8(xv, vorrq_u8(vorrq_u8(iv.val[0], iv.val[1]), vorrq_u8(iv.val[2], iv.val[3]))));
 	ip += 64; op += (64/4)*3;
   }
+  unsigned rc;
   if(!(rc=tb64xdec(ip, inlen&(64-1), op)) || vaddvq_u8(vshrq_n_u8(xv,7))) return 0; //decode all
   return (op-out)+rc; 
 }

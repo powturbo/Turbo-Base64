@@ -43,6 +43,9 @@ endif
 ifeq ($(OS),$(filter $(OS),Linux GNU/kFreeBSD GNU OpenBSD FreeBSD DragonFly NetBSD MSYS_NT Haiku))
 LDFLAGS+=-lrt
 endif
+ifeq ($(STATIC),1)
+LDFLAGS+=-static
+endif
 
 all: tb64app
 
@@ -65,16 +68,13 @@ turbob64avx.o: turbob64sse.c
 turbob64avx2.o: turbob64avx2.c
 	$(CC) -O3 -march=haswell -fstrict-aliasing -falign-loops $< -c -o $@ 
 
-LIB=turbob64c.o turbob64d.o 
-#ifeq ($(ARCH),$(filter $(ARCH),x86_64 aarch64 ppc64le))
-LIB+=turbob64sse.o
-#endif
+LIB=turbob64c.o turbob64d.o turbob64sse.o
 ifeq ($(ARCH),x86_64)
 LIB+=turbob64avx.o turbob64avx2.o
 endif
 
-tb64app: $(LIB) tb64app.o
-	$(CC) $(LIB) tb64app.o $(LDFLAGS) -o tb64app
+tb64app: $(LIB) tb64app.o 
+	$(CC) -O3 $(LIB) tb64app.o $(LDFLAGS) -o tb64app
  
 .c.o:
 	$(CC) -O3 $(CFLAGS)  $(MARCH) $< -c -o $@

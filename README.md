@@ -2,7 +2,7 @@ Turbo Base64: Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/pow
 ===================================
 
 ###### **Fastest Base64 SIMD** Encoding library
- * 100% C (C++ headers), as simple as memcpy. OS:Linux amd64, arm64, Power9, MacOs
+ * 100% C (C++ headers), as simple as memcpy. 
  * No other base64 library encode or decode faster
  * :sparkles: **Scalar** can be faster than other SSE or ARM Neon based base64 libraries
  * :new: Turbo Base64 **SSE** faster than other SSE/AVX/AVX2! base64 library
@@ -12,6 +12,8 @@ Turbo Base64: Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/pow
  * Base64 robust **error checking**
  * Portable library, 32/64 bits, **SSE/AVX/AVX2**, **ARM Neon**, **Power9 Altivec**
  * Ready and simple to use library, no armada of files, no hassles dependencies
+ * OS:Linux amd64, arm64, Power9, MacOs, s390x. Windows:Mingw, visual c++
+ * Big+Little endian
 <p>
 
 ------------------------------------------------------------------------
@@ -27,7 +29,7 @@ Turbo Base64: Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/pow
 |E Size|ratio%|E MB/s|D MB/s|Name|Description 2019.12|
 |--------:|-----:|--------:|--------:|----------------|----------------|
 |42603868|133.3|**8435**|**9011**|[**TB64avx2**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx2**|
-|42603868|133.3|**8057**|**8564**|[**TB64avx**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx**|
+|42603868|133.3|**8153**|**8564**|[**TB64avx**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx**|
 |42603868|133.3|**7943**|**8017**|[**TB64sse**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 sse**|
 |42603868|133.3|7795|7860|[fb64avx2](https://github.com/lemire/fastbase64)|Fastbase64 avx2|
 |42603868|133.3|7809|7815|[b64avx2](https://github.com/aklomp/base64)|Base64 avx2|
@@ -36,12 +38,12 @@ Turbo Base64: Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/pow
 |||||||
 |42603868|133.3|**3925**|**3143**|[**TB64x**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 scalar**|
 |42603868|133.3|1872|2490|[b64plain](https://github.com/aklomp/base64)|Base64 plain|
-|42603868|133.3|1907|2179|[TB64s](https://github.com/powturbo/TurboBase64)|**Turbo Base64 scalar**|
+|42603868|133.3|1908|2179|[TB64s](https://github.com/powturbo/TurboBase64)|**Turbo Base64 scalar**|
 |42603868|133.3|1262|1375|[chrome](https://github.com/lemire/fastbase64)|Google Chrome base64|
 |42603868|133.3|1675|1167|[fb64plain](https://github.com/lemire/fastbase64)|FastBase64 plain|
 |42603869|133.3|1122|816|[quicktime](https://github.com/lemire/fastbase64)|Apple Quicktime base64|
 |43269553|135.4| 903|171|[linux](https://github.com/lemire/fastbase64)|Linux base64|
-|31952900|100.0|14198|14448|memcpy|raw data|
+|31952900|100.0|14432|14464|memcpy|raw data|
 
 ###### Benchmark ARM: ARMv8 A73-ODROID-N2 1.8GHz (clang 6.0)
 |E Size|ratio%|E MB/s|D MB/s|Name|Description 2019.12|

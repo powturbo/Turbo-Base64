@@ -2,13 +2,13 @@ language: c
 
 arch:
   - amd64
-#  - arm64
+  - arm64
   - s390x
 # - ppc64le (gcc > 8.0)
 
 compiler: 
   - gcc
-#  - clang
+  - clang
 
 branches:
   only:
@@ -16,7 +16,6 @@ branches:
 
 script:
   - make
-  - ./tb64app
 
 matrix:
   include:
@@ -36,5 +35,3 @@ matrix:
 
     - name: macOS, xcode
       os: osx
-
-

@@ -29,8 +29,8 @@ Turbo Base64: Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/pow
 |E Size|ratio%|E MB/s|D MB/s|Name|Description 2019.12|
 |--------:|-----:|--------:|--------:|----------------|----------------|
 |42603868|133.3|**8435**|**9011**|[**TB64avx2**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx2**|
-|42603868|133.3|**8153**|**8564**|[**TB64avx**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx**|
-|42603868|133.3|**7943**|**8017**|[**TB64sse**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 sse**|
+|42603868|133.3|**8153**|**8844**|[**TB64avx**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx**|
+|42603868|133.3|**7943**|**8229**|[**TB64sse**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 sse**|
 |42603868|133.3|7795|7860|[fb64avx2](https://github.com/lemire/fastbase64)|Fastbase64 avx2|
 |42603868|133.3|7809|7815|[b64avx2](https://github.com/aklomp/base64)|Base64 avx2|
 |42603868|133.3|7161|6510|[b64avx](https://github.com/aklomp/base64)|Base64 avx|
@@ -117,5 +117,5 @@ Turbo Base64: Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/pow
   * :green_book:[Faster Base64 Encoding and Decoding Using AVX2 Instructions](https://arxiv.org/abs/1704.00605)
   * :green_book:[RFC 4648:The Base16, Base32, and Base64 Data Encodings](https://tools.ietf.org/html/rfc4648)
 
-Last update: 26 Nov 2019
+Last update: 30 Nov 2019
 

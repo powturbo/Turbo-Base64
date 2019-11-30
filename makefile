@@ -38,6 +38,9 @@ else ifeq ($(ARCH),$(filter $(ARCH),x86_64 ppc64le))
   MSSE=-mssse3
 endif
 
+ifeq (,$(findstring clang, $(CC)))
+DEFS+=-falign-loops
+endif
 #$(info ARCH="$(ARCH)")
 
 ifeq ($(OS),$(filter $(OS),Linux GNU/kFreeBSD GNU OpenBSD FreeBSD DragonFly NetBSD MSYS_NT Haiku))
@@ -54,16 +57,16 @@ DEFS+=-DB64CHECK
 endif
 
 turbob64c.o: turbob64c.c
-	$(CC) -O3 $(MARCH) $(DEFS) -fstrict-aliasing -falign-loops $< -c -o $@ 
+	$(CC) -O3 $(MARCH) $(DEFS) -fstrict-aliasing  $< -c -o $@ 
 
 turbob64d.o: turbob64d.c
-	$(CC) -O3 $(MARCH) $(DEFS) -fstrict-aliasing -falign-loops $< -c -o $@ 
+	$(CC) -O3 $(MARCH) $(DEFS) -fstrict-aliasing $< -c -o $@ 
 
 turbob64sse.o: turbob64sse.c
-	$(CC) -O3 $(MSSE) $(DEFS) -fstrict-aliasing -falign-loops $< -c -o $@ 
+	$(CC) -O3 $(MSSE) $(DEFS) -fstrict-aliasing $< -c -o $@ 
 
 turbob64avx.o: turbob64sse.c
-	$(CC) -O3 $(DEFS) -march=corei7-avx -mtune=corei7-avx -mno-aes -fstrict-aliasing -falign-loops $< -c -o turbob64avx.o 
+	$(CC) -O3 $(DEFS) -march=corei7-avx -mtune=corei7-avx -mno-aes -fstrict-aliasing $< -c -o turbob64avx.o 
 
 turbob64avx2.o: turbob64avx2.c
 	$(CC) -O3 -march=haswell -fstrict-aliasing -falign-loops $< -c -o $@ 
@@ -71,6 +74,9 @@ turbob64avx2.o: turbob64avx2.c
 LIB=turbob64c.o turbob64d.o turbob64sse.o
 ifeq ($(ARCH),x86_64)
 LIB+=turbob64avx.o turbob64avx2.o
+endif
+ifeq ($(BASE64),1)
+xtb64make
 endif
 
 tb64app: $(LIB) tb64app.o 

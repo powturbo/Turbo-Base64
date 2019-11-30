@@ -30,9 +30,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     - twitter  : https://twitter.com/powturbo
     - email    : powturbo [_AT_] gmail [_DOT_] com
 **/
-
+// SSE + AVX2 Based on:
 // http://0x80.pl/articles/index.html#base64-algorithm-update
 // https://arxiv.org/abs/1704.00605
+// https://gist.github.com/aqrit/a2ccea48d7cac7e9d4d99f19d4759666 (decode)
 
 #include <immintrin.h>
 #include "conf.h"
@@ -40,43 +41,66 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define PREFETCH(_ip_,_i_,_rw_) __builtin_prefetch(_ip_+(_i_),_rw_)
 
-unsigned tb64avx2dec(const unsigned char *in, unsigned inlen, unsigned char *out) {
-  const unsigned char *ip=in;
-        unsigned char *op=out; 
-		
-  const __m256i lut_lo   = _mm256_set_epi8(26, 27, 27, 27, 26, 19, 17, 17,   17, 17, 17, 17, 17, 17, 17, 21,
-									       26, 27, 27, 27, 26, 19, 17, 17,   17, 17, 17, 17, 17, 17, 17, 21),
-                lut_hi   = _mm256_set_epi8(16, 16, 16, 16, 16, 16, 16, 16,    8,  4,  8,  4,  2,  1, 16, 16,
-										   16, 16, 16, 16, 16, 16, 16, 16,    8,  4,  8,  4,  2,  1, 16, 16),
-                lut_roll = _mm256_set_epi8( 0,  0,  0,  0,  0,  0,  0,  0,  -71,-71,-65,-65,  4, 19, 16,  0,
-											0,  0,  0,  0,  0,  0,  0,  0,  -71,-71,-65,-65,  4, 19, 16,  0),
-                cpv      = _mm256_set_epi8(-1, -1, -1, -1, 12, 13, 14,  8,    9, 10,  4,  5,  6,  0,  1,  2,
-                                           -1, -1, -1, -1, 12, 13, 14,  8,    9, 10,  4,  5,  6,  0,  1,  2), 
-                cv_2f    = _mm256_set1_epi8(0x2f);
-				
-  if(inlen >= 32+4) {
-	const unsigned char *ie = in+(inlen-(32+4));
-    for(op = out; ip < ie; ip += 32, op += 24) {			PREFETCH(ip,1024,0);
-      __m256i          v  = _mm256_loadu_si256((__m256i *)ip);    
-      __m256i  hi_nibbles = _mm256_srli_epi32(v, 4); 				//fromascii: https://arxiv.org/abs/1704.00605 P.15
-               hi_nibbles = _mm256_and_si256(hi_nibbles, cv_2f);
-      const __m256i roll  = _mm256_shuffle_epi8(lut_roll, _mm256_add_epi8(_mm256_cmpeq_epi8(v, cv_2f), hi_nibbles));
+#define DEC_RESHUFFLE(v) {\
+  const __m256i merge_ab_and_bc = _mm256_maddubs_epi16(v,            _mm256_set1_epi32(0x01400140));\
+                              v = _mm256_madd_epi16(merge_ab_and_bc, _mm256_set1_epi32(0x00011000));\
+                              v = _mm256_shuffle_epi8(v, cpv);\
+}
 
-      __m256i lo_nibbles  = _mm256_and_si256(v, cv_2f);
-                        v = _mm256_add_epi8(v, roll);
-																//dec_reshuffle: https://arxiv.org/abs/1704.00605 P.17
-      const __m256i merge_ab_and_bc = _mm256_maddubs_epi16(v,            _mm256_set1_epi32(0x01400140));
-                                v = _mm256_madd_epi16(merge_ab_and_bc, _mm256_set1_epi32(0x00011000));								
-      v = _mm256_shuffle_epi8(v, cpv);
-	
-      _mm_storeu_si128((__m128i*) op,       _mm256_castsi256_si128(v));
-      _mm_storeu_si128((__m128i*)(op + 12), _mm256_extracti128_si256(v, 1));							
-      if(!_mm256_testz_si256(_mm256_shuffle_epi8(lut_lo, lo_nibbles), _mm256_shuffle_epi8(lut_hi, hi_nibbles))) break;    
+#define ASCII2BIN(iv,ov,shifted) { /*Convert ascii input bytes to 6-bit values*/\
+                shifted    = _mm256_srli_epi32(iv, 3);\
+  const __m256i delta_hash = _mm256_avg_epu8(_mm256_shuffle_epi8(delta_asso, iv), shifted);\
+	                    ov = _mm256_add_epi8(_mm256_shuffle_epi8(delta_values, delta_hash), iv);\
+}
+
+#define B64CHECK(iv0,vx) {\
+  const __m256i check_hash = _mm256_avg_epu8( _mm256_shuffle_epi8(check_asso, iv0),          shifted0);\
+  const __m256i        chk = _mm256_adds_epi8(_mm256_shuffle_epi8(check_values, check_hash), iv0);\
+                        vx = _mm256_or_si256(vx, chk);\
+}
+
+#define CHECK0(a) a
+  #ifdef B64CHECK
+#define CHECK1(a) a
+  #else
+#define CHECK1(a)
+  #endif
+
+unsigned tb64avx2dec(const unsigned char *in, unsigned inlen, unsigned char *out) {
+  const unsigned char *ip = in;
+        unsigned char *op = out; 
+		
+  __m256i vx = _mm256_setzero_si256();
+  #define ND 64
+  if(inlen >= ND+4) {
+    const __m256i delta_asso   = _mm256_setr_epi8(0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,	  0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x0f,
+	  									          0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,	  0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x0f);
+    const __m256i delta_values = _mm256_setr_epi8(0x00, 0x00, 0x00, 0x13, 0x04, 0xbf, 0xbf, 0xb9,	  0xb9, 0x00, 0x10, 0xc3, 0xbf, 0xbf, 0xb9, 0xb9,
+										          0x00, 0x00, 0x00, 0x13, 0x04, 0xbf, 0xbf, 0xb9,	  0xb9, 0x00, 0x10, 0xc3, 0xbf, 0xbf, 0xb9, 0xb9);
+    const __m256i check_asso   = _mm256_setr_epi8(0x0d, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,   0x01, 0x01, 0x03, 0x07, 0x0b, 0x0b, 0x0b, 0x0f,
+											      0x0d, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,   0x01, 0x01, 0x03, 0x07, 0x0b, 0x0b, 0x0b, 0x0f);
+    const __m256i check_values = _mm256_setr_epi8(0x80, 0x80, 0x80, 0x80, 0xcf, 0xbf, 0xd5, 0xa6,   0xb5, 0x86, 0xd1, 0x80, 0xb1, 0x80, 0x91, 0x80,
+										          0x80, 0x80, 0x80, 0x80, 0xcf, 0xbf, 0xd5, 0xa6,   0xb5, 0x86, 0xd1, 0x80, 0xb1, 0x80, 0x91, 0x80),
+                           cpv = _mm256_set_epi8( -1, -1, -1, -1, 12, 13, 14,  8,    9, 10,  4,  5,  6,  0,  1,  2,
+                                                  -1, -1, -1, -1, 12, 13, 14,  8,    9, 10,  4,  5,  6,  0,  1,  2);
+
+    for(op = out; ip < in+(inlen-(ND+4)); ip += ND, op += (ND/4)*3) {			PREFETCH(ip,1024,0);
+      __m256i          iv0 = _mm256_loadu_si256((__m256i *)ip);    
+      __m256i          iv1 = _mm256_loadu_si256((__m256i *)(ip+32));    
+	  __m256i ov0,shifted0; ASCII2BIN(iv0, ov0,shifted0); DEC_RESHUFFLE(ov0);
+	  __m256i ov1,shifted1; ASCII2BIN(iv1, ov1,shifted1); DEC_RESHUFFLE(ov1);
+      
+      _mm_storeu_si128((__m128i*) op,       _mm256_castsi256_si128(ov0));
+      _mm_storeu_si128((__m128i*)(op + 12), _mm256_extracti128_si256(ov0, 1));							
+      _mm_storeu_si128((__m128i*)(op + 24), _mm256_castsi256_si128(ov1));
+      _mm_storeu_si128((__m128i*)(op + 36), _mm256_extracti128_si256(ov1, 1));							
+ 
+      CHECK0(B64CHECK(iv0,vx));
+      CHECK1(B64CHECK(iv1,vx));
     }
-    if(ip < ie) return 0;
   }
   unsigned rc;
-  if(!(rc=tb64xdec(ip, inlen-(ip-in), op))) return 0;
+  if(!(rc = tb64xdec(ip, inlen-(ip-in), op)) || _mm256_movemask_epi8(vx)) return 0;
   return (op-out)+rc; 
 }
 
@@ -113,3 +137,4 @@ unsigned tb64avx2enc(const unsigned char* in, unsigned inlen, unsigned char *out
   tb64xenc(ip, inlen-(ip-in), op);
   return TURBOB64LEN(inlen);
 }
+

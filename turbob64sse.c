@@ -364,13 +364,13 @@ int cpuisa(void) {
     if( c[2] & (1 << 23)) {     _cpuisa = 41; // +popcount       
     if( c[2] & (1 << 20)) {     _cpuisa = 42; // SSE4.2
     if((c[2] & (1 << 28)) &&         
-       (c[2] & (1 << 27)) &&                  // OSXSAVE 
-       (c[2] & (1 << 26)) &&                  // XSAVE
+       (c[2] & (1 << 27)) &&    // OSXSAVE 
+       (c[2] & (1 << 26)) &&    // XSAVE
        (xgetbv(0) & 6)==6){     _cpuisa = 50; // AVX
       if(c[2]& (1 << 25))       _cpuisa = 51; // +AES
       cpuid(c, 7);                                    
       if(c[1] & (1 << 5)) {     _cpuisa = 52; // AVX2
-      if(c[1] & (1 << 16)) {     	        // AVX512
+      if(c[1] & (1 << 16)) {     	          // AVX512
         cpuid(c, 0xd);                                      
         if(c[0] & 0x60) {       _cpuisa = 60; // AVX512
           cpuid(c, 7);                                        

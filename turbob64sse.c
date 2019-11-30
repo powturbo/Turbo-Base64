@@ -394,6 +394,7 @@ char *cpustr(int cpuisa) {
        if(cpuisa >= 62) return "avx512bw";
   else if(cpuisa >= 61) return "avx512vl";
   else if(cpuisa >= 60) return "avx512";
+  else if(cpuisa >= 52) return "avx2";
   else if(cpuisa >= 51) return "avx+aes";
   else if(cpuisa >= 50) return "avx";
   else if(cpuisa >= 42) return "sse4.2"; 

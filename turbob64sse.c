@@ -369,15 +369,15 @@ int cpuisa(void) {
        (xgetbv(0) & 6)==6){     _cpuisa = 50; // AVX
       if(c[2]& (1 << 25))       _cpuisa = 51; // +AES
       cpuid(c, 7);                                    
-      if(c[1] & (1 << 5))       _cpuisa = 52; // AVX2
-      if(c[1] & (1 << 16)) {     			  // AVX512
+      if(c[1] & (1 << 5)) {     _cpuisa = 52; // AVX2
+      if(c[1] & (1 << 16)) {     	        // AVX512
         cpuid(c, 0xd);                                      
         if(c[0] & 0x60) {       _cpuisa = 60; // AVX512
           cpuid(c, 7);                                        
           if(c[1] & (1 << 31))  _cpuisa = 61; // AVX512VL
           if(c[1] & 0x40020000) _cpuisa = 62; // AVX512BW AVX512DQ
         }
-      }
+      }}
     }}}}}}}}}
 	#elif defined(__powerpc64__)
   _cpuisa = 35; // power9 

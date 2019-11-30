@@ -16,7 +16,6 @@ branches:
 
 script:
   - make
-  - ./tb64app
   
 matrix:
   include:

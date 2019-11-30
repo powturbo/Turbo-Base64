@@ -33,18 +33,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //------------- TurboBase64 : Base64 encoding ----------------------
 #include "conf.h"
 #include "turbob64.h"
-
-#if defined(__i386__) || defined(__x86_64__) || defined(__powerpc__)
 #define PREFETCH(_ip_,_i_,_rw_) __builtin_prefetch(_ip_+(_i_),_rw_)
-  #else
-#define PREFETCH(_ip_,_i_,_rw_) __builtin_prefetch(_ip_+(_i_),_rw_)
-  #endif
 
   #if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
 #define BSWAP32(a) a 
   #else
 #define BSWAP32(a) bswap32(a)
   #endif  
+
+unsigned turbob64len(unsigned n) { return TURBOB64LEN(n); }
 
 //--------------------------------------------------------------
 #define LU32(_u_) (lut1[(_u_>> 8) & 0x3f] << 24 |\
@@ -53,11 +50,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                    lut1[(_u_>>26) & 0x3f])
 
 #define ETAIL() \
-  if((outlen = inlen - (ip-in))) { \
-    *op++ = lut1[(ip[0]>>2)&0x3f];\
-    if(outlen == 2) *op++ = lut1[(ip[0] & 0x3) << 4 | (ip[1] & 0xf0) >> 4],\
-                    *op++ = lut1[(ip[1] & 0xf) << 2];\
-    else            *op++ = lut1[(ip[0] & 0x3) << 4], *op++ = '=';\
+  if(outlen - (op-out) > 4)\
+    for(; op < out+(outlen-4); op += 4, ip+= 3) { unsigned _u = BSWAP32(ctou32(ip)); ctou32(op) = LU32(_u); }\
+  unsigned _l = inlen - (ip-in);\
+  if(_l == 3) { unsigned _u = ip[0]<<24 | ip[1]<<16 | ip[2]<<8; ctou32(op) = LU32(_u); op+=4; ip+=3; }\
+  else if(_l) { *op++ = lut1[(ip[0]>>2)&0x3f];\
+    if(_l == 2) *op++ = lut1[(ip[0] & 0x3) << 4 | (ip[1] & 0xf0) >> 4],\
+                *op++ = lut1[(ip[1] & 0xf) << 2];\
+    else        *op++ = lut1[(ip[0] & 0x3) << 4], *op++ = '=';\
     *op++ = '=';\
   }
 
@@ -73,20 +73,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                               
 unsigned tb64senc(const unsigned char *in, unsigned inlen, unsigned char *out) {
   static unsigned char lut1[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-  const  unsigned char *ip;
-         unsigned char *op;
-         unsigned      outlen = (inlen/3)*4;
-  #define NS 128
-  for(op = out, ip = in; op != out+(outlen&~(NS-1)); op += NS, ip += (NS/4)*3) { 		// unrolling 96 bytes
-    LI32(0); LI32(1); LI32( 2); LI32( 3); LI32( 4); LI32( 5); LI32( 6); LI32( 7);         
-    LI32(8); LI32(9); LI32(10); LI32(11); LI32(12); LI32(13); LI32(14); LI32(15);         PREFETCH(ip,256, 0); 
-  }
-  for(; op != out+(outlen&~(4-1)); op += 4, ip+= 3) { 
-    unsigned u          = BSWAP32(ctou32(ip)); 
-             ctou32(op) = LU32(u);
-  }
+  const  unsigned char *ip    = in;
+         unsigned char *op    = out;
+         unsigned      outlen = TURBOB64LEN(inlen);
+
+  if(outlen >= 128+4)
+    for(; op <= out+(outlen-(128+4)); op += 128, ip += (128/4)*3) { 					// 96->128 bytes
+      LI32(0); LI32(1); LI32( 2); LI32( 3); LI32( 4); LI32( 5); LI32( 6); LI32( 7);         
+      LI32(8); LI32(9); LI32(10); LI32(11); LI32(12); LI32(13); LI32(14); LI32(15);    PREFETCH(ip,256, 0);
+    }
   ETAIL(); 
-  return TURBOB64LEN(inlen);
+  return outlen;
 }
 
 //---------------------- Fast encoding with 4k LUT ------------------------------------------------------------
@@ -362,20 +359,17 @@ unsigned tb64xenc(const unsigned char *in, unsigned inlen, unsigned char *out) {
   static unsigned char lut1[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
   const  unsigned char *ip = in;
          unsigned char *op = out;
-         unsigned      outlen = (inlen/3)*4;
+         unsigned      outlen = TURBOB64LEN(inlen);
   
-  #define N 128
-  if(outlen >= N+4) {
+  if(outlen >= 128+4) {
     unsigned ux = ctou32(ip  ),
              vx = ctou32(ip+3);
-    
-    for(; op < out+(outlen-N-4); op += N, ip += (N/4)*3) { // unrolling 96 bytes
+    for(; op <= out+(outlen-(128+4)); op += 128, ip += (128/4)*3) { // unrolling 96 bytes
       EI32(0); EI32(1); EI32( 2); EI32( 3); EI32( 4); EI32( 5); EI32( 6); EI32( 7);      
       EI32(8); EI32(9); EI32(10); EI32(11); EI32(12); EI32(13); EI32(14); EI32(15);      PREFETCH(ip,256, 0);
     }
   }
-  for(; op < out+(outlen&~(4-1)); op += 4, ip+=3) { unsigned u = BSWAP32(ctou32(ip)); ctou32(op) = LU32(u); }
-  ETAIL(); 
-  return TURBOB64LEN(inlen);
+  ETAIL();
+  return outlen;
 }
 

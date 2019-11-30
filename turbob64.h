@@ -38,8 +38,8 @@ extern "C" {
 
 //---------------------- base64 API functions ----------------------------------
 // Base64 output length after encoding 
-#define TURBOB64LEN(_n_) (((_n_ + 2) / 3) * 4)
-static inline unsigned turbob64len(unsigned n) { return TURBOB64LEN(n); }
+#define TURBOB64LEN(_n_) (((_n_ + 2)/ 3) * 4)
+unsigned turbob64len(unsigned n);
 
 // Encode binary input 'in' buffer into base64 string 'out' 
 // with automatic cpu detection for avx2/sse4.1/scalar 

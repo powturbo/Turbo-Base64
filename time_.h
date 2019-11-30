@@ -131,7 +131,7 @@ int clock_gettime(int /*clk_id*/, struct timespec* t) {
         #endif
       #endif
 static   tm_t tmtime(void)    { struct timespec tm; clock_gettime(CLOCK_MONOTONIC, &tm); return (tm_t)tm.tv_sec*1000000 + tm.tv_nsec/1000; }
-static   tm_t tminit()        { tm_t t0=tmtime(),ts; while((ts = tmtime())==t0); return ts; }
+static   tm_t tminit()        { tm_t t0=tmtime(),ts; while((ts = tmtime())==t0) {}; return ts; }
     #endif
 static double tmsec( tm_t tm) { double d = tm; return d/1000000.0; }
 static double tmmsec(tm_t tm) { double d = tm; return d/1000.0; }

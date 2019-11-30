@@ -16,7 +16,8 @@ branches:
 
 script:
   - make
-
+  - tb64app
+  
 matrix:
   include:
     - name: linux-ppc64le-gcc-9

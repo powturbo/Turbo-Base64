@@ -30,7 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     - twitter  : https://twitter.com/powturbo
     - email    : powturbo [_AT_] gmail [_DOT_] com
 **/
-// TubeBase64: ssse3 + arm neon functions 
+// TubeBase64: ssse3 + arm neon functions (see also turbob64avx2)
 
   #if defined(__AVX__)
 #include <immintrin.h>
@@ -59,6 +59,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define PREFETCH(_ip_,_i_,_rw_) __builtin_prefetch(_ip_+(_i_),_rw_)
 
 //#define B64CHECK
+#define CHECK0(a) a
+  #ifdef B64CHECK
+#define CHECK1(a) a
+  #else
+#define CHECK1(a)
+  #endif
 
 #ifdef __ARM_NEON  //----------------------------------- arm neon --------------------------------
 
@@ -84,13 +90,6 @@ static inline uint8x16x4_t vld1q_u8_x4(const uint8_t *lut) {
   v.val[3] = vld1q_u8(lut+48);
   return v;
 }
-  #endif
-
-#define CHECK0(a) a
-  #ifdef B64CHECK
-#define CHECK1(a) a
-  #else
-#define CHECK1(a) 
   #endif
 
 #define B64D(iv, ov) {\
@@ -192,79 +191,65 @@ unsigned tb64sseenc(const unsigned char* in, unsigned inlen, unsigned char *out)
                               v = _mm_shuffle_epi8(v, cpv);\
 }
 
-#define ASCII2BIN(hi_nibbles, lo_nibbles, iv, ov) {\
-  hi_nibbles = _mm_and_si128(_mm_srli_epi32(iv, 4), cv2f);   	/*fromascii: https://arxiv.org/abs/1704.00605 P.15*/\
-  lo_nibbles = _mm_and_si128(iv, cv2f);\
-          ov = _mm_add_epi8(iv, _mm_shuffle_epi8(lut_roll, _mm_add_epi8(_mm_cmpeq_epi8(iv, cv2f), hi_nibbles)));\
+#define ASCII2BIN(iv, ov, shifted) { /*Convert ascii input bytes to 6-bit values*/\
+                shifted    = _mm_srli_epi32(iv, 3);\
+  const __m128i delta_hash = _mm_avg_epu8(_mm_shuffle_epi8(delta_asso, iv), shifted);\
+	                    ov = _mm_add_epi8(_mm_shuffle_epi8(delta_values, delta_hash), iv);\
 }
 
-#define CHECK0
-  #ifdef B64CHECK
-#define CHECK1
-  #endif
+#define B64CHECK(iv0,vx) {\
+  const __m128i check_hash = _mm_avg_epu8(_mm_shuffle_epi8(check_asso, iv0), shifted0);\
+  const __m128i        chk = _mm_adds_epi8(_mm_shuffle_epi8(check_values, check_hash), iv0);\
+                        vx = _mm_or_si128(vx, chk);\
+}
+
 unsigned TEMPLATE2(FUNPREF, dec)(const unsigned char *in, unsigned inlen, unsigned char *out) {
   const unsigned char *ip = in;
         unsigned char *op = out; 
-        unsigned rc0 = 0;
     #ifdef __AVX__
   #define ND 64
     #else
   #define ND 32
     #endif
+  __m128i vx = _mm_setzero_si128();
   if(inlen >= ND+4) {
-    const __m128i lut_lo  = _mm_set_epi8( 26, 27, 27, 27, 26, 19, 17, 17,   17, 17, 17, 17, 17, 17, 17, 21),
-                  lut_hi  = _mm_set_epi8( 16, 16, 16, 16, 16, 16, 16, 16,    8,  4,  8,  4,  2,  1, 16, 16),
-                 lut_roll = _mm_set_epi8(  0,  0,  0,  0,  0,  0,  0,  0,  -71,-71,-65,-65,  4, 19, 16,  0),			                             
-                      cpv = _mm_set_epi8( -1, -1, -1, -1, 12, 13, 14,  8,    9, 10,  4,  5,  6,  0,  1,  2), 
-                     cv2f = _mm_set1_epi8(0x2f);
-    __m128i vx = _mm_setzero_si128();
+	const __m128i delta_asso   = _mm_setr_epi8(0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,	0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x0f);
+	const __m128i delta_values = _mm_setr_epi8(0x00, 0x00, 0x00, 0x13, 0x04, 0xbf, 0xbf, 0xb9,	0xb9, 0x00, 0x10, 0xc3, 0xbf, 0xbf, 0xb9, 0xb9);
+	const __m128i check_asso   = _mm_setr_epi8(0x0d, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,  0x01, 0x01, 0x03, 0x07, 0x0b, 0x0b, 0x0b, 0x0f);
+	const __m128i check_values = _mm_setr_epi8(0x80, 0x80, 0x80, 0x80, 0xcf, 0xbf, 0xd5, 0xa6,  0xb5, 0x86, 0xd1, 0x80, 0xb1, 0x80, 0x91, 0x80);    
+    const __m128i          cpv = _mm_set_epi8( -1, -1, -1, -1, 12, 13, 14,  8,    9, 10,  4,  5,  6,  0,  1,  2);
+
     for(; ip < in+(inlen-(ND+4)); ip += ND, op += (ND/4)*3) {  	
       __m128i iv0 = _mm_loadu_si128((__m128i *) ip);
-      __m128i iv1 = _mm_loadu_si128((__m128i *)(ip+16));				
+      __m128i iv1 = _mm_loadu_si128((__m128i *)(ip+16));
                 																
-      __m128i hi_nibbles0, lo_nibbles0, ov0;    ASCII2BIN(hi_nibbles0, lo_nibbles0, iv0,ov0); DEC_RESHUFFLE(ov0);
-      __m128i hi_nibbles1, lo_nibbles1, ov1;    ASCII2BIN(hi_nibbles1, lo_nibbles1, iv1,ov1); DEC_RESHUFFLE(ov1);
-	
+	  __m128i ov0,shifted0; ASCII2BIN(iv0, ov0,shifted0); DEC_RESHUFFLE(ov0);
+	  __m128i ov1,shifted1; ASCII2BIN(iv1, ov1,shifted1); DEC_RESHUFFLE(ov1);
+
   	  _mm_storeu_si128((__m128i*) op,     ov0);											         
       _mm_storeu_si128((__m128i*)(op+12), ov1);												PREFETCH(ip,1024,0);										
+
 	    #if ND > 32
       __m128i iv2 = _mm_loadu_si128((__m128i *)(ip+32));
       __m128i iv3 = _mm_loadu_si128((__m128i *)(ip+48));				
 		#endif
       
-        #ifdef CHECK0
-	  hi_nibbles0 = _mm_shuffle_epi8(lut_hi, hi_nibbles0);    lo_nibbles0 = _mm_shuffle_epi8(lut_lo, lo_nibbles0);										
-      vx = _mm_or_si128(vx, _mm_and_si128(lo_nibbles0, hi_nibbles0));
-        #endif
-        #ifdef CHECK1
-      hi_nibbles1 = _mm_shuffle_epi8(lut_hi, hi_nibbles1);    lo_nibbles1 = _mm_shuffle_epi8(lut_lo, lo_nibbles1);
-      vx = _mm_or_si128(vx, _mm_and_si128(lo_nibbles1, hi_nibbles1));
-        #endif
+      CHECK0(B64CHECK(iv0,vx));
+      CHECK1(B64CHECK(iv1,vx));
 
 		#if ND > 32
-      {
-      __m128i ov2,ov3; 	      
-      __m128i hi_nibbles2, lo_nibbles2;    ASCII2BIN(hi_nibbles2, lo_nibbles2, iv2,ov2); DEC_RESHUFFLE(ov2);
-      __m128i hi_nibbles3, lo_nibbles3;    ASCII2BIN(hi_nibbles3, lo_nibbles3, iv3,ov3); DEC_RESHUFFLE(ov3);
+	  __m128i ov2,shifted2; ASCII2BIN(iv2, ov2,shifted2); DEC_RESHUFFLE(ov2);
+	  __m128i ov3,shifted3; ASCII2BIN(iv3, ov3,shifted3); DEC_RESHUFFLE(ov3);
 	
   	  _mm_storeu_si128((__m128i*)(op+24), ov2);											         
       _mm_storeu_si128((__m128i*)(op+36), ov3);																					
-      
-          #ifdef CHECK0
-	  hi_nibbles2 = _mm_shuffle_epi8(lut_hi, hi_nibbles2);    lo_nibbles2 = _mm_shuffle_epi8(lut_lo, lo_nibbles2);										
-      vx = _mm_or_si128(vx, _mm_and_si128(lo_nibbles2, hi_nibbles2));
-          #endif
-          #ifdef CHECK1
-      hi_nibbles3 = _mm_shuffle_epi8(lut_hi, hi_nibbles3);    lo_nibbles3 = _mm_shuffle_epi8(lut_lo, lo_nibbles3);
-      vx = _mm_or_si128(vx, _mm_and_si128(lo_nibbles3, hi_nibbles3));
-          #endif		
-      }
+      CHECK1(B64CHECK(iv2,vx));
+      CHECK1(B64CHECK(iv3,vx));
 	    #endif
     }
-    rc0 = _mm_movemask_epi8(_mm_cmpgt_epi8(vx, _mm_setzero_si128()));
   }
   unsigned rc;
-  if(!(rc = tb64xdec(ip, inlen-(ip-in), op)) || rc0) return 0;
+  if(!(rc = tb64xdec(ip, inlen-(ip-in), op)) || _mm_movemask_epi8(vx)) return 0;
   return (op-out)+rc; 
 }
 

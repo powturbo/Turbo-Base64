@@ -356,20 +356,28 @@ int cpuisa(void) {
   cpuid(c, 0);                                        
   if(c[0]) {              
     cpuid(c, 1);                                       
-    if( c[3] & (1 << 25)) { _cpuisa = 10; // SSE
-    if( c[3] & (1 << 26)) { _cpuisa = 20; // SSE2
-    if( c[2] & (1 <<  0)) { _cpuisa = 30; // SSE3                                          
-    if( c[2] & (1 <<  9)) { _cpuisa = 33; // SSSE3
-    if( c[2] & (1 << 19)) { _cpuisa = 40; // SSE4.1 
-    if( c[2] & (1 << 23)) { _cpuisa = 41; // +popcount       
-    if( c[2] & (1 << 20)) { _cpuisa = 42; // SSE4.2
+    if( c[3] & (1 << 25)) {     _cpuisa = 10; // SSE
+    if( c[3] & (1 << 26)) {     _cpuisa = 20; // SSE2
+    if( c[2] & (1 <<  0)) {     _cpuisa = 30; // SSE3                                          
+    if( c[2] & (1 <<  9)) {     _cpuisa = 33; // SSSE3
+    if( c[2] & (1 << 19)) {     _cpuisa = 40; // SSE4.1 
+    if( c[2] & (1 << 23)) {     _cpuisa = 41; // +popcount       
+    if( c[2] & (1 << 20)) {     _cpuisa = 42; // SSE4.2
     if((c[2] & (1 << 28)) &&         
-       (c[2] & (1 << 27)) && // OSXSAVE 
-       (c[2] & (1 << 26)) && // XSAVE
-       (xgetbv(0) & 6)==6){ _cpuisa = 50; // AVX
-      if(c[2]& (1 << 25))   _cpuisa = 51; // +AES
+       (c[2] & (1 << 27)) &&                  // OSXSAVE 
+       (c[2] & (1 << 26)) &&                  // XSAVE
+       (xgetbv(0) & 6)==6){     _cpuisa = 50; // AVX
+      if(c[2]& (1 << 25))       _cpuisa = 51; // +AES
       cpuid(c, 7);                                    
-      if(c[1] & (1 << 5))   _cpuisa = 52; // AVX2
+      if(c[1] & (1 << 5))       _cpuisa = 52; // AVX2
+      if(c[1] & (1 << 16)) {     			  // AVX512
+        cpuid(c, 0xd);                                      
+        if(c[0] & 0x60) {       _cpuisa = 60; // AVX512
+          cpuid(c, 7);                                        
+          if(c[1] & (1 << 31))  _cpuisa = 61; // AVX512VL
+          if(c[1] & 0x40020000) _cpuisa = 62; // AVX512BW AVX512DQ
+        }
+      }
     }}}}}}}}}
 	#elif defined(__powerpc64__)
   _cpuisa = 35; // power9 
@@ -383,7 +391,9 @@ int cpuini(int cpuisa) { if(cpuisa) _cpuisa = cpuisa; return _cpuisa; }
 
 char *cpustr(int cpuisa) {
   if(!cpuisa) cpuisa = _cpuisa;
-       if(cpuisa >= 52) return "avx2";
+       if(cpuisa >= 62) return "avx512bw";
+  else if(cpuisa >= 61) return "avx512vl";
+  else if(cpuisa >= 60) return "avx512";
   else if(cpuisa >= 51) return "avx+aes";
   else if(cpuisa >= 50) return "avx";
   else if(cpuisa >= 42) return "sse4.2"; 

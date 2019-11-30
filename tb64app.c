@@ -62,6 +62,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "turbob64.h"
 #include "time_.h"
 
+  #ifdef BASE64
+#include "xtb64test.c"
+  #endif
+
 //------------------------------- malloc ------------------------------------------------
 #define USE_MMAP
   #if __WORDSIZE == 64
@@ -74,7 +78,7 @@ void *_valloc(size_t size, unsigned a) {
   if(!size) return NULL;
     #if defined(_WIN32)
   return VirtualAlloc(NULL, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-    #elif defined(USE_MMAP)
+    #elif defined(USE_MMAP) && !defined(__APPLE__)
   void *ptr = mmap(NULL/*0(size_t)a<<MAP_BITS*/, size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
   if(ptr == MAP_FAILED) return NULL;														
   return ptr;
@@ -87,7 +91,7 @@ void _vfree(void *p, size_t size) {
   if(!p) return;
     #if defined(_WIN32)
   VirtualFree(p, 0, MEM_RELEASE);
-    #elif defined(USE_MMAP)
+    #elif defined(USE_MMAP) && !defined(__APPLE__)
   munmap(p, size);
     #else
   free(p);
@@ -113,22 +117,25 @@ void bench(unsigned char *in, unsigned n, unsigned char *out, unsigned char *cpy
   memrcpy(cpy,in,n); 
     #endif
   switch(id) {
-    case 1:                    TMBENCH("",l=tb64senc(   in, n, out),n); pr(l,n); TMBENCH2("tb64s",      tb64sdec(out, l, cpy), n);    break;
-    case 2:                    TMBENCH("",l=tb64xenc(   in, n, out),n); pr(l,n); TMBENCH2("tb64x",      tb64xdec( out, l, cpy), n);   break;
+    case 1:                    TMBENCH("",l=tb64xenc(   in, n, out),n); pr(l,n); TMBENCH("tb64s",      tb64sdec(out, l, cpy), n);    break;
+    case 2:                    TMBENCH("",l=tb64xenc(   in, n, out),n); pr(l,n); TMBENCH("tb64x",      tb64xdec( out, l, cpy), n);   break;
       #if defined(__i386__) || defined(__x86_64__) || defined(__ARM_NEON) || defined(__powerpc64__)
-    case 3:                    TMBENCH("",l=tb64enc(    in, n, out),n); pr(l,n); TMBENCH2("tb64(auto)", tb64dec(out, l, cpy), n);     break;
-    case 4:if(cpuini(0)>=33) { TMBENCH("",l=tb64sseenc( in, n, out),n); pr(l,n); TMBENCH2("tb64sse",    tb64ssedec(out, l, cpy), n);  break; } return;
+    case 3:                    TMBENCH("",l=tb64enc(    in, n, out),n); pr(l,n); TMBENCH("tb64(auto)", tb64dec(out, l, cpy), n);     break;
+    case 4:if(cpuini(0)>=33) { TMBENCH("",l=tb64sseenc( in, n, out),n); pr(l,n); TMBENCH("tb64sse",    tb64ssedec(out, l, cpy), n);  break; } return;
       #else
     case 3: case 4:return;  
       #endif
       #if defined(__i386__) || defined(__x86_64__)
-    case 5:if(cpuini(0)>=50) { TMBENCH("",l=tb64avxenc( in, n, out),n); pr(l,n); TMBENCH2("tb64avx",    tb64avxdec( out, l, cpy), n); break; } return;
-    case 6:if(cpuini(0)>=52) { TMBENCH("",l=tb64avx2enc(in, n, out),n); pr(l,n); TMBENCH2("tb64avx2",   tb64avx2dec(out, l, cpy), n); break; } return;
+    case 5:if(cpuini(0)>=50) { TMBENCH("",l=tb64avxenc( in, n, out),n); pr(l,n); TMBENCH("tb64avx",    tb64avxdec( out, l, cpy), n); break; } return;
+    case 6:if(cpuini(0)>=52) { TMBENCH("",l=tb64avx2enc(in, n, out),n); pr(l,n); TMBENCH("tb64avx2",   tb64avx2dec(out, l, cpy), n); break; } return;
       #else
     case 5: case 6:return;  
       #endif
       break;
-    case ID_MEMCPY:            TMBENCH( "", memcpy(out,in,n) ,n);       pr(n,n); TMBENCH2("memcpy",     memcpy( cpy,out,n) ,n);       break;
+      #ifdef BASE64
+    #include "xtb64test.c"
+      #endif
+    case ID_MEMCPY:            TMBENCH( "", memcpy(out,in,n) ,n);       pr(n,n); TMBENCH("memcpy",     memcpy( cpy,out,n) ,n);       break;
 	default: return;
   }
   printf("\n");
@@ -253,6 +260,5 @@ int main(int argc, char* argv[]) {
 	if (out) free(out);
 	if (cpy) free(cpy);
   }
-
 }
 

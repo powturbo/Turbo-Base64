@@ -117,7 +117,7 @@ void bench(unsigned char *in, unsigned n, unsigned char *out, unsigned char *cpy
   memrcpy(cpy,in,n); 
     #endif
   switch(id) {
-    case 1:                    TMBENCH("",l=tb64xenc(   in, n, out),n); pr(l,n); TMBENCH("tb64s",      tb64sdec(out, l, cpy), n);    break;
+    case 1:                    TMBENCH("",l=tb64senc(   in, n, out),n); pr(l,n); TMBENCH("tb64s",      tb64sdec(out, l, cpy), n);    break;
     case 2:                    TMBENCH("",l=tb64xenc(   in, n, out),n); pr(l,n); TMBENCH("tb64x",      tb64xdec( out, l, cpy), n);   break;
       #if defined(__i386__) || defined(__x86_64__) || defined(__ARM_NEON) || defined(__powerpc64__)
     case 3:                    TMBENCH("",l=tb64enc(    in, n, out),n); pr(l,n); TMBENCH("tb64(auto)", tb64dec(out, l, cpy), n);     break;

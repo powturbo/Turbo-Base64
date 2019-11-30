@@ -375,7 +375,7 @@ int cpuisa(void) {
         if(c[0] & 0x60) {       _cpuisa = 60; // AVX512
           cpuid(c, 7);                                        
           if(c[1] & (1 << 31))  _cpuisa = 61; // AVX512VL
-          if(c[1] & 0x40020000) _cpuisa = 62; // AVX512BW AVX512DQ
+          if(c[1] & 0x40020000) _cpuisa = 62; // AVX512BW/DQ
         }
       }}
     }}}}}}}}}

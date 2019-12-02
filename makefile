@@ -26,11 +26,11 @@ ifeq ($(ARCH),ppc64le)
   CFLAGS=-mcpu=power9 -mtune=power9
   MSSE=-D__SSSE3__
 else ifeq ($(ARCH),aarch64)
-  CFLAGS+=-march=armv8-a
+  CFLAGS+=-march=armv8-a 
 ifneq (,$(findstring clang, $(CC)))
   CFLAGS+=-march=armv8-a -falign-loops -fomit-frame-pointer
 else
-  CFLAGS+=-march=armv8-a
+  CFLAGS+=-march=armv8-a 
 endif
   MSSE=-march=armv8-a
 else ifeq ($(ARCH),$(filter $(ARCH),x86_64 ppc64le))
@@ -50,6 +50,7 @@ ifeq ($(STATIC),1)
 LDFLAGS+=-static
 endif
 
+
 all: tb64app
 
 ifeq ($(FULLCHECK),1)
@@ -58,6 +59,9 @@ endif
 
 turbob64c.o: turbob64c.c
 	$(CC) -O3 $(MARCH) $(DEFS) -fstrict-aliasing  $< -c -o $@ 
+
+tb64app.o: tb64app.c
+	$(CC) -O3 $(DEFS) $< -c -o $@ 
 
 turbob64d.o: turbob64d.c
 	$(CC) -O3 $(MARCH) $(DEFS) -fstrict-aliasing $< -c -o $@ 
@@ -75,13 +79,22 @@ LIB=turbob64c.o turbob64d.o turbob64sse.o
 ifeq ($(ARCH),x86_64)
 LIB+=turbob64avx.o turbob64avx2.o
 endif
+
 ifeq ($(BASE64),1)
-xtb64make
+include xtb64make
 endif
+
 
 tb64app: $(LIB) tb64app.o 
 	$(CC) -O3 $(LIB) tb64app.o $(LDFLAGS) -o tb64app
- 
+
+tb64bench: $(LIB) tb64bench.o 
+	$(CC) -O3 $(LIB) tb64bench.o $(LDFLAGS) -o tb64bench
+
+tb64test: $(LIB) tb64test.o 
+	$(CC) -O3 $(LIB) tb64test.o $(LDFLAGS) -o tb64test
+	
+	
 .c.o:
 	$(CC) -O3 $(CFLAGS)  $(MARCH) $< -c -o $@
 

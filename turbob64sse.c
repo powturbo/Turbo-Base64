@@ -114,8 +114,8 @@ unsigned tb64ssedec(const unsigned char *in, unsigned inlen, unsigned char *out)
         unsigned char *op; 
   const uint8x16x4_t vlut0 = vld1q_u8_x4( lut),
                      vlut1 = vld1q_u8_x4(&lut[64]);
-  const uint8x16_t  cv40 = vdupq_n_u8(0x40);
-        uint8x16_t    xv = vdupq_n_u8(0);
+  const uint8x16_t    cv40 = vdupq_n_u8(0x40);
+        uint8x16_t      xv = vdupq_n_u8(0);
 	  
   for(ip = in, op = out; ip != in+(inlen&~(128-1)); ip += 128, op += (128/4)*3) { PREFETCH(ip,256,0);	
     uint8x16x4_t iv0 = vld4q_u8(ip),
@@ -123,9 +123,9 @@ unsigned tb64ssedec(const unsigned char *in, unsigned inlen, unsigned char *out)
 
 	uint8x16x3_t ov0; B64D(iv0,ov0);
 	CHECK0(xv = vorrq_u8(xv, vorrq_u8(vorrq_u8(iv0.val[0], iv0.val[1]), vorrq_u8(iv0.val[2], iv0.val[3]))));
-	uint8x16x3_t ov1; B64D(iv1,ov1);                                   
 
 	vst3q_u8(op,    ov0);       
+	uint8x16x3_t ov1; B64D(iv1,ov1);                                   
 	vst3q_u8(op+48, ov1);                                                                                                                                                                       
 	CHECK1(xv = vorrq_u8(xv, vorrq_u8(vorrq_u8(iv1.val[0], iv1.val[1]), vorrq_u8(iv1.val[2], iv1.val[3]))));
   }
@@ -155,16 +155,17 @@ unsigned tb64ssedec(const unsigned char *in, unsigned inlen, unsigned char *out)
 }
 
 unsigned tb64sseenc(const unsigned char* in, unsigned inlen, unsigned char *out) {
+  if(inlen < 256) return tb64xenc(in, inlen, out);
   static unsigned char lut[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
   const unsigned char *ip; 
         unsigned char *op;
-  const unsigned      outlen = (inlen/3)*4;
+  const unsigned      outlen = TURBOB64LEN(inlen);
   const uint8x16x4_t vlut = vld1q_u8_x4(lut);
   const uint8x16_t   cv3f = vdupq_n_u8(0x3f);
   
   for(ip = in, op = out; op != out+(outlen&~(128-1)); op += 128, ip += (128/4)*3) { 								
-    const uint8x16x3_t iv0 = vld3q_u8(ip);
-    const uint8x16x3_t iv1 = vld3q_u8(ip+48);                   
+    const uint8x16x3_t iv0 = vld3q_u8(ip),
+                       iv1 = vld3q_u8(ip+48);                   
    
     uint8x16x4_t ov0; B64E(iv0, ov0); 
     uint8x16x4_t ov1; B64E(iv1, ov1);                                       
@@ -185,21 +186,21 @@ unsigned tb64sseenc(const unsigned char* in, unsigned inlen, unsigned char *out)
 
 #elif defined(__SSSE3__) //----------------- SSSE3 / SSE4.1 / AVX (derived from the AVX2 functions ) -----------------------------------------------------------------
 
-#define DEC_RESHUFFLE(v) {\
+#define DECPACK(v) {\
   const __m128i merge_ab_and_bc = _mm_maddubs_epi16(v,            _mm_set1_epi32(0x01400140));  /*/dec_reshuffle: https://arxiv.org/abs/1704.00605 P.17*/\
                               v = _mm_madd_epi16(merge_ab_and_bc, _mm_set1_epi32(0x00011000));\
                               v = _mm_shuffle_epi8(v, cpv);\
 }
 
-#define ASCII2BIN(iv, ov, shifted) { /*Convert ascii input bytes to 6-bit values*/\
+#define ASCII2BIN(iv, shifted, ov) { /*Convert ascii input bytes to 6-bit values*/\
                 shifted    = _mm_srli_epi32(iv, 3);\
   const __m128i delta_hash = _mm_avg_epu8(_mm_shuffle_epi8(delta_asso, iv), shifted);\
 	                    ov = _mm_add_epi8(_mm_shuffle_epi8(delta_values, delta_hash), iv);\
 }
 
-#define B64CHECK(iv0,vx) {\
-  const __m128i check_hash = _mm_avg_epu8(_mm_shuffle_epi8(check_asso, iv0), shifted0);\
-  const __m128i        chk = _mm_adds_epi8(_mm_shuffle_epi8(check_values, check_hash), iv0);\
+#define B64CHK(iv, shifted, vx) {\
+  const __m128i check_hash = _mm_avg_epu8(_mm_shuffle_epi8(check_asso, iv), shifted);\
+  const __m128i        chk = _mm_adds_epi8(_mm_shuffle_epi8(check_values, check_hash), iv);\
                         vx = _mm_or_si128(vx, chk);\
 }
 
@@ -220,31 +221,31 @@ unsigned TEMPLATE2(FUNPREF, dec)(const unsigned char *in, unsigned inlen, unsign
     const __m128i          cpv = _mm_set_epi8( -1, -1, -1, -1, 12, 13, 14,  8,    9, 10,  4,  5,  6,  0,  1,  2);
 
     for(; ip < in+(inlen-(ND+4)); ip += ND, op += (ND/4)*3) {  	
-      __m128i iv0 = _mm_loadu_si128((__m128i *) ip);
-      __m128i iv1 = _mm_loadu_si128((__m128i *)(ip+16));
+      __m128i iv0 = _mm_loadu_si128((__m128i *) ip),
+              iv1 = _mm_loadu_si128((__m128i *)(ip+16));
                 																
-	  __m128i ov0,shifted0; ASCII2BIN(iv0, ov0,shifted0); DEC_RESHUFFLE(ov0);
-	  __m128i ov1,shifted1; ASCII2BIN(iv1, ov1,shifted1); DEC_RESHUFFLE(ov1);
+	  __m128i ov0,shifted0; ASCII2BIN(iv0, shifted0, ov0); DECPACK(ov0);
+	  __m128i ov1,shifted1; ASCII2BIN(iv1, shifted1, ov1); DECPACK(ov1);
 
   	  _mm_storeu_si128((__m128i*) op,     ov0);											         
       _mm_storeu_si128((__m128i*)(op+12), ov1);												PREFETCH(ip,1024,0);										
 
 	    #if ND > 32
-      __m128i iv2 = _mm_loadu_si128((__m128i *)(ip+32));
-      __m128i iv3 = _mm_loadu_si128((__m128i *)(ip+48));				
+      __m128i iv2 = _mm_loadu_si128((__m128i *)(ip+32)),
+              iv3 = _mm_loadu_si128((__m128i *)(ip+48));
 		#endif
       
-      CHECK0(B64CHECK(iv0,vx));
-      CHECK1(B64CHECK(iv1,vx));
+      CHECK0(B64CHK(iv0, shifted0, vx));
+      CHECK1(B64CHK(iv1, shifted1, vx));
 
 		#if ND > 32
-	  __m128i ov2,shifted2; ASCII2BIN(iv2, ov2,shifted2); DEC_RESHUFFLE(ov2);
-	  __m128i ov3,shifted3; ASCII2BIN(iv3, ov3,shifted3); DEC_RESHUFFLE(ov3);
+	  __m128i ov2,shifted2; ASCII2BIN(iv2, shifted2, ov2); DECPACK(ov2);
+	  __m128i ov3,shifted3; ASCII2BIN(iv3, shifted3, ov3); DECPACK(ov3);
 	
   	  _mm_storeu_si128((__m128i*)(op+24), ov2);											         
       _mm_storeu_si128((__m128i*)(op+36), ov3);																					
-      CHECK1(B64CHECK(iv2,vx));
-      CHECK1(B64CHECK(iv3,vx));
+      CHECK1(B64CHK(iv2, shifted2, vx));
+      CHECK1(B64CHK(iv3, shifted3, vx));
 	    #endif
     }
   }
@@ -268,9 +269,9 @@ static ALWAYS_INLINE __m128i enc_reshuffle(__m128i v) {
 }
 
 unsigned TEMPLATE2(FUNPREF, enc)(const unsigned char* in, unsigned inlen, unsigned char *out) { 
-  const unsigned char *ip=in; 
-        unsigned char *op=out;
-        unsigned      outlen = (inlen/3)*4;
+  const unsigned char *ip = in; 
+        unsigned char *op = out;
+        unsigned   outlen = TURBOB64LEN(inlen); 
 
   const __m128i shuf    = _mm_set_epi8(10,11,  9, 10,  7,  8,  6,  7,    4,  5,  3,  4,  1,  2,  0,  1);
   const __m128i offsets = _mm_set_epi8( 0, 0,-16,-19, -4, -4, -4, -4,   -4, -4, -4, -4, -4, -4, 71, 65);
@@ -281,11 +282,11 @@ unsigned TEMPLATE2(FUNPREF, enc)(const unsigned char* in, unsigned inlen, unsign
     #endif
   if(outlen >= NE+4)
     for(ip = in, op = out; op <= out+(outlen-(NE+4)); op += NE, ip += (NE/4)*3) { 	 					PREFETCH(ip,1024,0);			
-	  __m128i v0 = _mm_loadu_si128((__m128i*)ip);      
-	  __m128i v1 = _mm_loadu_si128((__m128i*)(ip+12)); 
+	  __m128i v0 = _mm_loadu_si128((__m128i*)ip),   
+	          v1 = _mm_loadu_si128((__m128i*)(ip+12)); 
         #if NE > 32
-	  __m128i v2 = _mm_loadu_si128((__m128i*)(ip+24));      
-	  __m128i v3 = _mm_loadu_si128((__m128i*)(ip+36)); 
+	  __m128i v2 = _mm_loadu_si128((__m128i*)(ip+24)),
+	          v3 = _mm_loadu_si128((__m128i*)(ip+36)); 
 		#endif
               v0 = _mm_shuffle_epi8(v0, shuf);
               v1 = _mm_shuffle_epi8(v1, shuf);
@@ -295,15 +296,13 @@ unsigned TEMPLATE2(FUNPREF, enc)(const unsigned char* in, unsigned inlen, unsign
               v1 = bin2ascii(v1);
       _mm_storeu_si128((__m128i*) op,     v0);											
       _mm_storeu_si128((__m128i*)(op+16), v1);											
-                #if NE > 32
+        #if NE > 32
               v2 = _mm_shuffle_epi8(v2, shuf);
               v3 = _mm_shuffle_epi8(v3, shuf);
 	          v2 = enc_reshuffle(v2);
 			  v3 = enc_reshuffle(v3);
               v2 = bin2ascii(v2);
               v3 = bin2ascii(v3);
-		        #endif			  
-        #if NE > 32
       _mm_storeu_si128((__m128i*)(op+32), v2);											
       _mm_storeu_si128((__m128i*)(op+48), v3);											
 		#endif			  
@@ -348,6 +347,17 @@ static inline uint64_t xgetbv (int ctr) {
     #endif
   #endif
 
+#define AVX512F     0
+#define AVX512DQ    1
+#define AVX512IFMA  2
+#define AVX512PF    3
+#define AVX512ER    4
+#define AVX512CD    5
+#define AVX512BW    6
+#define AVX512VL    7
+#define AVX512VBMI  8
+#define AVX512VNNI  9
+
 int cpuisa(void) {
   int c[4] = {0};                               
   if(_cpuisa) return _cpuisa;                                   
@@ -355,10 +365,13 @@ int cpuisa(void) {
     #if defined(__i386__) || defined(__x86_64__)    
   cpuid(c, 0);                                        
   if(c[0]) {              
-    cpuid(c, 1);                                       
+    cpuid(c, 1);                      
+	//family = ((c >> 8) & 0xf) + ((c >> 20) & 0xff)
+	//model  = ((c >> 4) & 0xf) + ((c >> 12) & 0xf0)
     if( c[3] & (1 << 25)) {     _cpuisa = 10; // SSE
     if( c[3] & (1 << 26)) {     _cpuisa = 20; // SSE2
-    if( c[2] & (1 <<  0)) {     _cpuisa = 30; // SSE3                                          
+    if( c[2] & (1 <<  0)) {     _cpuisa = 30; // SSE3
+      //                  	    _cpuisa = 32; // Atom SSSE3 slow
     if( c[2] & (1 <<  9)) {     _cpuisa = 33; // SSSE3
     if( c[2] & (1 << 19)) {     _cpuisa = 40; // SSE4.1 
     if( c[2] & (1 << 23)) {     _cpuisa = 41; // +popcount       
@@ -366,18 +379,26 @@ int cpuisa(void) {
     if((c[2] & (1 << 28)) &&         
        (c[2] & (1 << 27)) &&    // OSXSAVE 
        (c[2] & (1 << 26)) &&    // XSAVE
-       (xgetbv(0) & 6)==6){     _cpuisa = 50; // AVX
-      if(c[2]& (1 << 25))       _cpuisa = 51; // +AES
+       (xgetbv(0) & 6)==6) {    _cpuisa = 50; // AVX
+      if(c[2]& (1 << 3))        _cpuisa = 51; // +FMA3
+      if(c[2]& (1 << 25))       _cpuisa |= 2; // 52,53 +AES
       cpuid(c, 7);                                    
-      if(c[1] & (1 << 5)) {     _cpuisa = 52; // AVX2
-      if(c[1] & (1 << 16)) {     	          // AVX512
-        cpuid(c, 0xd);                                      
-        if(c[0] & 0x60) {       _cpuisa = 60; // AVX512
-          cpuid(c, 7);                                        
-          if(c[1] & (1 << 31))  _cpuisa = 61; // AVX512VL
-          if(c[1] & 0x40020000) _cpuisa = 62; // AVX512BW/DQ
-        }
-      }}
+      if(c[1] & (1 << 5)) {     _cpuisa = 60; // AVX2
+        if(c[1] & (1 << 16)) {     	          
+          cpuid(c, 0xd);                                      
+          if(c[0] & 0x60) {     _cpuisa = 70; // AVX512
+            cpuid(c, 7);   
+		    if(c[1]&(1<<16)) 	_cpuisa |= AVX512F;
+		    if(c[1]&(1<<17))	_cpuisa |= AVX512DQ;
+		    if(c[1]&(1<<21))	_cpuisa |= AVX512IFMA;
+		    if(c[1]&(1<<26))	_cpuisa |= AVX512PF;
+		    if(c[1]&(1<<27))	_cpuisa |= AVX512ER;
+		    if(c[1]&(1<<28))	_cpuisa |= AVX512CD;
+		    if(c[1]&(1<<30))	_cpuisa |= AVX512BW;
+		    if(c[1]&(1<<31))	_cpuisa |= AVX512VL;
+	        if(c[2]&(1<< 1))	_cpuisa |= AVX512VBMI;
+			if(c[2]&(1<<11))	_cpuisa |= AVX512VNNI;
+      }}}
     }}}}}}}}}
 	#elif defined(__powerpc64__)
   _cpuisa = 35; // power9 
@@ -391,10 +412,8 @@ int cpuini(int cpuisa) { if(cpuisa) _cpuisa = cpuisa; return _cpuisa; }
 
 char *cpustr(int cpuisa) {
   if(!cpuisa) cpuisa = _cpuisa;
-       if(cpuisa >= 62) return "avx512bw";
-  else if(cpuisa >= 61) return "avx512vl";
-  else if(cpuisa >= 60) return "avx512";
-  else if(cpuisa >= 52) return "avx2";
+  else if(cpuisa >= 70) return "avx512";
+  else if(cpuisa >= 60) return "avx2";
   else if(cpuisa >= 51) return "avx+aes";
   else if(cpuisa >= 50) return "avx";
   else if(cpuisa >= 42) return "sse4.2"; 
@@ -406,7 +425,7 @@ char *cpustr(int cpuisa) {
   else if(cpuisa >= 30) return "sse3";
   else if(cpuisa >= 20) return "sse2";
   else if(cpuisa >= 10) return "sse";
-  else return "none";
+  return "none";
 }
 
 //---------------------------------------------------------------------------------
@@ -424,7 +443,7 @@ void tb64ini(int id) {
   i = id?id:cpuisa();
     #if defined(__i386__) || defined(__x86_64__)
       #ifndef NO_AVX2
-  if(i >= 52) {  
+  if(i >= 60) {  
     _tb64e = tb64avx2enc; 
     _tb64d = tb64avx2dec;
   } else 

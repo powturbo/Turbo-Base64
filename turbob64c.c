@@ -78,7 +78,7 @@ unsigned tb64senc(const unsigned char *in, unsigned inlen, unsigned char *out) {
          unsigned      outlen = TURBOB64LEN(inlen);
 
   if(outlen >= 128+4)
-    for(; op <= out+(outlen-(128+4)); op += 128, ip += (128/4)*3) { 					// 96->128 bytes
+    for(; op <= out+(outlen-(128+4)); op += 128, ip += (128/4)*3) {                     // 96->128 bytes
       LI32(0); LI32(1); LI32( 2); LI32( 3); LI32( 4); LI32( 5); LI32( 6); LI32( 7);         
       LI32(8); LI32(9); LI32(10); LI32(11); LI32(12); LI32(13); LI32(14); LI32(15);    PREFETCH(ip,256, 0);
     }

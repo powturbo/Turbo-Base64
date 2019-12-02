@@ -21,7 +21,7 @@
     - twitter  : https://twitter.com/powturbo
     - email    : powturbo [_AT_] gmail [_DOT_] com
 **/
-//	    time_.h : time functions
+//      time_.h : time functions
 #include <time.h>
 #include <float.h>
 
@@ -50,19 +50,19 @@ typedef struct timespec tm_t;
   #endif
 
   #ifdef __corei7__
-#define RDTSC_INI(_c_) do { unsigned _cl, _ch;				\
-  __asm volatile ("couid\n\t"								\
-				"rdtsc\n\t"									\
-				"mov %%edx, %0\n"							\
-				"mov %%eax, %1\n": "=r" (_ch), "=r" (_cl)::	\
-				"%rax", "%rbx", "%rcx", "%rdx");			\
-  _c_ = (uint64_t)_ch << 32 | _cl;				\
+#define RDTSC_INI(_c_) do { unsigned _cl, _ch;              \
+  __asm volatile ("couid\n\t"                               \
+                "rdtsc\n\t"                                 \
+                "mov %%edx, %0\n"                           \
+                "mov %%eax, %1\n": "=r" (_ch), "=r" (_cl):: \
+                "%rax", "%rbx", "%rcx", "%rdx");            \
+  _c_ = (uint64_t)_ch << 32 | _cl;              \
 } while(0)
 
-#define RDTSC(_c_) do { unsigned _cl, _ch;					\
-  __asm volatile("rdtscp\n"									\
-               "mov %%edx, %0\n"							\
-               "mov %%eax, %1\n"							\
+#define RDTSC(_c_) do { unsigned _cl, _ch;                  \
+  __asm volatile("rdtscp\n"                                 \
+               "mov %%edx, %0\n"                            \
+               "mov %%eax, %1\n"                            \
                "cpuid\n\t": "=r" (_ch), "=r" (_cl):: "%rax",\
                "%rbx", "%rcx", "%rdx");\
   _c_ = (uint64_t)_ch << 32 | _cl;\
@@ -70,10 +70,10 @@ typedef struct timespec tm_t;
   #else
 #define RDTSC(_c_) do { unsigned _cl, _ch;\
   __asm volatile ("cpuid \n"\
-				"rdtsc"\
-				: "=a"(_cl), "=d"(_ch)\
-				: "a"(0)\
-				: "%ebx", "%ecx");\
+                "rdtsc"\
+                : "=a"(_cl), "=d"(_ch)\
+                : "a"(0)\
+                : "%ebx", "%ecx");\
   _c_ = (uint64_t)_ch << 32 | _cl;\
 } while(0)
 #define RDTSC_INI(_c_) RDTSC(_c_)
@@ -93,7 +93,7 @@ typedef struct timespec tm_t;
   #ifdef RDTSC_ON
 #define tminit() tmrdtscini()
 #define tmtime() tmrdtsc()
-#define TM_T					CLOCKS_PER_SEC
+#define TM_T                    CLOCKS_PER_SEC
 static double TMBS(unsigned l, double t) { double dt = t, dl = l; return t/l; }
 #define TM_C 1000
 
@@ -157,7 +157,7 @@ static int tmiszero(tm_t t) { return !(t.tv_sec|t.tv_nsec); }
 // end benchmark loop
 #define TMEND(_len_) _tm_r++; if((_tm_t = tmdiff(_tm_t0, tmtime())) > tm_tx) break; } \
   if(_tm_t < tm_tm) { if(tm_tm == DBL_MAX) tm_rm = _tm_r; tm_tm = _tm_t; _tm_c++; } \
-  else if(_tm_t > tm_tm*1.2) TMSLEEP;   													if(tm_verbose) { printf("%8.2f %2d_%.2d\b\b\b\b\b\b\b\b\b\b\b\b\b\b",TMBS(_len_, tm_tm/tm_rm),_tm_R+1,_tm_c),fflush(stdout); }\
+  else if(_tm_t > tm_tm*1.2) TMSLEEP;                                                       if(tm_verbose) { printf("%8.2f %2d_%.2d\b\b\b\b\b\b\b\b\b\b\b\b\b\b",TMBS(_len_, tm_tm/tm_rm),_tm_R+1,_tm_c),fflush(stdout); }\
   if(tmdiff(_tm_ts, tmtime()) > tm_TX && _tm_R < tm_RepMin) break;\
   if((_tm_R & 7)==7) sleep(tm_slp),_tm_ts = tmtime(); } }
 
@@ -208,7 +208,7 @@ static unsigned argtoi(char *s, unsigned def) {
     case 'm': f = Mb; break;
     case 'g': f = Gb; break;
     case 'b': def = 0;
-	default: if(!def) return n>=32?0xffffffffu:(1u << n); f = def; 
+    default: if(!def) return n>=32?0xffffffffu:(1u << n); f = def; 
   }
   return n*f;
 }
@@ -223,7 +223,7 @@ static uint64_t argtol(char *s) {
     case 'm': f = Mb; break;
     case 'g': f = Gb; break;
     case 'b': return 1u << n;
-	default:  f = MB;	
+    default:  f = MB;   
   }
   return n*f;
 }
@@ -236,7 +236,7 @@ static uint64_t argtot(char *s) {
     case 'm': f = 60000;   break;
     case 's': f = 1000;    break;
     case 'M': f = 1;       break;
-	default:  f = 1000;	
+    default:  f = 1000; 
   }
   return n*f;
 }

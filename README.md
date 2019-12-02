@@ -23,7 +23,7 @@ Turbo Base64:Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/powt
 - with [TurboBench](https://github.com/powturbo/TurboBench)
 - Single thread
 - Including base64 error checking
-- Small file + realistic and practical (no PURE cache) benchmark with large binary game assets corpus pd3d.tar (32 MB)
+- Small file + realistic and practical (no PURE cache) benchmark with large binary game assets corpus pd3d.tar (20 MB)
 - Unlike other benchmarks, the best of the best scalar+simd libraries are benchmarked
 
 ###### Benchmark Intel CPU: Skylake i7-6700 3.4GHz gcc 9.2

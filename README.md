@@ -1,63 +1,75 @@
-Turbo Base64: Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/powturbo/TurboBase64.svg?branch=master)](https://travis-ci.org/powturbo/TurboBase64)
+Turbo Base64:Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/powturbo/TurboBase64.svg?branch=master)](https://travis-ci.org/powturbo/TurboBase64)
 ===================================
 
 ###### **Fastest Base64 SIMD** Encoding library
  * 100% C (C++ headers), as simple as memcpy. 
  * No other base64 library encode or decode faster
  * :sparkles: **Scalar** can be faster than other SSE or ARM Neon based base64 libraries
- * :new: Turbo Base64 **SSE** faster than other SSE/AVX/AVX2! base64 library
- * :new: Fastest **AVX2** implementation 
- * :new: Fastest **ARM Neon** base64
+ * :new: (2019.12) Turbo Base64 **SSE** faster than other SSE/AVX/AVX2! base64 library
+ * :new: (2019.12) Fastest **AVX2** implementation, damn near to memcpy
+ * SSE/AVX faster than other AVX2 base64. TurboBase64 AVX2 is ~2x faster than other AVX2 libs.
+ * :new: (2019.12) Fastest **ARM Neon** base64
  * :+1: Dynamic CPU detection and **JIT scalar/sse/avx/avx2** switching
  * Base64 robust **error checking**
  * Portable library, 32/64 bits, **SSE/AVX/AVX2**, **ARM Neon**, **Power9 Altivec**
- * Ready and simple to use library, no armada of files, no hassles dependencies
  * OS:Linux amd64, arm64, Power9, MacOs, s390x. Windows:Mingw, visual c++
  * Big+Little endian
+ * Ready and simple to use library, no armada of files, no hassles dependencies
 <p>
 
 ------------------------------------------------------------------------
 
-## Benchmark incl. the fastest SIMD Base64 libs:
+## Benchmark incl. the best SIMD Base64 libs:
 - with [TurboBench](https://github.com/powturbo/TurboBench)
 - Single thread
 - Including base64 error checking
-- Realistic and practical (no PURE cache) benchmark with large binary game assets corpus pd3d.tar (32 MB)
+- Small file + realistic and practical (no PURE cache) benchmark with large binary game assets corpus pd3d.tar (32 MB)
 - Unlike other benchmarks, the best of the best scalar+simd libraries are benchmarked
 
 ###### Benchmark Intel CPU: Skylake i7-6700 3.4GHz gcc 9.2
-|E Size|ratio%|E MB/s|D MB/s|Name|Description 2019.12|
+|E Size|ratio%|E MB/s|D MB/s|Name|1MB binary 2019.12 |
 |--------:|-----:|--------:|--------:|----------------|----------------|
-|42603868|133.3|**8435**|**9011**|[**TB64avx2**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx2**|
-|42603868|133.3|**8153**|**8844**|[**TB64avx**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx**|
-|42603868|133.3|**7943**|**8229**|[**TB64sse**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 sse**|
-|42603868|133.3|7795|7860|[fb64avx2](https://github.com/lemire/fastbase64)|Fastbase64 avx2|
-|42603868|133.3|7809|7815|[b64avx2](https://github.com/aklomp/base64)|Base64 avx2|
-|42603868|133.3|7161|6510|[b64avx](https://github.com/aklomp/base64)|Base64 avx|
-|42603868|133.3|6420|5560|[b64sse](https://github.com/aklomp/base64)|Base64 sse41|
+|1333336|133.3|**15.968**|**25.503**|[**TB64avx2**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx2**|
+|1333336|133.3|**9.838**|**15.630**|[**TB64avx**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx**|
+|1333336|133.3|**8.891**|**12.097**|[**TB64sse**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 sse**|
+|1333336|133.3|12.973|13.986|[fb64avx2](https://github.com/lemire/fastbase64)|Fastbase64 avx2|
+|1333336|133.3|12.962|13.970|[b64avx2](https://github.com/aklomp/base64)|Base64 avx2|
+|1333336|133.3|8.392|8.717|[b64avx](https://github.com/aklomp/base64)|Base64 avx|
+|1333336|133.3|6.899|7.477|[b64sse](https://github.com/aklomp/base64)|Base64 sse41|
+|1000000|100.0|29.934|29.992|memcpy||
+
+|E Size|ratio%|E MB/s|D MB/s|Name| 20MB binary 2019.12|
+|--------:|-----:|--------:|--------:|----------------|----------------|
+|26666668|133.3|**8.920**|**12.706**|[**TB64avx2**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx2**|
+|26666668|133.3|**8.466**|**12.401**|[**TB64avx**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx**|
+|26666668|133.3|**8.026**|**11.291**|[**TB64sse**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 sse**|
+|26666668|133.3|7.795|7.860|[fb64avx2](https://github.com/lemire/fastbase64)|Fastbase64 avx2|
+|26666668|133.3|7.809|10.381|[b64avx2](https://github.com/aklomp/base64)|Base64 avx2|
+|26666668|133.3|7.161|8.172|[b64avx](https://github.com/aklomp/base64)|Base64 avx|
+|26666668|133.3|6.420|7.042|[b64sse](https://github.com/aklomp/base64)|Base64 sse41|
 |||||||
-|42603868|133.3|**3925**|**3143**|[**TB64x**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 scalar**|
-|42603868|133.3|1872|2490|[b64plain](https://github.com/aklomp/base64)|Base64 plain|
-|42603868|133.3|1908|2179|[TB64s](https://github.com/powturbo/TurboBase64)|**Turbo Base64 scalar**|
-|42603868|133.3|1262|1375|[chrome](https://github.com/lemire/fastbase64)|Google Chrome base64|
-|42603868|133.3|1675|1167|[fb64plain](https://github.com/lemire/fastbase64)|FastBase64 plain|
-|42603869|133.3|1122|816|[quicktime](https://github.com/lemire/fastbase64)|Apple Quicktime base64|
-|43269553|135.4| 903|171|[linux](https://github.com/lemire/fastbase64)|Linux base64|
-|31952900|100.0|14432|14464|memcpy|raw data|
+||133.3|**3925**|**4246**|[**TB64x**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 scalar**|
+|26666668|133.3|1.840|3.320|[b64plain](https://github.com/aklomp/base64)|Base64 plain|
+|26666668|133.3|1.908|2.638|[TB64s](https://github.com/powturbo/TurboBase64)|**Turbo Base64 scalar**|
+|26666668|133.3|1.522|3.198|[chrome](https://github.com/lemire/fastbase64)|Google Chrome base64|
+|26666668|133.3|1.871|1.612|[fb64plain](https://github.com/lemire/fastbase64)|FastBase64 plain|
+|26666668|133.3|1.122|816|[quicktime](https://github.com/lemire/fastbase64)|Apple Quicktime base64|
+|27083334|135.4|1.100|178|[linux](https://github.com/lemire/fastbase64)|Linux base64|
+|20000000|100.0|14.432|14.464|memcpy||
 
 ###### Benchmark ARM: ARMv8 A73-ODROID-N2 1.8GHz (clang 6.0)
-|E Size|ratio%|E MB/s|D MB/s|Name|Description 2019.12|
+|E Size|ratio%|E MB/s|D MB/s|Name|20MB binary 2019.12|
 |--------:|-----:|--------:|--------:|----------------|----------------|
-|42603868|133.3|**2026**|**1212**|[**TB64neon**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 Neon**|
-|42603868|133.3|1795|989|[b64neon](https://github.com/aklomp/base64)|Base64 Neon|
-|42603868|133.3|**1279**|**801**|[**TB64x**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 scalar**|
-|42603868|133.3|702|639|[TB64s](https://github.com/powturbo/TurboBase64)|**Turbo Base64 scalar**|
-|42603868|133.3|512|615|[fb64neon](https://github.com/lemire/fastbase64)|Fastbase64 SIMD Neon|
-|42603868|133.3|565|460|[Chrome](https://github.com/lemire/fastbase64)|Google Chrome base64|
-|42603868|133.3|641|459|[b64plain](https://github.com/aklomp/base64)|Base64 plain|
-|42603868|133.3|506|412|[fb64plain](https://github.com/lemire/fastbase64)|Fastbase64 plain|
-|43269553|135.4|314|91|[Linux](https://github.com/lemire/fastbase64)|Linux base64|
-|31952900|100.0|4050|4105|memcpy|raw data|
+|26666668|133.3|**2026**|**1630**|[**TB64neon**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 Neon**|
+|26666668|133.3|1795|1270|[b64neon](https://github.com/aklomp/base64)|Base64 Neon|
+|26666668|133.3|**1270**|**1095**|[**TB64x**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 scalar**|
+|26666668|133.3|695|965|[TB64s](https://github.com/powturbo/TurboBase64)|**Turbo Base64 scalar**|
+|26666668|133.3|512|782|[fb64neon](https://github.com/lemire/fastbase64)|Fastbase64 SIMD Neon|
+|26666668|133.3|565|460|[Chrome](https://github.com/lemire/fastbase64)|Google Chrome base64|
+|26666668|133.3|659|639|[b64plain](https://github.com/aklomp/base64)|Base64 plain|
+|26666668|133.3|506|548|[fb64plain](https://github.com/lemire/fastbase64)|Fastbase64 plain|
+|27083334|135.4|314|91|[Linux](https://github.com/lemire/fastbase64)|Linux base64|
+|20000000|100.0|3720|3845|memcpy|raw data|
 
 (**bold** = pareto in category)  MB=1.000.000<br />
 (E/D) : Encode/Decode
@@ -117,5 +129,5 @@ Turbo Base64: Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/pow
   * :green_book:[Faster Base64 Encoding and Decoding Using AVX2 Instructions](https://arxiv.org/abs/1704.00605)
   * :green_book:[RFC 4648:The Base16, Base32, and Base64 Data Encodings](https://tools.ietf.org/html/rfc4648)
 
-Last update: 30 Nov 2019
+Last update: 2 Dec 2019
 

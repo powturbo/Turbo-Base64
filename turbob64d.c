@@ -76,24 +76,29 @@ static const unsigned char lut[] = {
 #define LU32(_u_) BSWAP32(lut[(unsigned char)(_u_     )] << 26 |\
                           lut[(unsigned char)(_u_>>  8)] << 20 |\
                           lut[(unsigned char)(_u_>> 16)] << 14 |\
-                          lut[               (_u_>> 24)] <<  8)
+                          lut[                _u_>> 24 ] <<  8)
 
-#define LI32(_i_) { \
-  unsigned _u = ctou32(ip+_i_*8);    _u = LU32(_u);\
-  unsigned _v = ctou32(ip+_i_*8+4);  _v = LU32(_v);\
-  ctou32(op+ _i_*6  ) = _u;\
-  ctou32(op+ _i_*6+3) = _v;\
-}
+#define LU32C(_u_)       (lut[(unsigned char)(_u_     )] |\
+                          lut[(unsigned char)(_u_>>  8)] |\
+                          lut[(unsigned char)(_u_>> 16)] |\
+                          lut[                _u_>> 24 ])
 
-#define LI32C(_i_) { \
-  unsigned _u = ctou32(ip+_i_*8);   _u = LU32(_u); CHECK0(cu|= _u);\
-  unsigned _v = ctou32(ip+_i_*8+4); _v = LU32(_v); CHECK1(cu|= _v);\
+#define LI32C(_i_) {\
+  unsigned _u = ctou32(ip+_i_*8);   CHECK0(cu|= LU32C(_u)); _u = LU32(_u);\
+  unsigned _v = ctou32(ip+_i_*8+4); CHECK1(cu|= LU32C(_v)); _v = LU32(_v);\
   ctou32(op+ _i_*6  ) = _u;\
   ctou32(op+ _i_*6+3) = _v;\
 }
 
   #ifdef B64CHECK
 #define LI32(a) LI32C(a)
+  #else
+#define LI32(_i_) { \
+  unsigned _u = ctou32(ip+_i_*8);    _u = LU32(_u);\
+  unsigned _v = ctou32(ip+_i_*8+4);  _v = LU32(_v);\
+  ctou32(op+ _i_*6  ) = _u;\
+  ctou32(op+ _i_*6+3) = _v;\
+}
   #endif
 
 unsigned tb64sdec(const unsigned char *in, unsigned inlen, unsigned char *out) {
@@ -108,7 +113,7 @@ unsigned tb64sdec(const unsigned char *in, unsigned inlen, unsigned char *out) {
       LI32(8);  LI32(9); LI32(10); LI32(11); LI32(12); LI32(13); LI32(14); LI32(15);   	PREFETCH(ip,384, 0);
     }
   if(inlen - (ip-in) > 4)												// decode rest
-    for(; ip < in+(inlen-4); ip += 4, op += 3) { unsigned u = ctou32(ip); u = LU32(u); ctou32(op) = u; cu |= u; }
+    for(; ip < in+(inlen-4); ip += 4, op += 3) { unsigned u = ctou32(ip); cu |= LU32C(u); u = LU32(u); ctou32(op) = u; }
 
   unsigned u = 0, l = inlen - (ip-in);  
   if(l == 4) 															// last 4 bytes
@@ -119,12 +124,12 @@ unsigned tb64sdec(const unsigned char *in, unsigned inlen, unsigned char *out) {
 	}                                       
   unsigned char *up = (unsigned char *)&u;
   switch(l) {
-    case 4: u = BSWAP32(lut[ip[0]]<<26 | lut[ip[1]]<<20 | lut[ip[2]]<<14 | lut[ip[3]]<<8); *op++ = up[0]; *op++ = up[1]; *op++ = up[2]; ip+=4; cu |= u; break; // 4->3 bytes
-    case 3: u = BSWAP32(lut[ip[0]]<<26 | lut[ip[1]]<<20 | lut[ip[2]]<<14);                 *op++ = up[0]; *op++ = up[1];                ip+=3; cu |= u; break; // 3->2 bytes
-    case 2: u = BSWAP32(lut[ip[0]]<<26 | lut[ip[1]]<<20);                                  *op++ = up[0];                               ip+=2; cu |= u; break; // 2->1 byte
-    case 1: u = BSWAP32(lut[ip[0]]);                                                       *op++ = up[0];                               ip+=1; cu |= u; break; // 1->1 byte
-  }
-  return (cu & 0x80808080)?0:(op-out);
+    case 4: u = BSWAP32(lut[ip[0]]<<26 | lut[ip[1]]<<20 | lut[ip[2]]<<14 | lut[ip[3]]<<8); *op++ = up[0]; *op++ = up[1]; *op++ = up[2]; cu |= lut[ip[0]] | lut[ip[1]] | lut[ip[2]] | lut[ip[3]]; ip+=4; break; // 4->3 bytes
+    case 3: u = BSWAP32(lut[ip[0]]<<26 | lut[ip[1]]<<20 | lut[ip[2]]<<14);                 *op++ = up[0]; *op++ = up[1];                cu |= lut[ip[0]] | lut[ip[1]] | lut[ip[2]]; ip+=3; break; // 3->2 bytes
+    case 2: u = BSWAP32(lut[ip[0]]<<26 | lut[ip[1]]<<20);                                  *op++ = up[0];                               cu |= lut[ip[0]] | lut[ip[1]]; ip+=2; break; // 2->1 byte
+    case 1: u = BSWAP32(lut[ip[0]]);                                                       *op++ = up[0];                               cu |= lut[ip[0]]; ip+=1; break; // 1->1 byte
+  } 
+  return (cu == 0xff)?0:(op-out);
 }
 
 //---- Fast decoding with pre shifted lookup table: 4k=4*4*256, (but only 4*4*64 = 1024 bytes used) for fast decoding ----------
@@ -314,6 +319,7 @@ static const unsigned lut3[] = {
   #endif				
 
   #ifdef B64CHECK
+#undef DI32
 #define DI32(a) DI32C(a)
   #endif
   

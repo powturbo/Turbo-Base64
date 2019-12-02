@@ -122,7 +122,7 @@ Turbo Base64:Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/powt
 
 ###### References:
 - [fastbase v2019.12](https://github.com/lemire/fastbase64)
-- [base64 v.0.4.0](https://github.com/aklomp/base64)
+- [base64 v.0.4.0 2019.12](https://github.com/aklomp/base64)
 - [base64simd](https://github.com/WojciechMula/base64simd)
 
 ###### * **Base64 publications:**

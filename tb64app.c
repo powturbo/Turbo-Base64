@@ -123,7 +123,7 @@ unsigned bench(unsigned char *in, unsigned n, unsigned char *out, unsigned char 
     case 3:                    TMBENCH("",l=tb64enc(    in, n, out),n); pr(l,n); TMBENCH2("tb64auto", tb64dec(out, l, cpy), l);      break;
     case 4:if(cpuini(0)>=33) { TMBENCH("",l=tb64sseenc( in, n, out),n); pr(l,n); TMBENCH2("tb64sse",  tb64ssedec(out, l, cpy), l); } break;
       #else
-    case 3: case 4:return;  
+    case 3: case 4:return 0;  
       #endif
       #if defined(__i386__) || defined(__x86_64__)
     case 5:if(cpuini(0)>=50) { TMBENCH("",l=tb64avxenc( in, n, out),n); pr(l,n); TMBENCH2("tb64avx",  tb64avxdec( out, l, cpy), l); } break;

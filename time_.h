@@ -23,19 +23,23 @@
 **/
 //	    time_.h : time functions
 #include <time.h>
+#include <float.h>
 
-#ifdef _WIN32
+  #ifdef _WIN32
 #include <windows.h>
-  #ifndef sleep
+    #ifndef sleep
 #define sleep(n) Sleep((n) * 1000)
-  #endif
+    #endif
+
 typedef unsigned __int64 uint64_t;
 typedef unsigned __int64 tm_t;
-#else
+
+  #else
 #include <stdint.h>
 #include <unistd.h>
-typedef uint64_t tm_t;
 #define Sleep(ms) usleep((ms) * 1000)
+
+typedef struct timespec tm_t;
 #endif
 
 #if defined (__i386__) || defined( __x86_64__ )
@@ -79,8 +83,8 @@ typedef uint64_t tm_t;
 #define RDTSC(_c_)
 #endif
 
-#define tmrdtscini() ({ tm_t _c; __asm volatile("" ::: "memory"); RDTSC_INI(_c); _c; })
-#define tmrdtsc()    ({ tm_t _c; RDTSC(_c); _c; })
+#define tmrdtscini() ({ uint64_t _c; __asm volatile("" ::: "memory"); RDTSC_INI(_c); _c; })
+#define tmrdtsc()    ({ uint64_t _c; RDTSC(_c); _c; })
 
 #ifndef TM_F
 #define TM_F 1.0  // TM_F=4 -> MI/s
@@ -90,32 +94,32 @@ typedef uint64_t tm_t;
 #define tminit() tmrdtscini()
 #define tmtime() tmrdtsc()
 #define TM_T					CLOCKS_PER_SEC
-static double TMBS(unsigned l, tm_t t) { double dt=t,dl=l; return t/l; }
+static double TMBS(unsigned l, double t) { double dt = t, dl = l; return t/l; }
 #define TM_C 1000
+
   #else
-#define TM_T 1000000.0
 #define TM_C 1
-static double TMBS(unsigned l, tm_t tm) { double dl=l,dt=tm; return dt>=0.000001?(dl/(1000000.0*TM_F))/(dt/TM_T):0.0; }
+static double TMBS(unsigned l, double t) { return (l/t)/1000000.0; }
+
     #ifdef _WIN32
 static LARGE_INTEGER tps;
 static tm_t tmtime(void) { 
   LARGE_INTEGER tm;
   tm_t t;
-  double d;  
   QueryPerformanceCounter(&tm);
-  d = tm.QuadPart;
-  t = d*1000000.0/tps.QuadPart; 
-  return t;
+  return tm.QuadPart;
 }
 
-static tm_t tminit() { tm_t t0,ts; QueryPerformanceFrequency(&tps); t0 = tmtime(); while((ts = tmtime())==t0); return ts; }
+static tm_t tminit() { tm_t t0,ts; QueryPerformanceFrequency(&tps); t0 = tmtime(); while((ts = tmtime())==t0) {}; return ts; }
+static double tmdiff(tm_t start, tm_t stop) { return (double)(stop - start)/tps.QuadPart; }
+static int tmiszero(tm_t t) { return !t; }
     #else
       #ifdef __APPLE__
 #include <AvailabilityMacros.h>
         #ifndef MAC_OS_X_VERSION_10_12
 #define MAC_OS_X_VERSION_10_12 101200
         #endif
-#define CIVETWEB_APPLE_HAVE_CLOCK_GETTIME defined(__APPLE__) && MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_12
+#define CIVETWEB_APPLE_HAVE_CLOCK_GETTIME (defined(__APPLE__) && defined(MAC_OS_X_VERSION_MIN_REQUIRED) && MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_12)
         #if !(CIVETWEB_APPLE_HAVE_CLOCK_GETTIME)
 #include <sys/time.h>
 #define CLOCK_REALTIME 0
@@ -130,35 +134,62 @@ int clock_gettime(int /*clk_id*/, struct timespec* t) {
 }
         #endif
       #endif
-static   tm_t tmtime(void)    { struct timespec tm; clock_gettime(CLOCK_MONOTONIC, &tm); return (tm_t)tm.tv_sec*1000000 + tm.tv_nsec/1000; }
-static   tm_t tminit()        { tm_t t0=tmtime(),ts; while((ts = tmtime())==t0) {}; return ts; }
+static   tm_t tmtime()                      { struct timespec tm; clock_gettime(CLOCK_MONOTONIC, &tm); return tm; }
+static double tmdiff(tm_t start, tm_t stop) { return (stop.tv_sec - start.tv_sec) + (double)(stop.tv_nsec - start.tv_nsec)/1e9f; }
+static   tm_t tminit()   { tm_t t0 = tmtime(),t; while(!tmdiff(t = tmtime(),t0)) {}; return t; }
+static int tmiszero(tm_t t) { return !(t.tv_sec|t.tv_nsec); }
     #endif
-static double tmsec( tm_t tm) { double d = tm; return d/1000000.0; }
-static double tmmsec(tm_t tm) { double d = tm; return d/1000.0; }
 #endif
+
 //---------------------------------------- bench ----------------------------------------------------------------------
-#define TM_TX TM_T
- 
-#define TMSLEEP do { tm_T = tmtime(); if(!tm_0) tm_0 = tm_T; else if(tm_T - tm_0 > tm_TX) { if(tm_verbose) { printf("S \b\b");fflush(stdout);} sleep(tm_slp); tm_0=tmtime();} } while(0)
+// for each a function call is repeated until exceding tm_tx seconds. 
+// A run duration is always tm_tx seconds
+// The number of runs can be set with the program options  -I and -J (specify -I15 -J15 for more precision)
 
-#define TMBEG(_tm_reps_, _tm_Reps_) { unsigned _tm_r,_tm_c=0,_tm_R; tm_t _tm_t0,_tm_t,_tm_ts;\
-  for(tm_rm = _tm_reps_, tm_tm = (tm_t)1<<63,_tm_R = 0,_tm_ts=tmtime(); _tm_R < _tm_Reps_; _tm_R++) { tm_t _tm_t0 = tminit();\
+// sleep after each 8 runs to avoid cpu trottling.
+#define TMSLEEP do { tm_T = tmtime(); if(tmiszero(tm_0)) tm_0 = tm_T; else if(tmdiff(tm_0, tm_T) > tm_TX) { if(tm_verbose) { printf("S \b\b");fflush(stdout); } sleep(tm_slp); tm_0=tmtime();} } while(0)
+
+// start benchmark loop   
+#define TMBEG(_tm_reps_, _tm_Reps_) { unsigned _tm_r,_tm_c = 0,_tm_R; tm_t _tm_ts; double _tm_t;\
+  for(tm_rm = _tm_reps_, tm_tm = DBL_MAX, _tm_R = 0, _tm_ts = tmtime(); _tm_R < _tm_Reps_; _tm_R++) { tm_t _tm_t0 = tminit();\
     for(_tm_r=0;_tm_r < tm_rm;) {
- 
-#define TMEND(_len_) _tm_r++; if((_tm_t = tmtime() - _tm_t0) > tm_tx) break; } \
-  if(_tm_t < tm_tm) { if(tm_tm == (tm_t)1<<63) tm_rm = _tm_r; tm_tm = _tm_t; _tm_c++; } \
-  else if(_tm_t>tm_tm*1.2) TMSLEEP;   													if(tm_verbose) { double d = tm_tm*TM_C,dr=tm_rm; printf("%8.2f %2d_%.2d\b\b\b\b\b\b\b\b\b\b\b\b\b\b",TMBS(_len_, d/dr),_tm_R+1,_tm_c),fflush(stdout); }\
-  if(tmtime()-_tm_ts > tm_TX && _tm_R < tm_RepMin) break;\
-  if((_tm_R & 7)==7) sleep(tm_slp),_tm_ts=tmtime(); } }
-  
-static unsigned tm_rep = 1<<20, tm_Rep = 3, tm_rep2 = 1<<20, tm_Rep2 = 4, tm_slp = 20, tm_rm;
-static tm_t     tm_tx = TM_T, tm_TX = 120*TM_T, tm_RepMin=1, tm_0, tm_T, tm_verbose=2, tm_tm;
-static void tm_init(int _tm_Rep, int _tm_verbose) { tm_verbose = _tm_verbose; if(_tm_Rep) tm_Rep = _tm_Rep; tm_tx =  tminit(); Sleep(500); tm_tx = tmtime() - tm_tx; tm_TX = 10*tm_tx; }
 
-#define TMBENCH(_name_, _func_, _len_)  do { if(tm_verbose>1) printf("%s ", _name_?_name_:#_func_); TMBEG(tm_rep, tm_Rep) _func_; TMEND(_len_); { double dm = tm_tm,dr=tm_rm; if(tm_verbose) printf("%8.2f      \b\b\b\b\b", TMBS(_len_, dm*TM_C/dr) );} } while(0)
-#define TMBENCH2(_name_, _func_, _len_)  do { TMBEG(tm_rep2, tm_Rep2) _func_; TMEND(_len_); { double dm = tm_tm,dr=tm_rm; if(tm_verbose) printf("%8.2f      \b\b\b\b\b", TMBS(_len_, dm*TM_C/dr) );} if(tm_verbose>1) printf("%s ", _name_?_name_:#_func_); } while(0)
-#define TMBENCHT(_name_,_func_, _len_, _res_)  do { TMBEG(tm_rep, tm_Rep) if(_func_ != _res_) { printf("ERROR: %lld != %lld", (long long)_func_, (long long)_res_ ); exit(0); }; TMEND(_len_); if(tm_verbose) printf("%8.2f      \b\b\b\b\b", TMBS(_len_,(double)tm_tm*TM_C/(double)tm_rm) ); if(tm_verbose) printf("%s ", _name_?_name_:#_func_ ); } while(0)
+// end benchmark loop
+#define TMEND(_len_) _tm_r++; if((_tm_t = tmdiff(_tm_t0, tmtime())) > tm_tx) break; } \
+  if(_tm_t < tm_tm) { if(tm_tm == DBL_MAX) tm_rm = _tm_r; tm_tm = _tm_t; _tm_c++; } \
+  else if(_tm_t > tm_tm*1.2) TMSLEEP;   													if(tm_verbose) { printf("%8.2f %2d_%.2d\b\b\b\b\b\b\b\b\b\b\b\b\b\b",TMBS(_len_, tm_tm/tm_rm),_tm_R+1,_tm_c),fflush(stdout); }\
+  if(tmdiff(_tm_ts, tmtime()) > tm_TX && _tm_R < tm_RepMin) break;\
+  if((_tm_R & 7)==7) sleep(tm_slp),_tm_ts = tmtime(); } }
 
+static unsigned tm_rep = 1<<24, tm_Rep = 3, tm_rep2 = 1<<20, tm_Rep2 = 3, tm_rm, tm_RepMin = 1, tm_slp = 20, tm_verbose = 2;
+static tm_t tm_0, tm_T;
+static double tm_tm, tm_tx = 1.5, tm_TX = 120;
+
+static void tm_init(int _tm_Rep, int _tm_verbose) { tm_verbose = _tm_verbose; 
+  if(_tm_Rep) tm_Rep = _tm_Rep;
+}
+
+#define TMBENCH(_name_, _func_, _len_)  do { if(tm_verbose>1) printf("%s ", _name_?_name_:#_func_);\
+  TMBEG(tm_rep, tm_Rep) _func_; TMEND(_len_); \
+  double dm = tm_tm, dr = tm_rm; if(tm_verbose) printf("%8.2f      \b\b\b\b\b", TMBS(_len_, dm*TM_C/dr) );\
+} while(0)
+
+// second TMBENCH. Example: use TMBENCH for encoding and TMBENCH2 for decoding 
+#define TMBENCH2(_name_, _func_, _len_)  do { \
+  TMBEG(tm_rep2, tm_Rep2) _func_; TMEND(_len_);\
+  double dm = tm_tm, dr = tm_rm; if(tm_verbose) printf("%8.2f      \b\b\b\b\b", TMBS(_len_, dm*TM_C/dr) );\
+  if(tm_verbose>1) printf("%s ", _name_?_name_:#_func_);\
+} while(0)
+
+// Check
+#define TMBENCHT(_name_,_func_, _len_, _res_)  do { \
+  TMBEG(tm_rep, tm_Rep) \
+  if(_func_ != _res_) { printf("ERROR: %lld != %lld", (long long)_func_, (long long)_res_ ); exit(0); };\
+  TMEND(_len_);\
+  if(tm_verbose) printf("%8.2f      \b\b\b\b\b", TMBS(_len_,(double)tm_tm*TM_C/(double)tm_rm) );\
+  if(tm_verbose) printf("%s ", _name_?_name_:#_func_ );\
+} while(0)
+//----------------------------------------------------------------------------------------------------------------------------------
 #define Kb (1u<<10)
 #define Mb (1u<<20)
 #define Gb (1u<<30)

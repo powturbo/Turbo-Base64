@@ -80,7 +80,7 @@ void *_valloc(size_t size, unsigned a) {
   return VirtualAlloc(NULL, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
     #elif defined(USE_MMAP) && !defined(__APPLE__)
   void *ptr = mmap(NULL/*0(size_t)a<<MAP_BITS*/, size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
-  if(ptr == MAP_FAILED) return NULL;														
+  if(ptr == MAP_FAILED) return NULL;                                                        
   return ptr;
     #else
   return malloc(size); 
@@ -103,8 +103,8 @@ int memcheck(unsigned char *in, unsigned n, unsigned char *cpy) {
   for(i = 0; i < n; i++)
     if(in[i] != cpy[i]) {
       printf("ERROR in[%d]=%x, dec[%d]=%x\n", i, in[i], i, cpy[i]);
-	  return i+1; 
-	}
+      return i+1; 
+    }
   return 0;
 }
 
@@ -136,7 +136,7 @@ unsigned bench(unsigned char *in, unsigned n, unsigned char *out, unsigned char 
     #include "xtb64test.c"
       #endif
     case ID_MEMCPY:           TMBENCH( "", memcpy(out,in,n) ,n);       pr(n,n); TMBENCH2("memcpy", memcpy(cpy,out,n), n);  l=n; break;
-	default: return 0;
+    default: return 0;
   }
   if(l) { printf(" %10d\n", n); memcheck(in,n,cpy); }
   return l;
@@ -160,24 +160,24 @@ void usage(char *pgm) {
   exit(0);
 } 
 
-int main(int argc, char* argv[]) {  							
+int main(int argc, char* argv[]) {                              
   unsigned cmp=1, b = 1 << 30, esize=4, lz=0, fno,id=0,fuzz=3,bid=0;
   char     *scmd = NULL;
 
   int      c, digit_optind = 0, this_option_optind = optind ? optind : 1, option_index = 0;
-  static struct option long_options[] = { {"blocsize", 	0, 0, 'b'}, {0, 0, 0}  };
+  static struct option long_options[] = { {"blocsize",  0, 0, 'b'}, {0, 0, 0}  };
   for(;;) {
     if((c = getopt_long(argc, argv, "B:ce:f:I:J:kq:", long_options, &option_index)) == -1) break;
     switch(c) {
-      case  0 : printf("Option %s", long_options[option_index].name); if(optarg) printf (" with arg %s", optarg);  printf ("\n"); break;								
-      case 'B': b = argtoi(optarg,1); 	break;
-      case 'c': cmp++; 				  	break;
-      case 'k': bid++; 				  	break;
-	  case 'f': fuzz = atoi(optarg);    break;
-	  case 'e': scmd = optarg;          break;
+      case  0 : printf("Option %s", long_options[option_index].name); if(optarg) printf (" with arg %s", optarg);  printf ("\n"); break;                                
+      case 'B': b = argtoi(optarg,1);   break;
+      case 'c': cmp++;                  break;
+      case 'k': bid++;                  break;
+      case 'f': fuzz = atoi(optarg);    break;
+      case 'e': scmd = optarg;          break;
       case 'I': if((tm_Rep  = atoi(optarg))<=0) tm_rep =tm_Rep=1; break;
       case 'J': if((tm_Rep2 = atoi(optarg))<=0) tm_rep2=tm_Rep2=1; break;
-	  case 'q': cpuini(atoi(optarg));  break;
+      case 'q': cpuini(atoi(optarg));  break;
       default: 
         usage(argv[0]);
         exit(0); 
@@ -192,52 +192,52 @@ int main(int argc, char* argv[]) {
   if(argc - optind < 1) { //fprintf(stderr, "File not specified\n"); exit(-1);     
     unsigned _sizes0[] = { 10, 100, 1*KB, 10*KB, 100*KB, 1*MB, 10*MB, 20*MB, 30*MB, 40*MB, 50*MB, 100*MB, 0 },
              _sizes1[] = { 10*KB, 100*KB, 1*MB, 10*MB, 30*MB, 0 }, *sizes = bid?_sizes0:_sizes1;
-	unsigned n = 100*Mb, insize = n, outsize  = turbob64len(insize)*2;
-	unsigned char *_in;
+    unsigned n = 100*Mb, insize = n, outsize  = turbob64len(insize)*2;
+    unsigned char *_in;
     if(!(_in = (unsigned char*)_valloc(insize+1024,1))) die("malloc error in size=%u\n", insize); //_in[insize]=0;
   
     unsigned char *_cpy = _in, *cpy=_cpy, *in = _in, *_out = (unsigned char*)_valloc(outsize,2),*out=_out;  if(!_out) die("malloc error out size=%u\n", outsize);
     if(cmp && !(_cpy = (unsigned char*)_valloc(outsize,3))) die("malloc error cpy size=%u\n", insize);
 
-	for(int s = 0; sizes[s]; s++) {
-	  n = sizes[s];  if(b!=(1<<30) && n<b) continue;
+    for(int s = 0; sizes[s]; s++) {
+      n = sizes[s];  if(b!=(1<<30) && n<b) continue;
       
-	  if(fuzz & 1) { in  = (_in +insize)-n; }  //in[n]=0;
-	  if(fuzz & 2) { out = (_out+outsize)-turbob64len(n); cpy = (_cpy+insize)-n; } 
+      if(fuzz & 1) { in  = (_in +insize)-n; }  //in[n]=0;
+      if(fuzz & 2) { out = (_out+outsize)-turbob64len(n); cpy = (_cpy+insize)-n; } 
       srand(0); for(int i = 0; i < n; i++) in[i] = rand()&0xff;
       if(!bid) {
-	    if(n>=1000000) printf("size=%uMb (Mb=1.000.000)\n", n/1000000);
+        if(n>=1000000) printf("size=%uMb (Mb=1.000.000)\n", n/1000000);
         else           printf("size=%uKb (Kb=1.000)\n", n/1000);
       }
       char *p = scmd?scmd:_scmd;
-	  do { 
+      do { 
         unsigned id = strtoul(p, &p, 10),idx = id, i;    
-	    while(isspace(*p)) p++; if(*p == '-') { if((idx = strtoul(p+1, &p, 10)) < id) idx = id; if(idx > ID_MEMCPY) idx = ID_MEMCPY; } 
-	    for(i = id; i <= idx; i++)
+        while(isspace(*p)) p++; if(*p == '-') { if((idx = strtoul(p+1, &p, 10)) < id) idx = id; if(idx > ID_MEMCPY) idx = ID_MEMCPY; } 
+        for(i = id; i <= idx; i++)
           bench(in, n, out,cpy,i);
-	  } while(*p++);
+      } while(*p++);
     }
-    //_vfree(_in); free(_out); if(cpy) free(cpy);	
-	exit(0);
+    //_vfree(_in); free(_out); if(cpy) free(cpy);   
+    exit(0);
   }
   
   {
     unsigned char *in = NULL, *out = NULL, *cpy = NULL;
     for(fno = optind; fno < argc; fno++) {
       uint64_t flen;
-      int n,i;	  
-      char *inname = argv[fno];  									
-      FILE *fi = fopen(inname, "rb"); 							if(!fi ) { perror(inname); continue; } 	
+      int n,i;    
+      char *inname = argv[fno];                                     
+      FILE *fi = fopen(inname, "rb");                           if(!fi ) { perror(inname); continue; }  
       fseek(fi, 0, SEEK_END); 
       flen = ftell(fi); 
-	  fseek(fi, 0, SEEK_SET);
-	
+      fseek(fi, 0, SEEK_SET);
+    
       if(flen > b) flen = b;
       n = flen; 
       if(!(in  =        (unsigned char*)malloc(n+64)))                 { fprintf(stderr, "malloc error\n"); exit(-1); } cpy = in;
       if(!(out =        (unsigned char*)malloc(turbob64len(flen)+64))) { fprintf(stderr, "malloc error\n"); exit(-1); } 
       if(cmp && !(cpy = (unsigned char*)malloc(n+64)))                 { fprintf(stderr, "malloc error\n"); exit(-1); }
-      n = fread(in, 1, n, fi);											 printf("File='%s' Length=%u\n", inname, n);			
+      n = fread(in, 1, n, fi);                                           printf("File='%s' Length=%u\n", inname, n);            
       fclose(fi);
       if(n <= 0) exit(0);
       tm_init(tm_Rep, tm_Rep2);  
@@ -248,15 +248,15 @@ int main(int argc, char* argv[]) {
       printf("  E MB/s    size     ratio    D MB/s   function\n");  
 
       char *p = scmd?scmd:_scmd;
-	  do { 
+      do { 
         unsigned id = strtoul(p, &p, 10),idx = id, i;    
-	    while(isspace(*p)) p++; if(*p == '-') { if((idx = strtoul(p+1, &p, 10)) < id) idx = id; if(idx > ID_MEMCPY) idx = ID_MEMCPY; } 
-	    for(i = id; i <= idx; i++)
+        while(isspace(*p)) p++; if(*p == '-') { if((idx = strtoul(p+1, &p, 10)) < id) idx = id; if(idx > ID_MEMCPY) idx = ID_MEMCPY; } 
+        for(i = id; i <= idx; i++)
           bench(in,n,out,cpy,i);    
-	  } while(*p++);
+      } while(*p++);
     }
-	if (in) free(in);
-	if (out) free(out);
-	if (cpy) free(cpy);
+    if (in) free(in);
+    if (out) free(out);
+    if (cpy) free(cpy);
   }
 }

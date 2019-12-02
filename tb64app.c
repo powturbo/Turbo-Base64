@@ -63,7 +63,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "time_.h"
 
   #ifdef BASE64
-#include "xtb64test.c"
+#include "xb64test.h"
   #endif
 
 //------------------------------- malloc ------------------------------------------------
@@ -110,36 +110,36 @@ int memcheck(unsigned char *in, unsigned n, unsigned char *cpy) {
 
 void pr(unsigned l, unsigned n) { double r = (double)l*100.0/n; if(r>0.1) printf("%10u %6.2f%% ", l, r);else printf("%10u %7.3f%%", l, r); fflush(stdout); }
 
-#define ID_MEMCPY 12
-void bench(unsigned char *in, unsigned n, unsigned char *out, unsigned char *cpy, int id) { 
+#define ID_MEMCPY 16
+unsigned bench(unsigned char *in, unsigned n, unsigned char *out, unsigned char *cpy, int id) { 
   unsigned l=0;
     #ifndef _MSC_VER
   memrcpy(cpy,in,n); 
     #endif
   switch(id) {
-    case 1:                    TMBENCH("",l=tb64senc(   in, n, out),n); pr(l,n); TMBENCH("tb64s",      tb64sdec(out, l, cpy), n);    break;
-    case 2:                    TMBENCH("",l=tb64xenc(   in, n, out),n); pr(l,n); TMBENCH("tb64x",      tb64xdec( out, l, cpy), n);   break;
+    case 1:                    TMBENCH("",l=tb64senc(   in, n, out),n); pr(l,n); TMBENCH2("tb64s",    tb64sdec(out,  l, cpy), l);   break;
+    case 2:                    TMBENCH("",l=tb64xenc(   in, n, out),n); pr(l,n); TMBENCH2("tb64x",    tb64xdec( out, l, cpy), l);   break;
       #if defined(__i386__) || defined(__x86_64__) || defined(__ARM_NEON) || defined(__powerpc64__)
-    case 3:                    TMBENCH("",l=tb64enc(    in, n, out),n); pr(l,n); TMBENCH("tb64(auto)", tb64dec(out, l, cpy), n);     break;
-    case 4:if(cpuini(0)>=33) { TMBENCH("",l=tb64sseenc( in, n, out),n); pr(l,n); TMBENCH("tb64sse",    tb64ssedec(out, l, cpy), n);  break; } return;
+    case 3:                    TMBENCH("",l=tb64enc(    in, n, out),n); pr(l,n); TMBENCH2("tb64auto", tb64dec(out, l, cpy), l);      break;
+    case 4:if(cpuini(0)>=33) { TMBENCH("",l=tb64sseenc( in, n, out),n); pr(l,n); TMBENCH2("tb64sse",  tb64ssedec(out, l, cpy), l); } break;
       #else
     case 3: case 4:return;  
       #endif
       #if defined(__i386__) || defined(__x86_64__)
-    case 5:if(cpuini(0)>=50) { TMBENCH("",l=tb64avxenc( in, n, out),n); pr(l,n); TMBENCH("tb64avx",    tb64avxdec( out, l, cpy), n); break; } return;
-    case 6:if(cpuini(0)>=52) { TMBENCH("",l=tb64avx2enc(in, n, out),n); pr(l,n); TMBENCH("tb64avx2",   tb64avx2dec(out, l, cpy), n); break; } return;
+    case 5:if(cpuini(0)>=50) { TMBENCH("",l=tb64avxenc( in, n, out),n); pr(l,n); TMBENCH2("tb64avx",  tb64avxdec( out, l, cpy), l); } break;
+    case 6:if(cpuini(0)>=60) { TMBENCH("",l=tb64avx2enc(in, n, out),n); pr(l,n); TMBENCH2("tb64avx2", tb64avx2dec(out, l, cpy), l); } break;
       #else
-    case 5: case 6:return;  
+    case 5: case 6:return 0;  
       #endif
       break;
       #ifdef BASE64
     #include "xtb64test.c"
       #endif
-    case ID_MEMCPY:            TMBENCH( "", memcpy(out,in,n) ,n);       pr(n,n); TMBENCH("memcpy",     memcpy( cpy,out,n) ,n);       break;
-	default: return;
+    case ID_MEMCPY:           TMBENCH( "", memcpy(out,in,n) ,n);       pr(n,n); TMBENCH2("memcpy", memcpy(cpy,out,n), n);  l=n; break;
+	default: return 0;
   }
-  printf("\n");
-  memcheck(in,n,cpy);
+  if(l) { printf(" %10d\n", n); memcheck(in,n,cpy); }
+  return l;
 }
 
 void usage(char *pgm) {
@@ -152,7 +152,7 @@ void usage(char *pgm) {
   fprintf(stderr, " -i#/-j#  # = Minimum  de/compression iterations per run (default=auto)\n");
   fprintf(stderr, " -I#/-J#  # = Number of de/compression runs (default=3)\n");
   fprintf(stderr, " -e#      # = function id\n");
-  fprintf(stderr, " -q#      # = cpuid (33:sse, 50:avx, 52:avx2 default:auto detect). Only for tb64enc/tb64dec)\n");
+  fprintf(stderr, " -q#      # = cpuid (33:ssse3, 50:avx, 60:avx2 default:auto detect). Only for tb64enc/tb64dec)\n");
   fprintf(stderr, "Ex. turbob64 file\n");
   fprintf(stderr, "    turbob64 -e3 file\n");
   fprintf(stderr, "    turbob64 -q33 file\n");
@@ -161,21 +161,20 @@ void usage(char *pgm) {
 } 
 
 int main(int argc, char* argv[]) {  							
-  unsigned cmp=1, b = 1 << 30, esize=4, lz=0, fno,id=0,fuzz=3;
+  unsigned cmp=1, b = 1 << 30, esize=4, lz=0, fno,id=0,fuzz=3,bid=0;
   char     *scmd = NULL;
-  tm_Rep  = 15;  
-  tm_Rep2 = 15;
 
   int      c, digit_optind = 0, this_option_optind = optind ? optind : 1, option_index = 0;
   static struct option long_options[] = { {"blocsize", 	0, 0, 'b'}, {0, 0, 0}  };
   for(;;) {
-    if((c = getopt_long(argc, argv, "B:ce:f:I:J:q:", long_options, &option_index)) == -1) break;
+    if((c = getopt_long(argc, argv, "B:ce:f:I:J:kq:", long_options, &option_index)) == -1) break;
     switch(c) {
       case  0 : printf("Option %s", long_options[option_index].name); if(optarg) printf (" with arg %s", optarg);  printf ("\n"); break;								
       case 'B': b = argtoi(optarg,1); 	break;
       case 'c': cmp++; 				  	break;
-	  case 'f': fuzz   = atoi(optarg); break;
-	  case 'e': scmd   = optarg; break;
+      case 'k': bid++; 				  	break;
+	  case 'f': fuzz = atoi(optarg);    break;
+	  case 'e': scmd = optarg;          break;
       case 'I': if((tm_Rep  = atoi(optarg))<=0) tm_rep =tm_Rep=1; break;
       case 'J': if((tm_Rep2 = atoi(optarg))<=0) tm_rep2=tm_Rep2=1; break;
 	  case 'q': cpuini(atoi(optarg));  break;
@@ -185,23 +184,20 @@ int main(int argc, char* argv[]) {
     }
   }
 
-      tm_init(tm_Rep, tm_Rep2);  
+   tb64ini(0); 
+   printf("detected simd (id=%d->'%s')\n\n", cpuini(0), cpustr(cpuini(0))); 
+   printf("  E MB/s    size     ratio%%   D MB/s   function\n");  
+   char _scmd[33]; sprintf(_scmd, "1-%d", ID_MEMCPY);
 
-      tb64ini(0); 
-      printf("detected simd=%s\n\n", cpustr(cpuini(0))); 
-      printf("  E MB/s    size     ratio    D MB/s   function\n");  
-
-  
   if(argc - optind < 1) { //fprintf(stderr, "File not specified\n"); exit(-1);     
-    unsigned sizes[] = { 10000, 100000, 1000000, 10000000, 100000000, 0 }, n = 100*1024*1024;
-	int fuzz = 3;
-	unsigned insize   = n;
-    unsigned outsize  = turbob64len(insize)*2;
+    unsigned _sizes0[] = { 10, 100, 1*KB, 10*KB, 100*KB, 1*MB, 10*MB, 20*MB, 30*MB, 40*MB, 50*MB, 100*MB, 0 },
+             _sizes1[] = { 10*KB, 100*KB, 1*MB, 10*MB, 30*MB, 0 }, *sizes = bid?_sizes0:_sizes1;
+	unsigned n = 100*Mb, insize = n, outsize  = turbob64len(insize)*2;
 	unsigned char *_in;
-    if(!(_in = _valloc(insize,1))) die("malloc error in size=%u\n", insize); //_in[insize]=0;
+    if(!(_in = (unsigned char*)_valloc(insize+1024,1))) die("malloc error in size=%u\n", insize); //_in[insize]=0;
   
     unsigned char *_cpy = _in, *cpy=_cpy, *in = _in, *_out = (unsigned char*)_valloc(outsize,2),*out=_out;  if(!_out) die("malloc error out size=%u\n", outsize);
-    if(cmp && !(_cpy = _valloc(insize,3))) die("malloc error cpy size=%u\n", insize);
+    if(cmp && !(_cpy = (unsigned char*)_valloc(outsize,3))) die("malloc error cpy size=%u\n", insize);
 
 	for(int s = 0; sizes[s]; s++) {
 	  n = sizes[s];  if(b!=(1<<30) && n<b) continue;
@@ -209,14 +205,16 @@ int main(int argc, char* argv[]) {
 	  if(fuzz & 1) { in  = (_in +insize)-n; }  //in[n]=0;
 	  if(fuzz & 2) { out = (_out+outsize)-turbob64len(n); cpy = (_cpy+insize)-n; } 
       srand(0); for(int i = 0; i < n; i++) in[i] = rand()&0xff;
-	  if(n>=1000000) printf("size=%uMb (Mb=1.000.000)\n", n/1000000);
-      else           printf("size=%uKb (Kb=1.000)\n", n/1000);
-	  char *p = scmd?scmd:"1-10"; 
+      if(!bid) {
+	    if(n>=1000000) printf("size=%uMb (Mb=1.000.000)\n", n/1000000);
+        else           printf("size=%uKb (Kb=1.000)\n", n/1000);
+      }
+      char *p = scmd?scmd:_scmd;
 	  do { 
         unsigned id = strtoul(p, &p, 10),idx = id, i;    
 	    while(isspace(*p)) p++; if(*p == '-') { if((idx = strtoul(p+1, &p, 10)) < id) idx = id; if(idx > ID_MEMCPY) idx = ID_MEMCPY; } 
 	    for(i = id; i <= idx; i++)
-          bench(in,n,out,cpy,i);    
+          bench(in, n, out,cpy,i);
 	  } while(*p++);
     }
     //_vfree(_in); free(_out); if(cpy) free(cpy);	
@@ -248,7 +246,8 @@ int main(int argc, char* argv[]) {
       printf("detected simd=%s\n\n", cpustr(cpuini(0))); 
 
       printf("  E MB/s    size     ratio    D MB/s   function\n");  
-	  char *p = scmd?scmd:"1-12"; 
+
+      char *p = scmd?scmd:_scmd;
 	  do { 
         unsigned id = strtoul(p, &p, 10),idx = id, i;    
 	    while(isspace(*p)) p++; if(*p == '-') { if((idx = strtoul(p+1, &p, 10)) < id) idx = id; if(idx > ID_MEMCPY) idx = ID_MEMCPY; } 
@@ -261,4 +260,3 @@ int main(int argc, char* argv[]) {
 	if (cpy) free(cpy);
   }
 }
-

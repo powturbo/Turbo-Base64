@@ -108,20 +108,20 @@ unsigned tb64sdec(const unsigned char *in, unsigned inlen, unsigned char *out) {
   if(!inlen || (inlen&3)) return 0;
 
   if(inlen >= 128+4)
-    for(; ip <= in+(inlen-(128+4)); ip += 128, op += (128/4)*3) {		// decode 128->96 bytes			
+    for(; ip <= in+(inlen-(128+4)); ip += 128, op += (128/4)*3) {       // decode 128->96 bytes         
       LI32C(0); LI32(1); LI32( 2); LI32( 3); LI32( 4); LI32( 5); LI32( 6); LI32( 7);     
-      LI32(8);  LI32(9); LI32(10); LI32(11); LI32(12); LI32(13); LI32(14); LI32(15);   	PREFETCH(ip,384, 0);
+      LI32(8);  LI32(9); LI32(10); LI32(11); LI32(12); LI32(13); LI32(14); LI32(15);    PREFETCH(ip,384, 0);
     }
-  if(inlen - (ip-in) > 4)												// decode rest
+  if(inlen - (ip-in) > 4)                                               // decode rest
     for(; ip < in+(inlen-4); ip += 4, op += 3) { unsigned u = ctou32(ip); cu |= LU32C(u); u = LU32(u); ctou32(op) = u; }
 
   unsigned u = 0, l = inlen - (ip-in);  
-  if(l == 4) 															// last 4 bytes
+  if(l == 4)                                                            // last 4 bytes
     if(    ip[3]=='=') { l = 3; 
       if(  ip[2]=='=') { l = 2; 
         if(ip[1]=='=')   l = 1; 
-	  }
-	}                                       
+      }
+    }                                       
   unsigned char *up = (unsigned char *)&u;
   switch(l) {
     case 4: u = BSWAP32(lut[ip[0]]<<26 | lut[ip[1]]<<20 | lut[ip[2]]<<14 | lut[ip[3]]<<8); *op++ = up[0]; *op++ = up[1]; *op++ = up[2]; cu |= lut[ip[0]] | lut[ip[1]] | lut[ip[2]] | lut[ip[3]]; ip+=4; break; // 4->3 bytes
@@ -303,7 +303,7 @@ static const unsigned lut3[] = {
                      unsigned _v = vx; vx = ctou32(ip+8+_i_*8+4);\
                      ctou64(op+ _i_*6  ) = DU32(_u);\
                      ctou32(op+ _i_*6+3) = DU32(_v);\
-				   }
+                   }
 #define DI32C(_i_) { unsigned _u = ux; ux = ctou32(ip+8+_i_*8);\
                      unsigned _v = vx; vx = ctou32(ip+8+_i_*8+4);\
                      _u = DU32(_u); CHECK0(cu |= _u); ctou64(op+ _i_*6  ) = _u;\
@@ -316,7 +316,7 @@ static const unsigned lut3[] = {
 #define DI32C(_i_) { unsigned _u = ux; ux = ctou32(ip+8+_i_*8);   _u = DU32(_u); CHECK0(cu |= _u); ctou32(op+ _i_*6  ) = _u;\
                      unsigned _v = vx; vx = ctou32(ip+8+_i_*8+4); _v = DU32(_v); CHECK1(cu |= _v); ctou32(op+ _i_*6+3) = _v;\
                    }
-  #endif				
+  #endif                
 
   #ifdef B64CHECK
 #undef DI32
@@ -334,29 +334,29 @@ unsigned tb64xdec(const unsigned char *in, unsigned inlen, unsigned char *out) {
   #define N 64
     #else
   #define N 128
-	#endif
-  if(inlen >= N+4) { 															// 8/16x loop unrolling: decode 128/64->96/48 bytes
+    #endif
+  if(inlen >= N+4) {                                                            // 8/16x loop unrolling: decode 128/64->96/48 bytes
     unsigned ux = ctou32(ip), 
-	         vx = ctou32(ip+4);
-	
+             vx = ctou32(ip+4);
+    
     for(; ip < in+(inlen-(N+4)); ip += N, op += (N/4)*3) {
       DI32C(0); DI32(1); DI32( 2); DI32( 3); DI32( 4); DI32( 5); DI32( 6); DI32( 7); 
-	    #if N > 64
-	  DI32(8);  DI32(9); DI32(10); DI32(11); DI32(12); DI32(13); DI32(14); DI32(15);
-	    #endif
-																					PREFETCH(ip, 256, 0);  
+        #if N > 64
+      DI32(8);  DI32(9); DI32(10); DI32(11); DI32(12); DI32(13); DI32(14); DI32(15);
+        #endif
+                                                                                    PREFETCH(ip, 256, 0);  
     }
   }
-  if(inlen - (ip-in) > 4)                                                     // decode the rest 4->3 	
+  if(inlen - (ip-in) > 4)                                                     // decode the rest 4->3   
     for(; ip < in+(inlen-4); ip += 4, op += 3) { unsigned u = ctou32(ip); u = DU32(u); ctou32(op) = u; cu |= u; } 
 
   unsigned u = 0, l = inlen - (ip-in); 
-  if(l == 4) 																	// last 4 bytes
+  if(l == 4)                                                                    // last 4 bytes
     if(    ip[3]=='=') { l = 3; 
       if(  ip[2]=='=') { l = 2; 
         if(ip[1]=='=')   l = 1; 
-	  }
-	}
+      }
+    }
   unsigned char *up=(unsigned char *)&u;
   switch(l) {
     case 4: u = lut0[ip[0]] | lut1[ip[1]] | lut2[ip[2]] | lut3[ip[3]]; *op++ = up[0]; *op++ = up[1]; *op++ = up[2]; cu |= u; break; // 4->3 bytes

@@ -43,7 +43,7 @@ Turbo Base64:Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/powt
 |26666668|133.3|**8.920**|**12.706**|[**TB64avx2**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx2**|
 |26666668|133.3|**8.466**|**12.401**|[**TB64avx**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx**|
 |26666668|133.3|**8.026**|**11.291**|[**TB64sse**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 sse**|
-|26666668|133.3|7.795|7.860|[fb64avx2](https://github.com/lemire/fastbase64)|Fastbase64 avx2|
+|26666668|133.3|7.795|10.452|[fb64avx2](https://github.com/lemire/fastbase64)|Fastbase64 avx2|
 |26666668|133.3|7.809|10.381|[b64avx2](https://github.com/aklomp/base64)|Base64 avx2|
 |26666668|133.3|7.161|8.172|[b64avx](https://github.com/aklomp/base64)|Base64 avx|
 |26666668|133.3|6.420|7.042|[b64sse](https://github.com/aklomp/base64)|Base64 sse41|

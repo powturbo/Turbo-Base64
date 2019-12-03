@@ -1,8 +1,8 @@
 language: c
 
 arch:
-#  - amd64
-#  - arm64
+  - amd64
+  - arm64
   - s390x
 # - ppc64le (gcc > 8.0)
 
@@ -16,7 +16,7 @@ branches:
 
 script:
   - make
-  - ./tb64app -I0 -J0
+  - ./tb64app
   
 matrix:
   include:

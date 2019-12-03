@@ -80,6 +80,9 @@ unsigned tb64avxdec( const unsigned char *in, unsigned inlen, unsigned char *out
 unsigned tb64avx2enc(const unsigned char *in, unsigned inlen, unsigned char *out);
 unsigned tb64avx2dec(const unsigned char *in, unsigned inlen, unsigned char *out);
 
+unsigned tb64avx512enc(const unsigned char *in, unsigned inlen, unsigned char *out);
+unsigned tb64avx512dec(const unsigned char *in, unsigned inlen, unsigned char *out);
+
 void tb64ini(int id);  // detect cpu && set the default run time functions for tb64enc/tb64dec
  
 //------- CPU instruction set ----------------------

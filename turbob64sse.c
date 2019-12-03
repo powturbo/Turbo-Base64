@@ -426,6 +426,7 @@ int cpuini(int cpuisa) { if(cpuisa) _cpuisa = cpuisa; return _cpuisa; }
 
 char *cpustr(int cpuisa) {
   if(!cpuisa) cpuisa = _cpuisa;
+       if(cpuisa >= 78) return "avx512vbmi";
   else if(cpuisa >= 70) return "avx512";
   else if(cpuisa >= 60) return "avx2";
   else if(cpuisa >= 51) return "avx+aes";
@@ -456,6 +457,12 @@ void tb64ini(int id) {
   tb64set++;   
   i = id?id:cpuisa();
     #if defined(__i386__) || defined(__x86_64__)
+      #ifdef USE_AVX512
+  if(i >= 78) {  
+    _tb64e = tb64avx512enc; 
+    _tb64d = tb64avx512dec;
+  } else 
+      #endif
       #ifndef NO_AVX2
   if(i >= 60) {  
     _tb64e = tb64avx2enc; 

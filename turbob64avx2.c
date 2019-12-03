@@ -49,13 +49,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CHECK1(a)
   #endif
 
-#define DECPACK(v) {\
+#define PACK8TO6(v) {\
   const __m256i merge_ab_and_bc = _mm256_maddubs_epi16(v,            _mm256_set1_epi32(0x01400140));\
                               v = _mm256_madd_epi16(merge_ab_and_bc, _mm256_set1_epi32(0x00011000));\
                               v = _mm256_shuffle_epi8(v, cpv);\
 }
 
-#define ASCII2BIN(iv, shifted, ov) { /*Pack 8-bits ascii input to 6-bits values*/\
+#define MAP8TO6(iv, shifted, ov) { /*map 8-bits ascii to 6-bits bin*/\
                 shifted    = _mm256_srli_epi32(iv, 3);\
   const __m256i delta_hash = _mm256_avg_epu8(_mm256_shuffle_epi8(delta_asso, iv), shifted);\
                         ov = _mm256_add_epi8(_mm256_shuffle_epi8(delta_values, delta_hash), iv);\
@@ -84,12 +84,12 @@ unsigned tb64avx2dec(const unsigned char *in, unsigned inlen, unsigned char *out
                            cpv = _mm256_set_epi8( -1, -1, -1, -1, 12, 13, 14,  8,    9, 10,  4,  5,  6,  0,  1,  2,
                                                   -1, -1, -1, -1, 12, 13, 14,  8,    9, 10,  4,  5,  6,  0,  1,  2);
 
-    for(op = out; ip < in+(inlen-(64+4)); ip += 64, op += (64/4)*3) {           PREFETCH(ip,1024,0);
+    for(        ; ip < in+(inlen-(64+4)); ip += 64, op += (64/4)*3) {           PREFETCH(ip,1024,0);
       __m256i          iv0 = _mm256_loadu_si256((__m256i *)ip);    
       __m256i          iv1 = _mm256_loadu_si256((__m256i *)(ip+32)); 
    
-      __m256i ov0,shifted0; ASCII2BIN(iv0, shifted0, ov0); DECPACK(ov0);
-      __m256i ov1,shifted1; ASCII2BIN(iv1, shifted1, ov1); DECPACK(ov1);
+      __m256i ov0,shifted0; MAP8TO6(iv0, shifted0, ov0); PACK8TO6(ov0);
+      __m256i ov1,shifted1; MAP8TO6(iv1, shifted1, ov1); PACK8TO6(ov1);
       
       _mm_storeu_si128((__m128i*) op,       _mm256_castsi256_si128(ov0));
       _mm_storeu_si128((__m128i*)(op + 12), _mm256_extracti128_si256(ov0, 1));                          
@@ -106,7 +106,7 @@ unsigned tb64avx2dec(const unsigned char *in, unsigned inlen, unsigned char *out
 }
 
 //-------------------- Encode ----------------------------------------------------------------------
-static ALWAYS_INLINE __m256i bin2ascii(const __m256i v) { /* https://arxiv.org/abs/1704.00605 */
+static ALWAYS_INLINE __m256i map6to8(const __m256i v) { /*map 6-bits bin to 8-bits ascii (https://arxiv.org/abs/1704.00605) */
   __m256i vidx = _mm256_subs_epu8(v,   _mm256_set1_epi8(51));
           vidx = _mm256_sub_epi8(vidx, _mm256_cmpgt_epi8(v, _mm256_set1_epi8(25)));
 
@@ -115,7 +115,7 @@ static ALWAYS_INLINE __m256i bin2ascii(const __m256i v) { /* https://arxiv.org/a
   return _mm256_add_epi8(v, _mm256_shuffle_epi8(offsets, vidx));
 }
 
-static ALWAYS_INLINE __m256i encunpack(__m256i v) { /* https://arxiv.org/abs/1704.00605 p.12*/
+static ALWAYS_INLINE __m256i unpack6to8(__m256i v) { /* https://arxiv.org/abs/1704.00605 p.12*/
   const __m256i shuf = _mm256_set_epi8(10,11, 9,10, 7, 8, 6, 7, 4,   5, 3, 4, 1, 2, 0, 1,
                                        10,11, 9,10, 7, 8, 6, 7, 4,   5, 3, 4, 1, 2, 0, 1);
           v  = _mm256_shuffle_epi8(v, shuf);
@@ -130,14 +130,14 @@ unsigned tb64avx2enc(const unsigned char* in, unsigned inlen, unsigned char *out
         unsigned   outlen = TURBOB64LEN(inlen);
   
   if(outlen >= 64+4)
-    for(ip = in, op = out; op < out+(outlen-(64+4)); op += 64, ip += (64/4)*3) {            PREFETCH(ip,1024,0);            
+    for(; op < out+(outlen-(64+4)); op += 64, ip += (64/4)*3) {     PREFETCH(ip,1024,0);            
       __m256i v0 = _mm256_castsi128_si256(    _mm_loadu_si128((__m128i *) ip));      
               v0 = _mm256_inserti128_si256(v0,_mm_loadu_si128((__m128i *)(ip+12)),1);   
       __m256i v1 = _mm256_castsi128_si256(    _mm_loadu_si128((__m128i *)(ip+24)));      
               v1 = _mm256_inserti128_si256(v1,_mm_loadu_si128((__m128i *)(ip+36)),1);   
 
-      v0 = encunpack(v0); v0 = bin2ascii(v0);                                                                                                           
-      v1 = encunpack(v1); v1 = bin2ascii(v1);
+      v0 = unpack6to8(v0); v0 = map6to8(v0);                                                                                                           
+      v1 = unpack6to8(v1); v1 = map6to8(v1);
 
      _mm256_storeu_si256((__m256i*) op,     v0);                                            
      _mm256_storeu_si256((__m256i*)(op+32), v1);    

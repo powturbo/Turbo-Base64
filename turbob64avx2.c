@@ -103,6 +103,7 @@ unsigned tb64avx2dec(const unsigned char *in, unsigned inlen, unsigned char *out
   unsigned rc;
   if(!(rc = tb64xdec(ip, inlen-(ip-in), op)) || _mm256_movemask_epi8(vx)) return 0;
   return (op-out)+rc; 
+
 }
 
 //-------------------- Encode ----------------------------------------------------------------------

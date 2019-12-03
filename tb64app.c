@@ -191,7 +191,8 @@ int main(int argc, char* argv[]) {
 
   if(argc - optind < 1) { //fprintf(stderr, "File not specified\n"); exit(-1);     
     unsigned _sizes0[] = { 10, 100, 1*KB, 10*KB, 100*KB, 1*MB, 10*MB, 20*MB, 30*MB, 40*MB, 50*MB, 100*MB, 0 },
-             _sizes1[] = { 10*KB, 100*KB, 1*MB, 10*MB, 30*MB, 0 }, *sizes = bid?_sizes0:_sizes1;
+//             _sizes1[] = { 10*KB, 100*KB, 1*MB, 10*MB, 30*MB, 0 }, *sizes = bid?_sizes0:_sizes1;
+             _sizes1[] = { 1000, 1001, 1002, 1003, 1004, 0 }, *sizes = bid?_sizes0:_sizes1;
     unsigned n = 100*Mb, insize = n, outsize  = turbob64len(insize)*2;
     unsigned char *_in;
     if(!(_in = (unsigned char*)_valloc(insize+1024,1))) die("malloc error in size=%u\n", insize); //_in[insize]=0;

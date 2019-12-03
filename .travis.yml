@@ -1,8 +1,8 @@
 language: c
 
 arch:
-  - amd64
-  - arm64
+#  - amd64
+#  - arm64
   - s390x
 # - ppc64le (gcc > 8.0)
 
@@ -13,6 +13,7 @@ compiler:
 branches:
   only:
     - master 
+    - ./tb64app
 
 script:
   - make

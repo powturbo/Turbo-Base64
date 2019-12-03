@@ -295,7 +295,7 @@ unsigned TEMPLATE2(FUNPREF, enc)(const unsigned char* in, unsigned inlen, unsign
   #define NE 32
     #endif
   if(outlen >= NE+4)
-    for(ip = in, op = out; op <= out+(outlen-(NE+4)); op += NE, ip += (NE/4)*3) {                       PREFETCH(ip,1024,0);            
+    for(; op <= out+(outlen-(NE+4)); op += NE, ip += (NE/4)*3) {                       PREFETCH(ip,1024,0);            
       __m128i v0 = _mm_loadu_si128((__m128i*)ip),   
               v1 = _mm_loadu_si128((__m128i*)(ip+12)); 
         #if NE > 32

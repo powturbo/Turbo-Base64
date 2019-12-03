@@ -98,43 +98,51 @@ static inline uint8x16x4_t vld1q_u8_x4(const uint8_t *lut) {
     iv.val[2] = vqtbx4q_u8(vqtbl4q_u8(vlut1, veorq_u8(iv.val[2], cv40)), vlut0, iv.val[2]);\
     iv.val[3] = vqtbx4q_u8(vqtbl4q_u8(vlut1, veorq_u8(iv.val[3], cv40)), vlut0, iv.val[3]);\
 \
-    ov.val[0] = vorrq_u8(vshlq_n_u8(iv.val[0], 2), vshrq_n_u8(iv.val[1], 4));\
-    ov.val[1] = vorrq_u8(vshlq_n_u8(iv.val[1], 4), vshrq_n_u8(iv.val[2], 2));\
-    ov.val[2] = vorrq_u8(vshlq_n_u8(iv.val[2], 6),            iv.val[3]    );\
+	ov.val[0] = vorrq_u8(vshlq_n_u8(iv.val[0], 2), vshrq_n_u8(iv.val[1], 4));\
+	ov.val[1] = vorrq_u8(vshlq_n_u8(iv.val[1], 4), vshrq_n_u8(iv.val[2], 2));\
+	ov.val[2] = vorrq_u8(vshlq_n_u8(iv.val[2], 6),            iv.val[3]    );\
 }
 
-#define B64D1(iv, ov) {\
-    iv = vqtbx4_u8(vqtbl4_u8(vlut1, veorq_u8(iv, cv40)), vlut0, iv);\
-    ov = vorrq_u8(vshlq_n_u8(iv, 2), vshrq_n_u8(iv.val[1], 4));\
-}
+#define B64CHK(iv, xv) xv = vorrq_u8(xv, vorrq_u8(vorrq_u8(iv.val[0], iv.val[1]), vorrq_u8(iv.val[2], iv.val[3])))
 
 unsigned tb64ssedec(const unsigned char *in, unsigned inlen, unsigned char *out) {
-  if(inlen < 256) return tb64xdec(in, inlen, out);
   const unsigned char *ip;
         unsigned char *op; 
   const uint8x16x4_t vlut0 = vld1q_u8_x4( lut),
                      vlut1 = vld1q_u8_x4(&lut[64]);
   const uint8x16_t    cv40 = vdupq_n_u8(0x40);
         uint8x16_t      xv = vdupq_n_u8(0);
-      
-  for(ip = in, op = out; ip != in+(inlen&~(128-1)); ip += 128, op += (128/4)*3) { PREFETCH(ip,256,0);   
+  #define ND 256
+  for(ip = in, op = out; ip != in+(inlen&~(ND-1)); ip += ND, op += (ND/4)*3) { PREFETCH(ip,256,0);	
     uint8x16x4_t iv0 = vld4q_u8(ip),
                  iv1 = vld4q_u8(ip+64);                                                    
-
-    uint8x16x3_t ov0; B64D(iv0,ov0);
-    CHECK0(xv = vorrq_u8(xv, vorrq_u8(vorrq_u8(iv0.val[0], iv0.val[1]), vorrq_u8(iv0.val[2], iv0.val[3]))));
-
-    vst3q_u8(op,    ov0);       
-    uint8x16x3_t ov1; B64D(iv1,ov1);                                   
-    vst3q_u8(op+48, ov1);                                                                                                                                                                       
-    CHECK1(xv = vorrq_u8(xv, vorrq_u8(vorrq_u8(iv1.val[0], iv1.val[1]), vorrq_u8(iv1.val[2], iv1.val[3]))));
+	uint8x16x3_t ov0,ov1; 
+    B64D(iv0, ov0);
+      #if ND > 128
+	CHECK1(B64CHK(iv0,xv));
+      #else
+	CHECK0(B64CHK(iv0,xv));
+      #endif
+	B64D(iv1, ov1); CHECK1(B64CHK(iv1,xv));
+      #if ND > 128
+    iv0 = vld4q_u8(ip+128);
+    iv1 = vld4q_u8(ip+192);              
+      #endif
+	vst3q_u8(op,    ov0);       
+	vst3q_u8(op+48, ov1);                                                                                                                                                                       
+      #if ND > 128
+	B64D(iv0,ov0);	CHECK1(B64CHK(iv0,xv));
+	B64D(iv1,ov1); 
+	vst3q_u8(op+ 96, ov0);       
+	vst3q_u8(op+144, ov1);                                                                                                                                                                       
+	CHECK0(B64CHK(iv1,xv));
+      #endif
   }
-  if((inlen&~(128-1)) > 64) {
+  for(                 ; ip != in+(inlen&~(64-1)); ip += 64, op += (64/4)*3) { 	
     uint8x16x4_t iv = vld4q_u8(ip);
-    uint8x16x3_t ov; B64D(iv,ov);
-    vst3q_u8(op, ov);                                                                                                                          
-    CHECK0(xv = vorrq_u8(xv, vorrq_u8(vorrq_u8(iv.val[0], iv.val[1]), vorrq_u8(iv.val[2], iv.val[3]))));
-    ip += 64; op += (64/4)*3;
+	uint8x16x3_t ov; B64D(iv,ov);
+	vst3q_u8(op, ov);                                                                                                                          
+	CHECK0(xv = vorrq_u8(xv, vorrq_u8(vorrq_u8(iv.val[0], iv.val[1]), vorrq_u8(iv.val[2], iv.val[3]))));
   }
   unsigned rc;
   if(!(rc=tb64xdec(ip, inlen&(64-1), op)) || vaddvq_u8(vshrq_n_u8(xv,7))) return 0; //decode all
@@ -155,30 +163,36 @@ unsigned tb64ssedec(const unsigned char *in, unsigned inlen, unsigned char *out)
 }
 
 unsigned tb64sseenc(const unsigned char* in, unsigned inlen, unsigned char *out) {
-  if(inlen < 256) return tb64xenc(in, inlen, out);
   static unsigned char lut[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
   const unsigned char *ip; 
         unsigned char *op;
   const unsigned      outlen = TURBOB64LEN(inlen);
   const uint8x16x4_t vlut = vld1q_u8_x4(lut);
   const uint8x16_t   cv3f = vdupq_n_u8(0x3f);
-  
-  for(ip = in, op = out; op != out+(outlen&~(128-1)); op += 128, ip += (128/4)*3) {                                 
-    const uint8x16x3_t iv0 = vld3q_u8(ip),
-                       iv1 = vld3q_u8(ip+48);                   
-   
-    uint8x16x4_t ov0; B64E(iv0, ov0); 
-    uint8x16x4_t ov1; B64E(iv1, ov1);                                       
 
-    vst4q_u8(op,    ov0);                                                       
-    vst4q_u8(op+64, ov1);                           //PREFETCH(ip,256,0);                                              
-  }
-  if((outlen&~(128-1)) > 64) { 
+  #define NE 128 // 256//
+  for(ip = in, op = out; op != out+(outlen&~(NE-1)); op += NE, ip += (NE/4)*3) { 	 							
+          uint8x16x3_t iv0 = vld3q_u8(ip),
+                       iv1 = vld3q_u8(ip+48);                   
+
+    uint8x16x4_t ov0,ov1; B64E(iv0, ov0); B64E(iv1, ov1);                                       
+      #if NE > 128 
+    iv0 = vld3q_u8(ip+ 96);
+    iv1 = vld3q_u8(ip+144);                   
+      #endif
+	vst4q_u8(op,    ov0);                                                       
+	vst4q_u8(op+64, ov1);                          	//PREFETCH(ip,256,0);                                                  
+      #if NE > 128 
+                         B64E(iv0, ov0); B64E(iv1, ov1);                                             
+ 	vst4q_u8(op+128, ov0);                                                       
+	vst4q_u8(op+192, ov1);                          	                                            
+          #endif
+ }
+  for(                 ; op != out+(outlen&~(64-1)); op += 64, ip += (64/4)*3) { 								
     const uint8x16x3_t iv = vld3q_u8(ip);
-    uint8x16x4_t ov; B64E(iv, ov); 
-    vst4q_u8(op,ov);                                                       
-    op += 64; 
-    ip += (64/4)*3;
+    uint8x16x4_t       ov; 
+    B64E(iv, ov); 
+	vst4q_u8(op,ov);                                                       
   } 
   tb64xenc(ip, outlen&(64-1), op);
   return TURBOB64LEN(inlen);
@@ -186,13 +200,13 @@ unsigned tb64sseenc(const unsigned char* in, unsigned inlen, unsigned char *out)
 
 #elif defined(__SSSE3__) //----------------- SSSE3 / SSE4.1 / AVX (derived from the AVX2 functions ) -----------------------------------------------------------------
 
-#define DECPACK(v) {\
+#define PACK8TO6(v) {\
   const __m128i merge_ab_and_bc = _mm_maddubs_epi16(v,            _mm_set1_epi32(0x01400140));  /*/dec_reshuffle: https://arxiv.org/abs/1704.00605 P.17*/\
                               v = _mm_madd_epi16(merge_ab_and_bc, _mm_set1_epi32(0x00011000));\
                               v = _mm_shuffle_epi8(v, cpv);\
 }
 
-#define ASCII2BIN(iv, shifted, ov) { /*Convert ascii input bytes to 6-bit values*/\
+#define MAP8TO6(iv, shifted, ov) { /*map 8-bits ascii to 6-bits bin*/\
                 shifted    = _mm_srli_epi32(iv, 3);\
   const __m128i delta_hash = _mm_avg_epu8(_mm_shuffle_epi8(delta_asso, iv), shifted);\
                         ov = _mm_add_epi8(_mm_shuffle_epi8(delta_values, delta_hash), iv);\
@@ -224,8 +238,8 @@ unsigned TEMPLATE2(FUNPREF, dec)(const unsigned char *in, unsigned inlen, unsign
       __m128i iv0 = _mm_loadu_si128((__m128i *) ip),
               iv1 = _mm_loadu_si128((__m128i *)(ip+16));
                                                                                 
-      __m128i ov0,shifted0; ASCII2BIN(iv0, shifted0, ov0); DECPACK(ov0);
-      __m128i ov1,shifted1; ASCII2BIN(iv1, shifted1, ov1); DECPACK(ov1);
+      __m128i ov0,shifted0; MAP8TO6(iv0, shifted0, ov0); PACK8TO6(ov0);
+      __m128i ov1,shifted1; MAP8TO6(iv1, shifted1, ov1); PACK8TO6(ov1);
 
       _mm_storeu_si128((__m128i*) op,     ov0);                                                  
       _mm_storeu_si128((__m128i*)(op+12), ov1);                                             PREFETCH(ip,1024,0);                                        
@@ -239,8 +253,8 @@ unsigned TEMPLATE2(FUNPREF, dec)(const unsigned char *in, unsigned inlen, unsign
       CHECK1(B64CHK(iv1, shifted1, vx));
 
         #if ND > 32
-      __m128i ov2,shifted2; ASCII2BIN(iv2, shifted2, ov2); DECPACK(ov2);
-      __m128i ov3,shifted3; ASCII2BIN(iv3, shifted3, ov3); DECPACK(ov3);
+      __m128i ov2,shifted2; MAP8TO6(iv2, shifted2, ov2); PACK8TO6(ov2);
+      __m128i ov3,shifted3; MAP8TO6(iv3, shifted3, ov3); PACK8TO6(ov3);
     
       _mm_storeu_si128((__m128i*)(op+24), ov2);                                                  
       _mm_storeu_si128((__m128i*)(op+36), ov3);                                                                                 
@@ -254,7 +268,7 @@ unsigned TEMPLATE2(FUNPREF, dec)(const unsigned char *in, unsigned inlen, unsign
   return (op-out)+rc; 
 }
 
-static ALWAYS_INLINE __m128i bin2ascii(const __m128i v) {
+static ALWAYS_INLINE __m128i map6to8(const __m128i v) {
   const __m128i offsets = _mm_set_epi8(0, 0, -16, -19, -4, -4, -4, -4,   -4, -4, -4, -4, -4, -4, 71, 65);
 
   __m128i vidx = _mm_subs_epu8(v,   _mm_set1_epi8(51));
@@ -262,7 +276,7 @@ static ALWAYS_INLINE __m128i bin2ascii(const __m128i v) {
   return _mm_add_epi8(v, _mm_shuffle_epi8(offsets, vidx));
 }
 
-static ALWAYS_INLINE __m128i enc_reshuffle(__m128i v) {
+static ALWAYS_INLINE __m128i unpack6to8(__m128i v) {
   __m128i va = _mm_mulhi_epu16(_mm_and_si128(v, _mm_set1_epi32(0x0fc0fc00)), _mm_set1_epi32(0x04000040));
   __m128i vb = _mm_mullo_epi16(_mm_and_si128(v, _mm_set1_epi32(0x003f03f0)), _mm_set1_epi32(0x01000010));
   return       _mm_or_si128(va, vb);                        
@@ -290,19 +304,19 @@ unsigned TEMPLATE2(FUNPREF, enc)(const unsigned char* in, unsigned inlen, unsign
         #endif
               v0 = _mm_shuffle_epi8(v0, shuf);
               v1 = _mm_shuffle_epi8(v1, shuf);
-              v0 = enc_reshuffle(v0);
-              v1 = enc_reshuffle(v1);
-              v0 = bin2ascii(v0);
-              v1 = bin2ascii(v1);
+              v0 = unpack6to8(v0);
+              v1 = unpack6to8(v1);
+              v0 = map6to8(v0);
+              v1 = map6to8(v1);
       _mm_storeu_si128((__m128i*) op,     v0);                                          
       _mm_storeu_si128((__m128i*)(op+16), v1);                                          
         #if NE > 32
               v2 = _mm_shuffle_epi8(v2, shuf);
               v3 = _mm_shuffle_epi8(v3, shuf);
-              v2 = enc_reshuffle(v2);
-              v3 = enc_reshuffle(v3);
-              v2 = bin2ascii(v2);
-              v3 = bin2ascii(v3);
+              v2 = unpack6to8(v2);
+              v3 = unpack6to8(v3);
+              v2 = map6to8(v2);
+              v3 = map6to8(v3);
       _mm_storeu_si128((__m128i*)(op+32), v2);                                          
       _mm_storeu_si128((__m128i*)(op+48), v3);                                          
         #endif            

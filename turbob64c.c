@@ -52,8 +52,8 @@ unsigned turbob64len(unsigned n) { return TURBOB64LEN(n); }
 #define ETAIL() \
   if(outlen - (op-out) > 4)\
     for(; op < out+(outlen-4); op += 4, ip+= 3) { unsigned _u = BSWAP32(ctou32(ip)); ctou32(op) = LU32(_u); }\
-  unsigned _l = inlen - (ip-in); printf("L=%d ", _l);\
-  if(_l == 3) { unsigned _u = BSWAP32(ip[0] | ip[1]<<8 | ip[2]<<16); ctou32(op) = LU32(_u); op+=4; ip+=3; }\
+  unsigned _l = inlen - (ip-in);\
+  if(_l == 3) { unsigned _u = ip[0]<<24 | ip[1]<<16 | ip[2]<<8; ctou32(op) = LU32(_u); op+=4; ip+=3; }\
   else if(_l) { *op++ = lut1[(ip[0]>>2)&0x3f];\
     if(_l == 2) *op++ = lut1[(ip[0] & 0x3) << 4 | (ip[1] & 0xf0) >> 4],\
                 *op++ = lut1[(ip[1] & 0xf) << 2];\

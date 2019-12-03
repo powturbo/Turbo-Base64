@@ -126,7 +126,7 @@ static ALWAYS_INLINE __m256i unpack6to8(__m256i v) { /* https://arxiv.org/abs/17
 }
 
 unsigned tb64avx2enc(const unsigned char* in, unsigned inlen, unsigned char *out) {
-  const unsigned char *ip = ip; 
+  const unsigned char *ip = in; 
         unsigned char *op = out;
         unsigned   outlen = TURBOB64LEN(inlen);
   

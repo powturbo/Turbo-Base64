@@ -67,7 +67,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   #endif
 
 //------------------------------- malloc ------------------------------------------------
-#define USE_MMAP
+//#define USE_MMAP
   #if __WORDSIZE == 64
 #define MAP_BITS 30
   #else

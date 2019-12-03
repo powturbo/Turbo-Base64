@@ -13,10 +13,10 @@ compiler:
 branches:
   only:
     - master 
-    - ./tb64app
 
 script:
   - make
+    - ./tb64app
   
 matrix:
   include:

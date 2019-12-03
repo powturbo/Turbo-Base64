@@ -124,11 +124,10 @@ unsigned tb64sdec(const unsigned char *in, unsigned inlen, unsigned char *out) {
     }                                       
   unsigned char *up = (unsigned char *)&u;
   switch(l) {
-    case 4: u = ctou32(ip); u = LU32(u); /*BSWAP32(lut[ip[0]]<<26 | lut[ip[1]]<<20 | lut[ip[2]]<<14 | lut[ip[3]]<<8);*/ 
-                *op++ = up[0]; *op++ = up[1]; *op++ = up[2]; cu |= lut[ip[0]] | lut[ip[1]] | lut[ip[2]] | lut[ip[3]]; ip+=4; break; // 4->3 bytes
-    case 3: u = BSWAP32(lut[ip[0]]<<26 | lut[ip[1]]<<20 | lut[ip[2]]<<14);                 *op++ = up[0]; *op++ = up[1];                cu |= lut[ip[0]] | lut[ip[1]] | lut[ip[2]]; ip+=3; break; // 3->2 bytes
-    case 2: u = BSWAP32(lut[ip[0]]<<26 | lut[ip[1]]<<20);                                  *op++ = up[0];                               cu |= lut[ip[0]] | lut[ip[1]]; ip+=2; break; // 2->1 byte
-    case 1: u = BSWAP32(lut[ip[0]]);                                                       *op++ = up[0];                               cu |= lut[ip[0]]; ip+=1; break; // 1->1 byte
+    case 4: u = ctou32(ip); cu |= LU32C(u); u = LU32(u);                   *op++ = up[0]; *op++ = up[1]; *op++ = up[2]; ip+=4;                                            break; // 4->3 bytes
+    case 3: u = BSWAP32(lut[ip[0]]<<26 | lut[ip[1]]<<20 | lut[ip[2]]<<14); *op++ = up[0]; *op++ = up[1];                ip+=3; cu |= lut[ip[0]] | lut[ip[1]] | lut[ip[2]];break; // 3->2 bytes
+    case 2: u = BSWAP32(lut[ip[0]]<<26 | lut[ip[1]]<<20);                  *op++ = up[0];                               ip+=2; cu |= lut[ip[0]] | lut[ip[1]];             break; // 2->1 byte
+    case 1: u = BSWAP32(lut[ip[0]]);                                       *op++ = up[0];                               ip+=1; cu |= lut[ip[0]];                          break; // 1->1 byte
   } 
   return (cu == 0xff)?0:(op-out);
 }
@@ -350,7 +349,7 @@ unsigned tb64xdec(const unsigned char *in, unsigned inlen, unsigned char *out) {
   if(inlen - (ip-in) > 4)                                                     // decode the rest 4->3   
     for(; ip < in+(inlen-4); ip += 4, op += 3) { unsigned u = ctou32(ip); u = DU32(u); ctou32(op) = u; cu |= u; } 
 
-  unsigned u = 0, l = inlen - (ip-in); printf("L=%d ", l);
+  unsigned u = 0, l = inlen - (ip-in); 
   if(l == 4)                                                                    // last 4 bytes
     if(    ip[3]=='=') { l = 3; 
       if(  ip[2]=='=') { l = 2; 
@@ -359,11 +358,10 @@ unsigned tb64xdec(const unsigned char *in, unsigned inlen, unsigned char *out) {
     }												 
   unsigned char *up=(unsigned char *)&u;  
   switch(l) {
-    case 4: u = ctou32(ip); u = LU32(u); //lut0[ip[0]] | lut1[ip[1]] | lut2[ip[2]] | lut3[ip[3]]; 
-                 *op++ = up[0]; *op++ = up[1]; *op++ = up[2]; cu |= u; break; // 4->3 bytes
-    case 3: u = lut0[ip[0]] | lut1[ip[1]] | lut2[ip[2]];               *op++ = up[0]; *op++ = up[1];                cu |= u; break; // 3->2 bytes
-    case 2: u = lut0[ip[0]] | lut1[ip[1]];                             *op++ = up[0];                               cu |= u; break; // 2->1 byte
-    case 1: u = lut0[ip[0]];                                           *op++ = up[0];                               cu |= u; break; // 1->1 byte
+    case 4: u = ctou32(ip); u = DU32(u);                 *op++ = up[0]; *op++ = up[1]; *op++ = up[2]; cu |= u; break; // 4->3 bytes
+    case 3: u = lut0[ip[0]] | lut1[ip[1]] | lut2[ip[2]]; *op++ = up[0]; *op++ = up[1];                cu |= u; break; // 3->2 bytes
+    case 2: u = lut0[ip[0]] | lut1[ip[1]];               *op++ = up[0];                               cu |= u; break; // 2->1 byte
+    case 1: u = lut0[ip[0]];                             *op++ = up[0];                               cu |= u; break; // 1->1 byte
   }
   return (cu == -1)?0:(op-out);
 }

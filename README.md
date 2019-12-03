@@ -58,18 +58,18 @@ Turbo Base64:Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/powt
 |20000000|100.0|14.432|14.464|memcpy||
 
 ###### Benchmark ARM: ARMv8 A73-ODROID-N2 1.8GHz (clang 6.0)
-|E Size|ratio%|E MB/s|D MB/s|Name|20MB binary 2019.12|
+|E Size|ratio%|E MB/s|D MB/s|Name|30MB binary 2019.12|
 |--------:|-----:|--------:|--------:|----------------|----------------|
-|26666668|133.3|**2026**|**1630**|[**TB64neon**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 Neon**|
-|26666668|133.3|1795|1270|[b64neon](https://github.com/aklomp/base64)|Base64 Neon|
-|26666668|133.3|**1270**|**1095**|[**TB64x**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 scalar**|
-|26666668|133.3|695|965|[TB64s](https://github.com/powturbo/TurboBase64)|**Turbo Base64 scalar**|
-|26666668|133.3|512|782|[fb64neon](https://github.com/lemire/fastbase64)|Fastbase64 SIMD Neon|
-|26666668|133.3|565|460|[Chrome](https://github.com/lemire/fastbase64)|Google Chrome base64|
-|26666668|133.3|659|639|[b64plain](https://github.com/aklomp/base64)|Base64 plain|
-|26666668|133.3|506|548|[fb64plain](https://github.com/lemire/fastbase64)|Fastbase64 plain|
-|27083334|135.4|314|91|[Linux](https://github.com/lemire/fastbase64)|Linux base64|
-|20000000|100.0|3720|3845|memcpy|raw data|
+|40000000|133.3|**2026**|**1650**|[**TB64neon**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 Neon**|
+|40000000|133.3|1795|1285|[b64neon64](https://github.com/aklomp/base64)|Base64 Neon|
+|40000000|133.3|**1270**|**1095**|[**TB64x**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 scalar**|
+|40000000|133.3|695|965|[TB64s](https://github.com/powturbo/TurboBase64)|**Turbo Base64 scalar**|
+|40000000|133.3|512|782|[fb64neon](https://github.com/lemire/fastbase64)|Fastbase64 SIMD Neon|
+|40000000|133.3|565|460|[Chrome](https://github.com/lemire/fastbase64)|Google Chrome base64|
+|40000000|133.3|642|614|[b64plain](https://github.com/aklomp/base64)|Base64 plain|
+|40000000|133.3|506|548|[fb64plain](https://github.com/lemire/fastbase64)|Fastbase64 plain|
+|40500000|135.4|314|91|[Linux](https://github.com/lemire/fastbase64)|Linux base64|
+|30000000|100.0|3820|3834|memcpy|raw data|
 
 (**bold** = pareto in category)  MB=1.000.000<br />
 (E/D) : Encode/Decode

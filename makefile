@@ -75,6 +75,10 @@ turbob64avx.o: turbob64sse.c
 turbob64avx2.o: turbob64avx2.c
 	$(CC) -O3 -march=haswell -fstrict-aliasing -falign-loops $< -c -o $@ 
 
+turbob64avx512.o: turbob64avx512.c
+	$(CC) -O3 -march=cannonlake -fstrict-aliasing -falign-loops $< -c -o $@ 
+
+
 LIB=turbob64c.o turbob64d.o turbob64sse.o
 ifeq ($(ARCH),x86_64)
 LIB+=turbob64avx.o turbob64avx2.o
@@ -82,6 +86,11 @@ endif
 
 ifeq ($(BASE64),1)
 include xtb64make
+endif
+
+ifeq ($(AVX512),1)
+CFLAGS+=-DUSE_AVX512
+LIB+=turbob64avx512.o
 endif
 
 

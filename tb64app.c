@@ -120,14 +120,17 @@ unsigned bench(unsigned char *in, unsigned n, unsigned char *out, unsigned char 
     case 1:                    TMBENCH("",l=tb64senc(   in, n, out),n); pr(l,n); TMBENCH2("tb64s",    tb64sdec(out,  l, cpy), l);   break;
     case 2:                    TMBENCH("",l=tb64xenc(   in, n, out),n); pr(l,n); TMBENCH2("tb64x",    tb64xdec( out, l, cpy), l);   break;
       #if defined(__i386__) || defined(__x86_64__) || defined(__ARM_NEON) || defined(__powerpc64__)
-    case 3:if(cpuini(0)>=33) { TMBENCH("",l=tb64sseenc( in, n, out),n); pr(l,n); TMBENCH2("tb64sse",  tb64ssedec(out, l, cpy), l); } break;
+    case 3:if(cpuini(0)>=0x33) { TMBENCH("",l=tb64sseenc( in, n, out),n); pr(l,n); TMBENCH2("tb64sse",  tb64ssedec(out, l, cpy), l); } break;
     case 4:                    TMBENCH("",l=tb64enc(    in, n, out),n); pr(l,n); TMBENCH2("tb64auto", tb64dec(out, l, cpy), l);      break;
       #else
     case 3: case 4:return 0;  
       #endif
       #if defined(__i386__) || defined(__x86_64__)
-    case 5:if(cpuini(0)>=50) { TMBENCH("",l=tb64avxenc( in, n, out),n); pr(l,n); TMBENCH2("tb64avx",  tb64avxdec( out, l, cpy), l); } break;
-    case 6:if(cpuini(0)>=60) { TMBENCH("",l=tb64avx2enc(in, n, out),n); pr(l,n); TMBENCH2("tb64avx2", tb64avx2dec(out, l, cpy), l); } break;
+    case 5:if(cpuini(0)>=0x50) { TMBENCH("",l=tb64avxenc( in, n, out),n); pr(l,n); TMBENCH2("tb64avx",  tb64avxdec( out, l, cpy), l); } break;
+    case 6:if(cpuini(0)>=0x60) { TMBENCH("",l=tb64avx2enc(in, n, out),n); pr(l,n); TMBENCH2("tb64avx2", tb64avx2dec(out, l, cpy), l); } break;
+        #ifdef USE_AVX512
+    case 7:if(cpuini(0)>=0x78) { TMBENCH("",l=tb64avx512enc(in, n, out),n); pr(l,n); TMBENCH2("tb64avx512", tb64avx512dec(out, l, cpy), l); } break;
+        #endif 
       #else
     case 5: case 6:return 0;  
       #endif
@@ -152,7 +155,7 @@ void usage(char *pgm) {
   fprintf(stderr, " -i#/-j#  # = Minimum  de/compression iterations per run (default=auto)\n");
   fprintf(stderr, " -I#/-J#  # = Number of de/compression runs (default=3)\n");
   fprintf(stderr, " -e#      # = function id\n");
-  fprintf(stderr, " -q#      # = cpuid (33:ssse3, 50:avx, 60:avx2 default:auto detect). Only for tb64enc/tb64dec)\n");
+  fprintf(stderr, " -q#      # = cpuid (sse, avx, avx2 (default:auto detect)\n");
   fprintf(stderr, "Ex. turbob64 file\n");
   fprintf(stderr, "    turbob64 -e3 file\n");
   fprintf(stderr, "    turbob64 -q33 file\n");
@@ -177,7 +180,11 @@ int main(int argc, char* argv[]) {
       case 'e': scmd = optarg;          break;
       case 'I': if((tm_Rep  = atoi(optarg))<=0) tm_rep =tm_Rep=1; break;
       case 'J': if((tm_Rep2 = atoi(optarg))<=0) tm_rep2=tm_Rep2=1; break;
-      case 'q': cpuini(atoi(optarg));  break;
+      case 'q':      if(!strcasecmp(optarg,"sse"))    cpuini(0x33);  
+                else if(!strcasecmp(optarg,"avx"))    cpuini(0x50); 
+                else if(!strcasecmp(optarg,"avx2"))   cpuini(0x60); 
+                else if(!strcasecmp(optarg,"avx512")) cpuini(0x78); 
+                break;
       default: 
         usage(argv[0]);
         exit(0); 
@@ -185,7 +192,7 @@ int main(int argc, char* argv[]) {
   }
 
    tb64ini(0); 
-   printf("detected simd (id=%d->'%s')\n\n", cpuini(0), cpustr(cpuini(0))); 
+   printf("detected simd (id=%x->'%s')\n\n", cpuini(0), cpustr(cpuini(0))); 
    printf("  E MB/s    size     ratio%%   D MB/s   function\n");  
    char _scmd[33]; sprintf(_scmd, "1-%d", ID_MEMCPY);
 

@@ -6,13 +6,13 @@ Turbo Base64:Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/powt
  * No other base64 library encode or decode faster
  * :sparkles: **Scalar** can be faster than other SSE or ARM Neon based base64 libraries
  * :new: (2019.12) Turbo Base64 **SSE** faster than other SSE/AVX/AVX2! base64 library
- * :new: (2019.12) Fastest **AVX2** implementation, damn near to memcpy
- * SSE/AVX faster than other AVX2 base64. TurboBase64 AVX2 is ~2x faster than other AVX2 libs.
+ * :new: (2019.12) Fastest **AVX2** implementation, damn near to memcpy 
+ * TurboBase64 AVX2 is ~2x faster than other AVX2 libs.
  * :new: (2019.12) Fastest **ARM Neon** base64
  * :+1: Dynamic CPU detection and **JIT scalar/sse/avx/avx2** switching
  * Base64 robust **error checking**
  * Portable library, 32/64 bits, **SSE/AVX/AVX2**, **ARM Neon**, **Power9 Altivec**
- * OS:Linux amd64, arm64, Power9, MacOs, s390x. Windows:Mingw, visual c++
+ * OS:Linux amd64, arm64, Power9, MacOs, s390x. Windows: Mingw, visual c++
  * Big+Little endian
  * Ready and simple to use library, no armada of files, no hassles dependencies
 <p>
@@ -57,7 +57,7 @@ Turbo Base64:Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/powt
 |27083334|135.4|1.100|178|[linux](https://github.com/lemire/fastbase64)|Linux base64|
 |20000000|100.0|14.432|14.464|memcpy||
 
-###### Benchmark ARM: ARMv8 A73-ODROID-N2 1.8GHz (clang 6.0)
+###### Benchmark ARM Neon: ARMv8 A73-ODROID-N2 1.8GHz (clang 6.0)
 |E Size|ratio%|E MB/s|D MB/s|Name|30MB binary 2019.12|
 |--------:|-----:|--------:|--------:|----------------|----------------|
 |40000000|133.3|**2026**|**1650**|[**TB64neon**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 Neon**|
@@ -69,14 +69,14 @@ Turbo Base64:Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/powt
 |40000000|133.3|642|614|[b64plain](https://github.com/aklomp/base64)|Base64 plain|
 |40000000|133.3|506|548|[fb64plain](https://github.com/lemire/fastbase64)|Fastbase64 plain|
 |40500000|135.4|314|91|[Linux](https://github.com/lemire/fastbase64)|Linux base64|
-|30000000|100.0|3820|3834|memcpy|raw data|
+|30000000|100.0|3820|3834|memcpy||
 
 (**bold** = pareto in category)  MB=1.000.000<br />
 (E/D) : Encode/Decode
 
 <p>
 
-## Compile: (Download or clone Turbo Base64)
+## Compile: (Download or clone Turbo Base64 SIMD)
         git clone git://github.com/powturbo/TurboBase64.git
         make
 
@@ -91,7 +91,7 @@ Turbo Base64:Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/powt
 
 >**unsigned tb64enc(const unsigned char *in, unsigned inlen, unsigned char *out)**<br />
 	Encode binary input 'in' buffer into base64 string 'out'<br />
-	with automatic cpu detection for avx2/sse4.1/scalar<br />
+	with automatic cpu detection for simd and switch (sse/avx2/scalar<br />
 	**in**          : Input buffer to encode<br />
 	**inlen**       : Length in bytes of input buffer<br />
 	**out**         : Output buffer<br />
@@ -118,14 +118,14 @@ Turbo Base64:Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/powt
 - Linux arm: aarch64 ARMv8: gcc (>=6.3) 
 - Linux arm: aarch64 ARMv8: clang (>=6.0) 
 - MaxOS: XCode (>=9)
-- PowerPC ppc64le: gcc (>=8.0)
+- PowerPC ppc64le: gcc (>=8.0) incl. SIMD Altivec
 
 ###### References:
 - [fastbase v2019.12](https://github.com/lemire/fastbase64)
 - [base64 v.0.4.0 2019.12](https://github.com/aklomp/base64)
 - [base64simd](https://github.com/WojciechMula/base64simd)
 
-###### * **Base64 publications:**
+###### * **SIMD Base64 publications:**
   * :green_book:[Faster Base64 Encoding and Decoding Using AVX2 Instructions](https://arxiv.org/abs/1704.00605)
   * :green_book:[RFC 4648:The Base16, Base32, and Base64 Data Encodings](https://tools.ietf.org/html/rfc4648)
 

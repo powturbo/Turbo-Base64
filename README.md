@@ -82,7 +82,8 @@ Turbo Base64:Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/powt
 
 ## Usage: (Benchmark App)
 
-        ./tb64app file
+        ./tb64app file   
+        ./tb64app
 
 ## Function usage:
 
@@ -115,8 +116,8 @@ Turbo Base64:Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/powt
 - Windows: MinGW-w64 makefile
 - Linux amd/intel: GNU GCC (>=4.6)
 - Linux amd/intel: Clang (>=3.2) 
-- Linux arm: aarch64 ARMv8: gcc (>=6.3) 
-- Linux arm: aarch64 ARMv8: clang (>=6.0) 
+- Linux arm: aarch64 ARMv8 Neon: gcc (>=6.3) 
+- Linux arm: aarch64 ARMv8 Neon: clang (>=6.0) 
 - MaxOS: XCode (>=9)
 - PowerPC ppc64le: gcc (>=8.0) incl. SIMD Altivec
 
@@ -129,5 +130,5 @@ Turbo Base64:Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/powt
   * :green_book:[Faster Base64 Encoding and Decoding Using AVX2 Instructions](https://arxiv.org/abs/1704.00605)
   * :green_book:[RFC 4648:The Base16, Base32, and Base64 Data Encodings](https://tools.ietf.org/html/rfc4648)
 
-Last update: 3 Dec 2019
+Last update: 5 Dec 2019
 

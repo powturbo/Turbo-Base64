@@ -361,16 +361,30 @@ static inline uint64_t xgetbv (int ctr) {
     #endif
   #endif
 
-#define AVX512F     0
-#define AVX512DQ    1
-#define AVX512IFMA  2
-#define AVX512PF    3
-#define AVX512ER    4
-#define AVX512CD    5
-#define AVX512BW    6
-#define AVX512VL    7
-#define AVX512VBMI  8
-#define AVX512VNNI  9
+#define AVX512F     0x0
+#define AVX512DQ    0x1
+#define AVX512IFMA  0x2
+#define AVX512PF    0x3
+#define AVX512ER    0x4
+#define AVX512CD    0x5
+#define AVX512BW    0x6
+#define AVX512VL    0x7
+#define AVX512VBMI  0x8
+#define AVX512VNNI  0x9
+#define AVX512VBMI2 0xa
+
+#define IS_SSE       0x10
+#define IS_SSE2      0x20
+#define IS_SSE3      0x30
+#define IS_SSSE3     0x32
+#define IS_POWER9    0x34 // powerpc
+#define IS_NEON      0x38 // arm neon
+#define IS_SSE41     0x40
+#define IS_SSE41x    0x41 //+popcount
+#define IS_SSE42     0x42 
+#define IS_AVX       0x50
+#define IS_AVX2      0x60
+#define IS_AVX512    0x70
 
 int cpuisa(void) {
   int c[4] = {0};                               
@@ -382,42 +396,44 @@ int cpuisa(void) {
     cpuid(c, 1);                      
     //family = ((c >> 8) & 0xf) + ((c >> 20) & 0xff)
     //model  = ((c >> 4) & 0xf) + ((c >> 12) & 0xf0)
-    if( c[3] & (1 << 25)) {     _cpuisa = 10; // SSE
-    if( c[3] & (1 << 26)) {     _cpuisa = 20; // SSE2
-    if( c[2] & (1 <<  0)) {     _cpuisa = 30; // SSE3
-      //                        _cpuisa = 32; // Atom SSSE3 slow
-    if( c[2] & (1 <<  9)) {     _cpuisa = 33; // SSSE3
-    if( c[2] & (1 << 19)) {     _cpuisa = 40; // SSE4.1 
-    if( c[2] & (1 << 23)) {     _cpuisa = 41; // +popcount       
-    if( c[2] & (1 << 20)) {     _cpuisa = 42; // SSE4.2
+    if( c[3] & (1 << 25)) {         _cpuisa  = IS_SSE; 
+    if( c[3] & (1 << 26)) {         _cpuisa  = IS_SSE2; 
+    if( c[2] & (1 <<  0)) {         _cpuisa  = IS_SSE3; 
+      //                            _cpuisa  = IS_SSE3SLOW; // Atom SSSE3 slow
+    if( c[2] & (1 <<  9)) {         _cpuisa  = IS_SSSE3;  
+    if( c[2] & (1 << 19)) {         _cpuisa  = IS_SSE41;  
+    if( c[2] & (1 << 23)) {         _cpuisa  = IS_SSE41x; // +popcount       
+    if( c[2] & (1 << 20)) {         _cpuisa  = IS_SSE42;  // SSE4.2
     if((c[2] & (1 << 28)) &&         
-       (c[2] & (1 << 27)) &&    // OSXSAVE 
-       (c[2] & (1 << 26)) &&    // XSAVE
-       (xgetbv(0) & 6)==6) {    _cpuisa = 50; // AVX
-      if(c[2]& (1 << 3))        _cpuisa = 51; // +FMA3
-      if(c[2]& (1 << 25))       _cpuisa |= 2; // 52,53 +AES
+       (c[2] & (1 << 27)) &&                           // OSXSAVE 
+       (c[2] & (1 << 26)) &&                           // XSAVE
+       (xgetbv(0) & 6)==6) {        _cpuisa  = IS_AVX; // AVX
+      if(c[2]& (1 <<  3))           _cpuisa |= 1;      // +FMA3
+	  if(c[2]& (1 << 16))           _cpuisa |= 2;      // +FMA4
+      if(c[2]& (1 << 25))           _cpuisa |= 4;      // +AES
       cpuid(c, 7);                                    
-      if(c[1] & (1 << 5)) {     _cpuisa = 60; // AVX2
+      if(c[1] & (1 << 5)) {         _cpuisa = IS_AVX2; 
         if(c[1] & (1 << 16)) {                
           cpuid(c, 0xd);                                      
-          if(c[0] & 0x60) {     _cpuisa = 70; // AVX512
+          if((c[0] & 0x60)==0x60) { _cpuisa = IS_AVX512; 
             cpuid(c, 7);   
-            if(c[1]&(1<<16))    _cpuisa |= AVX512F;
-            if(c[1]&(1<<17))    _cpuisa |= AVX512DQ;
-            if(c[1]&(1<<21))    _cpuisa |= AVX512IFMA;
-            if(c[1]&(1<<26))    _cpuisa |= AVX512PF;
-            if(c[1]&(1<<27))    _cpuisa |= AVX512ER;
-            if(c[1]&(1<<28))    _cpuisa |= AVX512CD;
-            if(c[1]&(1<<30))    _cpuisa |= AVX512BW;
-            if(c[1]&(1<<31))    _cpuisa |= AVX512VL;
-            if(c[2]&(1<< 1))    _cpuisa |= AVX512VBMI;
-            if(c[2]&(1<<11))    _cpuisa |= AVX512VNNI;
+            if(c[1] & (1<<16))      _cpuisa |= AVX512F;
+            if(c[1] & (1<<17))      _cpuisa |= AVX512DQ;
+            if(c[1] & (1<<21))      _cpuisa |= AVX512IFMA;
+            if(c[1] & (1<<26))      _cpuisa |= AVX512PF;
+            if(c[1] & (1<<27))      _cpuisa |= AVX512ER;
+            if(c[1] & (1<<28))      _cpuisa |= AVX512CD;
+            if(c[1] & (1<<30))      _cpuisa |= AVX512BW;
+            if(c[1] & (1<<31))      _cpuisa |= AVX512VL;
+            if(c[2] & (1<< 1))      _cpuisa |= AVX512VBMI;
+            if(c[2] & (1<<11))      _cpuisa |= AVX512VNNI;
+            if(c[2] & (1<< 6))      _cpuisa |= AVX512VBMI2;			                 
       }}}
     }}}}}}}}}
     #elif defined(__powerpc64__)
-  _cpuisa = 35; // power9 
+  _cpuisa = IS_POWER9; // power9 
     #elif defined(__ARM_NEON)
-  _cpuisa = 34; // ARM_NEON 
+  _cpuisa = IS_NEON; // ARM_NEON 
     #endif 
   return _cpuisa;
 }
@@ -426,20 +442,43 @@ int cpuini(int cpuisa) { if(cpuisa) _cpuisa = cpuisa; return _cpuisa; }
 
 char *cpustr(int cpuisa) {
   if(!cpuisa) cpuisa = _cpuisa;
-       if(cpuisa >= 78) return "avx512vbmi";
-  else if(cpuisa >= 70) return "avx512";
-  else if(cpuisa >= 60) return "avx2";
-  else if(cpuisa >= 51) return "avx+aes";
-  else if(cpuisa >= 50) return "avx";
-  else if(cpuisa >= 42) return "sse4.2"; 
-  else if(cpuisa >= 41) return "sse4.1x"; //+popcount
-  else if(cpuisa >= 40) return "sse4.1";
-  else if(cpuisa >= 35) return "power9";
-  else if(cpuisa >= 34) return "arm_neon";
-  else if(cpuisa >= 33) return "ssse3";
-  else if(cpuisa >= 30) return "sse3";
-  else if(cpuisa >= 20) return "sse2";
-  else if(cpuisa >= 10) return "sse";
+    #if defined(__i386__) || defined(__x86_64__)    
+  if(cpuisa >= IS_AVX512)
+	switch(cpuisa&0xf) {
+      case AVX512F:    return "avx512f";
+      case AVX512DQ:   return "avx512dq";
+      case AVX512IFMA: return "avx512ifma";
+      case AVX512PF:   return "avx512pf";
+      case AVX512ER:   return "avx512er";
+      case AVX512CD:   return "avx512cd";
+      case AVX512BW:   return "avx512bw";
+      case AVX512VL:   return "avx512vl";
+      case AVX512VBMI: return "avx512vbmi";
+      case AVX512VNNI: return "avx512vnni";
+      case AVX512VBMI2:return "avx512vbmi2";
+	  default:         return "avx512";
+	} 
+  else if(cpuisa >= IS_AVX2)    return "avx2";
+  else if(cpuisa >= IS_AVX)      
+  	switch(cpuisa&0xf) {
+      case 1: return "avx+fma3";
+      case 2: return "avx+fma4";
+      case 4: return "avx+aes";
+      case 5: return "avx+fma3+aes";
+	  default:return "avx";
+    }
+  else if(cpuisa >= IS_SSE42)   return "sse4.2"; 
+  else if(cpuisa >= IS_SSE41x)  return "sse4.1+popcnt";
+  else if(cpuisa >= IS_SSE41)   return "sse4.1";
+  else if(cpuisa >= IS_SSSE3)   return "ssse3";
+  else if(cpuisa >= IS_SSE3)    return "sse3";
+  else if(cpuisa >= IS_SSE2)    return "sse2";
+  else if(cpuisa >= IS_SSE)     return "sse";
+     #elif defined(__powerpc64__)
+  if(cpuisa >= IS_POWER9)       return "power9"; 
+    #elif defined(__ARM_NEON)  
+  if(cpuisa >= IS_NEON)         return "arm_neon";
+    #endif
   return "none";
 }
 
@@ -458,19 +497,19 @@ void tb64ini(int id) {
   i = id?id:cpuisa();
     #if defined(__i386__) || defined(__x86_64__)
       #ifdef USE_AVX512
-  if(i >= 78) {  
+  if(i >= (IS_AVX512|AVX512VBMI)) {  
     _tb64e = tb64avx512enc; 
     _tb64d = tb64avx512dec;
   } else 
       #endif
       #ifndef NO_AVX2
-  if(i >= 60) {  
+  if(i >= IS_AVX2) {  
     _tb64e = tb64avx2enc; 
     _tb64d = tb64avx2dec;
   } else 
       #endif
       #ifndef NO_AVX
-    if(i >= 50) {  
+    if(i >= IS_AVX) {  
     _tb64e = tb64avxenc; 
     _tb64d = tb64avxdec;
   } else 
@@ -478,7 +517,7 @@ void tb64ini(int id) {
     #endif
     #if defined(__i386__) || defined(__x86_64__) || defined(__ARM_NEON) || defined(__powerpc64__)
       #ifndef NO_SSE
-  if(i >= 33) {  
+  if(i >= IS_SSSE3) {  
     _tb64e = tb64sseenc; 
     _tb64d = tb64ssedec;
   }
@@ -495,4 +534,3 @@ unsigned tb64dec(const unsigned char *in, unsigned inlen, unsigned char *out) {
   return _tb64d(in,inlen,out);
 }
 #endif
-

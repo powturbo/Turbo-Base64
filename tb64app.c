@@ -67,7 +67,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   #endif
 
 //------------------------------- malloc ------------------------------------------------
-//#define USE_MMAP
+#define USE_MMAP
   #if __WORDSIZE == 64
 #define MAP_BITS 30
   #else
@@ -197,11 +197,13 @@ int main(int argc, char* argv[]) {
    char _scmd[33]; sprintf(_scmd, "1-%d", ID_MEMCPY);
 
   if(argc - optind < 1) { //fprintf(stderr, "File not specified\n"); exit(-1);     
-    unsigned _sizes0[] = { 10, 100, 1*KB, 10*KB, 100*KB, 1*MB, 10*MB, 20*MB, 30*MB, 40*MB, 50*MB, 100*MB, 0 },
-             _sizes1[] = { 10*KB, 100*KB, 1*MB, 10*MB, 30*MB, 0 }, *sizes = bid?_sizes0:_sizes1;
-    unsigned n = 100*Mb, insize = n, outsize  = turbob64len(insize)*2;
+    unsigned _sizes0[] = { 10, 100, 1*Kb, 10*Kb, 100*Kb, 1*Mb, 10*Mb, 20*Mb, 30*Mb, 40*Mb, 50*Mb, 100*Mb, 0 },
+             _sizes1[] = { 1*Kb, 10*Kb, 1*Mb, 10*Mb, 30*Mb, 0 }, *sizes = bid?_sizes0:_sizes1;
+
+    unsigned pagesize = getpagesize();
+    unsigned n = 100*Mb, insize = SIZE_ROUNDUP(n, pagesize), outsize = turbob64len(insize);
     unsigned char *_in;
-    if(!(_in = (unsigned char*)_valloc(insize+1024,1))) die("malloc error in size=%u\n", insize); //_in[insize]=0;
+    if(!(_in = (unsigned char*)_valloc(insize,1))) die("malloc error in size=%u\n", insize); //_in[insize]=0;
   
     unsigned char *_cpy = _in, *cpy=_cpy, *in = _in, *_out = (unsigned char*)_valloc(outsize,2),*out=_out;  if(!_out) die("malloc error out size=%u\n", outsize);
     if(cmp && !(_cpy = (unsigned char*)_valloc(outsize,3))) die("malloc error cpy size=%u\n", insize);
@@ -209,7 +211,7 @@ int main(int argc, char* argv[]) {
     for(int s = 0; sizes[s]; s++) {
       n = sizes[s];  if(b!=(1<<30) && n<b) continue;
       
-      if(fuzz & 1) { in  = (_in +insize)-n; }  //in[n]=0;
+      if(fuzz & 1) { in  = (_in +insize)-n; } printf("%d ", in[n]);
       if(fuzz & 2) { out = (_out+outsize)-turbob64len(n); cpy = (_cpy+insize)-n; } 
       srand(0); for(int i = 0; i < n; i++) in[i] = rand()&0xff;
       if(!bid) {

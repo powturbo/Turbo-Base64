@@ -63,12 +63,12 @@ unsigned turbob64len(unsigned n) { return TURBOB64LEN(n); }
 
 //----------------------- small 64 bytes lut encoding ---------------------------------------
 #define LI32(_i_) { \
-  unsigned _u = BSWAP32(ctou32(ip+_i_*6    ));\
-  unsigned _v = BSWAP32(ctou32(ip+_i_*6 + 3));\
-  _u = LU32(_u);\
-  _v = LU32(_v);\
-  ctou32(op+_i_*8    ) = _u;\
-  ctou32(op+_i_*8 + 4) = _v;\
+  unsigned _u0 = BSWAP32(ctou32(ip+_i_*6    ));\
+  unsigned _u1 = BSWAP32(ctou32(ip+_i_*6 + 3));\
+  _u0 = LU32(_u0);\
+  _u1 = LU32(_u1);\
+  ctou32(op+_i_*8    ) = _u0;\
+  ctou32(op+_i_*8 + 4) = _u1;\
 }
                               
 unsigned tb64senc(const unsigned char *in, unsigned inlen, unsigned char *out) {
@@ -349,11 +349,11 @@ static const unsigned short lut2[1<<12] = {
                    lut2[ _u_ >> 20])
                              
 #define EI32(_i_) {\
-  unsigned _u = ux, _v = vx;\
-  ux = BSWAP32(ctou32(ip+6+_i_*6  ));  \
-  vx = BSWAP32(ctou32(ip+6+_i_*6+3));\
-  _u = EU32(_u); _v = EU32(_v); \
-  ctou32(op+_i_*8) = _u; ctou32(op+_i_*8+4) = _v; \
+  unsigned _u0 = u0x, _u1 = u1x;\
+  u0x = BSWAP32(ctou32(ip+6+_i_*6  ));  \
+  u1x = BSWAP32(ctou32(ip+6+_i_*6+3));\
+  _u0 = EU32(_u0); _u1 = EU32(_u1); \
+  ctou32(op+_i_*8) = _u0; ctou32(op+_i_*8+4) = _u1; \
 }                  
 
 unsigned tb64xenc(const unsigned char *in, unsigned inlen, unsigned char *out) {
@@ -363,8 +363,8 @@ unsigned tb64xenc(const unsigned char *in, unsigned inlen, unsigned char *out) {
          unsigned      outlen = TURBOB64LEN(inlen);
   
   if(outlen >= 128+4) {
-    unsigned ux = BSWAP32(ctou32(ip  )),
-             vx = BSWAP32(ctou32(ip+3));
+    unsigned u0x = BSWAP32(ctou32(ip  )),
+             u1x = BSWAP32(ctou32(ip+3));
     for(; op <= out+(outlen-(128+4)); op += 128, ip += (128/4)*3) { // unrolling 96->128 bytes
       EI32(0); EI32(1); EI32( 2); EI32( 3); EI32( 4); EI32( 5); EI32( 6); EI32( 7);      
       EI32(8); EI32(9); EI32(10); EI32(11); EI32(12); EI32(13); EI32(14); EI32(15);      PREFETCH(ip,256, 0);

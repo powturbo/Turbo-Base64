@@ -7,7 +7,7 @@ Turbo Base64:Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/powt
  * :sparkles: **Scalar** can be faster than other SSE or ARM Neon based base64 libraries
  * :new: (2019.12) Turbo Base64 **SSE** faster than other SSE/AVX/AVX2! base64 library
  * :new: (2019.12) Fastest **AVX2** implementation, damn near to memcpy 
- * TurboBase64 AVX2 is ~2x faster than other AVX2 libs.
+ * TurboBase64 AVX2 decoding is ~2x faster than other AVX2 libs.
  * :new: (2019.12) Fastest **ARM Neon** base64
  * :+1: Dynamic CPU detection and **JIT scalar/sse/avx/avx2** switching
  * Base64 robust **error checking**
@@ -82,7 +82,8 @@ Turbo Base64:Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/powt
 
 ## Usage: (Benchmark App)
 
-        ./tb64app file   
+        ./tb64app file 
+        or  
         ./tb64app
 
 ## Function usage:

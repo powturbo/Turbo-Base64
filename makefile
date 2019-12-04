@@ -89,7 +89,7 @@ include xtb64make
 endif
 
 ifeq ($(AVX512),1)
-CFLAGS+=-DUSE_AVX512
+DEFS+=-DUSE_AVX512
 LIB+=turbob64avx512.o
 endif
 

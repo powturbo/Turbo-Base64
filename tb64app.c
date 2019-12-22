@@ -61,6 +61,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "conf.h"
 #include "turbob64.h"
 #include "time_.h"
+    #ifdef _WIN32
+int getpagesize_() {
+  static int pagesize = 0;
+  if (pagesize == 0) {
+    SYSTEM_INFO system_info;
+    GetSystemInfo(&system_info);
+    pagesize = max(system_info.dwPageSize,
+                        system_info.dwAllocationGranularity);
+  }
+  return pagesize;
+} 
+  #endif
 
   #ifdef BASE64
 #include "xb64test.h"
@@ -129,7 +141,7 @@ unsigned bench(unsigned char *in, unsigned n, unsigned char *out, unsigned char 
     case 5:if(cpuini(0)>=0x50) { TMBENCH("",l=tb64avxenc( in, n, out),n); pr(l,n); TMBENCH2("tb64avx",  tb64avxdec( out, l, cpy), l); } break;
     case 6:if(cpuini(0)>=0x60) { TMBENCH("",l=tb64avx2enc(in, n, out),n); pr(l,n); TMBENCH2("tb64avx2", tb64avx2dec(out, l, cpy), l); } break;
         #ifdef USE_AVX512
-    case 7:if(cpuini(0)>=0x78) { TMBENCH("",l=tb64avx512enc(in, n, out),n); pr(l,n); TMBENCH2("tb64avx512", tb64avx512dec(out, l, cpy), l); } break;
+    case 7:if(cpuini(0)>=0x800) { TMBENCH("",l=tb64avx512enc(in, n, out),n); pr(l,n); TMBENCH2("tb64avx512", tb64avx512dec(out, l, cpy), l); } break;
         #endif 
       #else
     case 5: case 6:return 0;  
@@ -179,7 +191,7 @@ int main(int argc, char* argv[]) {
       case 'f': fuzz = atoi(optarg);    break;
       case 'e': scmd = optarg;          break;
       case 'I': if((tm_Rep  = atoi(optarg))<=0) tm_rep =tm_Rep=1; break;
-      case 'J': if((tm_Rep2 = atoi(optarg))<=0) tm_rep2=tm_Rep2=1; break;
+      case 'J': if((tm_Rep2 = atoi(optarg))<=0) tm_rep =tm_Rep2=1; break;
       case 'q':      if(!strcasecmp(optarg,"sse"))    cpuini(0x33);  
                 else if(!strcasecmp(optarg,"avx"))    cpuini(0x50); 
                 else if(!strcasecmp(optarg,"avx2"))   cpuini(0x60); 
@@ -197,11 +209,15 @@ int main(int argc, char* argv[]) {
    char _scmd[33]; sprintf(_scmd, "1-%d", ID_MEMCPY);
 
   if(argc - optind < 1) { //fprintf(stderr, "File not specified\n"); exit(-1);     
-    unsigned _sizes0[] = { 10, 100, 1*Kb, 10*Kb, 100*Kb, 1*Mb, 10*Mb, 20*Mb, 30*Mb, 40*Mb, 50*Mb, 100*Mb, 0 },
-             _sizes1[] = { 1*Kb, 10*Kb, 1*Mb, 10*Mb, 30*Mb, 0 }, *sizes = bid?_sizes0:_sizes1;
+    unsigned _sizes0[] = { 3*KB, 30*KB, 300*KB, 3*MB, 30*MB, 60*MB, 0 }, //{ 10, 100, 1*KB, 10*KB, 100*KB, 1*MB, 10*MB, 20*MB, 30*MB, 40*MB, 50*MB, 100*MB, 0 },
+             _sizes1[] = { 1*KB, 10*KB, 100*KB, 1*MB, 10*MB, 20*MB, 0 }, *sizes = bid?_sizes0:_sizes1;
 
+	  #ifdef _WIN32
+    unsigned pagesize = getpagesize_();	
+      #else
     unsigned pagesize = getpagesize();
-    unsigned n = 100*Mb, insize = SIZE_ROUNDUP(n, pagesize), outsize = turbob64len(insize);
+      #endif																
+    unsigned n = 100*Mb, insize = SIZE_ROUNDUP(n, pagesize), outsize = tb64enclen(insize);
     unsigned char *_in;
     if(!(_in = (unsigned char*)_valloc(insize,1))) die("malloc error in size=%u\n", insize); //_in[insize]=0;
   
@@ -211,12 +227,12 @@ int main(int argc, char* argv[]) {
     for(int s = 0; sizes[s]; s++) {
       n = sizes[s];  if(b!=(1<<30) && n<b) continue;
       
-      if(fuzz & 1) { in  = (_in +insize)-n; } printf("%d ", in[n]);
-      if(fuzz & 2) { out = (_out+outsize)-turbob64len(n); cpy = (_cpy+insize)-n; } 
+      if(fuzz & 1) { in  = (_in +insize)-n; } //printf("%d ", in[n]);
+      if(fuzz & 2) { out = (_out+outsize)-tb64enclen(n); cpy = (_cpy+insize)-n; } 
       srand(0); for(int i = 0; i < n; i++) in[i] = rand()&0xff;
       if(!bid) {
-        if(n>=1000000) printf("size=%uMb (Mb=1.000.000)\n", n/1000000);
-        else           printf("size=%uKb (Kb=1.000)\n", n/1000);
+        if(n >= 1000000) printf("size=%uMb (Mb=1.000.000)\n", n/1000000);
+        else             printf("size=%uKb (Kb=1.000)\n",     n/1000);
       }
       char *p = scmd?scmd:_scmd;
       do { 
@@ -244,7 +260,7 @@ int main(int argc, char* argv[]) {
       if(flen > b) flen = b;
       n = flen; 
       if(!(in  =        (unsigned char*)malloc(n+64)))                 { fprintf(stderr, "malloc error\n"); exit(-1); } cpy = in;
-      if(!(out =        (unsigned char*)malloc(turbob64len(flen)+64))) { fprintf(stderr, "malloc error\n"); exit(-1); } 
+      if(!(out =        (unsigned char*)malloc(tb64enclen(flen)+64))) { fprintf(stderr, "malloc error\n"); exit(-1); } 
       if(cmp && !(cpy = (unsigned char*)malloc(n+64)))                 { fprintf(stderr, "malloc error\n"); exit(-1); }
       n = fread(in, 1, n, fi);                                           printf("File='%s' Length=%u\n", inname, n);            
       fclose(fi);

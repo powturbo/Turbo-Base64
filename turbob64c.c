@@ -41,7 +41,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define BSWAP32(a) bswap32(a)
   #endif  
 
-unsigned turbob64len(unsigned n) { return TURBOB64LEN(n); }
+unsigned tb64enclen(unsigned n) { return TB64ENCLEN(n); }
 
 //--------------------------------------------------------------
 #define LU32(_u_) (lut1[(_u_>> 8) & 0x3f] << 24 |\
@@ -75,7 +75,7 @@ unsigned tb64senc(const unsigned char *in, unsigned inlen, unsigned char *out) {
   static unsigned char lut1[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
   const  unsigned char *ip    = in;
          unsigned char *op    = out;
-         unsigned      outlen = TURBOB64LEN(inlen);
+         unsigned      outlen = TB64ENCLEN(inlen);
 
   if(outlen >= 128+4)
     for(; op <= out+(outlen-(128+4)); op += 128, ip += (128/4)*3) {                     // 96->128 bytes
@@ -360,7 +360,7 @@ unsigned tb64xenc(const unsigned char *in, unsigned inlen, unsigned char *out) {
   static unsigned char lut1[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
   const  unsigned char *ip = in;
          unsigned char *op = out;
-         unsigned      outlen = TURBOB64LEN(inlen);
+         unsigned      outlen = TB64ENCLEN(inlen);
   
   if(outlen >= 128+4) {
     unsigned u0x = BSWAP32(ctou32(ip  )),

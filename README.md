@@ -29,7 +29,7 @@ Turbo Base64:Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/powt
 ###### Benchmark Intel CPU: Skylake i7-6700 3.4GHz gcc 9.2
 |E Size|ratio%|E MB/s|D MB/s|Name|1MB binary 2019.12 |
 |--------:|-----:|--------:|--------:|----------------|----------------|
-|1333336|133.3|**15.968**|**25.503**|[**TB64avx2**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx2**|
+|1333336|133.3|**16.247**|**26.032**|[**TB64avx2**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx2**|
 |1333336|133.3|**9.838**|**15.630**|[**TB64avx**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx**|
 |1333336|133.3|**8.891**|**12.097**|[**TB64sse**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 sse**|
 |1333336|133.3|12.973|13.986|[fb64avx2](https://github.com/lemire/fastbase64)|Fastbase64 avx2|
@@ -131,5 +131,5 @@ Turbo Base64:Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/powt
   * :green_book:[Faster Base64 Encoding and Decoding Using AVX2 Instructions](https://arxiv.org/abs/1704.00605)
   * :green_book:[RFC 4648:The Base16, Base32, and Base64 Data Encodings](https://tools.ietf.org/html/rfc4648)
 
-Last update: 5 Dec 2019
+Last update: 22 Dec 2019
 

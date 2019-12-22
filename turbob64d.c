@@ -322,6 +322,19 @@ static const unsigned lut3[] = {
 #undef DI32
 #define DI32(a) DI32C(a)
   #endif
+
+unsigned tb64declen(const unsigned char *in, unsigned inlen) {
+  if(!inlen || (inlen&3)) return 0;
+
+  unsigned outlen = (inlen/4)*3;
+  const unsigned char *ip = in+inlen;
+  if(    ip[-1]=='=') { outlen--; 
+    if(  ip[-2]=='=') { outlen--; 
+      if(ip[-3]=='=')   outlen--; 
+	}
+  }
+  return outlen;
+}
   
 unsigned tb64xdec(const unsigned char *in, unsigned inlen, unsigned char *out) { 
   const unsigned char *ip    = in;

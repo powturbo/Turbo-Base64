@@ -50,34 +50,38 @@ ifeq ($(STATIC),1)
 LDFLAGS+=-static
 endif
 
+#FPIC=-fPIC
 
-all: tb64app
+all: tb64app 
+#libtb64.so
 
 ifeq ($(FULLCHECK),1)
 DEFS+=-DB64CHECK
 endif
 
 turbob64c.o: turbob64c.c
-	$(CC) -O3 $(MARCH) $(DEFS) -fstrict-aliasing  $< -c -o $@ 
+	$(CC) -O3 $(MARCH) $(DEFS) $(FPIC) -fstrict-aliasing  $< -c -o $@ 
 
 tb64app.o: tb64app.c
 	$(CC) -O3 $(DEFS) $< -c -o $@ 
 
 turbob64d.o: turbob64d.c
-	$(CC) -O3 $(MARCH) $(DEFS) -fstrict-aliasing $< -c -o $@ 
+	$(CC) -O3 $(MARCH) $(DEFS) $(FPIC) -fstrict-aliasing $< -c -o $@ 
 
 turbob64sse.o: turbob64sse.c
-	$(CC) -O3 $(MSSE) $(DEFS) -fstrict-aliasing $< -c -o $@ 
+	$(CC) -O3 $(MSSE) $(DEFS) $(FPIC) -fstrict-aliasing $< -c -o $@ 
 
 turbob64avx.o: turbob64sse.c
-	$(CC) -O3 $(DEFS) -march=corei7-avx -mtune=corei7-avx -mno-aes -fstrict-aliasing $< -c -o turbob64avx.o 
+	$(CC) -O3 $(DEFS) $(FPIC) -march=corei7-avx -mtune=corei7-avx -mno-aes -fstrict-aliasing $< -c -o turbob64avx.o 
 
 turbob64avx2.o: turbob64avx2.c
-	$(CC) -O3 -march=haswell -fstrict-aliasing -falign-loops $< -c -o $@ 
+	$(CC) -O3 $(FPIC) -march=haswell -fstrict-aliasing -falign-loops $< -c -o $@ 
 
 turbob64avx512.o: turbob64avx512.c
-	$(CC) -O3 -march=cannonlake -fstrict-aliasing -falign-loops $< -c -o $@ 
+	$(CC) -O3 $(FPIC) -march=skylake-avx512 -mavx512vl -fstrict-aliasing -falign-loops $< -c -o $@ 
 
+_tb64.o: _tb64.c
+	$(CC) -O3 $(FPIC) -I/usr/include/python2.7 $< -c -o $@ 
 
 LIB=turbob64c.o turbob64d.o turbob64sse.o
 ifeq ($(ARCH),x86_64)
@@ -93,6 +97,14 @@ DEFS+=-DUSE_AVX512
 LIB+=turbob64avx512.o
 endif
 
+#_tb64.so: _tb64.o
+#	gcc -shared $^ -o $@
+
+libtb64.so: $(LIB)
+	gcc -shared $^ -o $@
+	cp libtb64.so ~/.local/lib/
+	./python/tb64/build.py
+	cp _tb64.so ~/.local/lib/
 
 tb64app: $(LIB) tb64app.o 
 	$(CC) -O3 $(LIB) tb64app.o $(LDFLAGS) -o tb64app
@@ -108,7 +120,7 @@ tb64test: $(LIB) tb64test.o
 	$(CC) -O3 $(CFLAGS)  $(MARCH) $< -c -o $@
 
 clean:
-	@find . -type f -name "*\.o" -delete -or -name "*\~" -delete -or -name "core" -delete -or -name "turbob64"
+	@find . -type f -name "*\.o" -delete -or -name "*\~" -delete -or -name "core" -delete -or -name "tb64app" -delete -or -name "_tb64.so" -delete -or -name "_tb64.c" -delete -or -name "xlibtb64.so"  -delete -or -name "libtb64.a"
 
 cleanw:
 	del /S *.o

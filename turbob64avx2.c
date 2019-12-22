@@ -128,7 +128,7 @@ static ALWAYS_INLINE __m256i unpack6to8(__m256i v) { /* https://arxiv.org/abs/17
 unsigned tb64avx2enc(const unsigned char* in, unsigned inlen, unsigned char *out) {
   const unsigned char *ip = in; 
         unsigned char *op = out;
-        unsigned   outlen = TURBOB64LEN(inlen);
+        unsigned   outlen = TB64ENCLEN(inlen);
   
   if(outlen >= 64+4)
     for(; op < out+(outlen-(64+4)); op += 64, ip += (64/4)*3) {     PREFETCH(ip,1024,0);            
@@ -145,6 +145,6 @@ unsigned tb64avx2enc(const unsigned char* in, unsigned inlen, unsigned char *out
     }
 
   tb64xenc(ip, inlen-(ip-in), op);
-  return TURBOB64LEN(inlen);
+  return outlen;
 }
 

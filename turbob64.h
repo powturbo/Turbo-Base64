@@ -36,10 +36,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 extern "C" {
 #endif
 
+#define TB64_VERSION 100
 //---------------------- base64 API functions ----------------------------------
 // Base64 output length after encoding 
-#define TURBOB64LEN(_n_) (((_n_ + 2)/ 3) * 4)
-unsigned turbob64len(unsigned n);
+#define TB64ENCLEN(_n_) ((_n_ + 2)/3 * 4)
+unsigned tb64memcpy(const unsigned char *in, unsigned inlen, unsigned char *out);
+
+// return the base64 buffer length after encoding
+unsigned tb64enclen(unsigned inlen);
+
+// return the original (after decoding) length for a given base64 encoded buffer
+unsigned tb64declen(const unsigned char *in, unsigned inlen);
 
 // Encode binary input 'in' buffer into base64 string 'out' 
 // with automatic cpu detection for avx2/sse4.1/scalar 
@@ -87,14 +94,15 @@ void tb64ini(int id);  // detect cpu && set the default run time functions for t
  
 //------- CPU instruction set ----------------------
 // cpuisa  = 0: return current simd set, 
-// cpuisa != 0: set simd set 0:scalar, 20:sse2, 52:avx2
-int   cpuini(int cpuisa); 
+// cpuisa != 0: set simd set 0:scalar, 0x33:sse2, 0x60:avx2
+unsigned cpuini(unsigned cpuisa); 
 
 // convert simd set to string "sse3", "ssse3", "sse4.1", "avx", "avx2", "neon",... 
 // Ex.: printf("current cpu set=%s\n", cpustr(cpuini(0)) ); 
-char *cpustr(int cpuisa); 
+char *cpustr(unsigned cpuisa); 
 
 #ifdef __cplusplus
 }
 #endif
 #endif
+

@@ -33,6 +33,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //------------- TurboBase64 : Base64 encoding ----------------------
 #include "conf.h"
 #include "turbob64.h"
+
+  #if defined(TB64SHORT) && TB64SHORT < 128
+#define NES 64    
+#define NEX 64 
+  #else
+#define NES 128    
+#define NEX 128 
+  #endif	
+
 #define PREFETCH(_ip_,_i_,_rw_) __builtin_prefetch(_ip_+(_i_),_rw_)
 
   #if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
@@ -41,7 +50,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define BSWAP32(a) bswap32(a)
   #endif  
 
-unsigned tb64enclen(unsigned n) { return TB64ENCLEN(n); }
+size_t tb64enclen(size_t n) { return TB64ENCLEN(n); }
 
 //--------------------------------------------------------------
 #define LU32(_u_) (lut1[(_u_>> 8) & 0x3f] << 24 |\
@@ -70,18 +79,26 @@ unsigned tb64enclen(unsigned n) { return TB64ENCLEN(n); }
   ctou32(op+_i_*8    ) = _u0;\
   ctou32(op+_i_*8 + 4) = _u1;\
 }
+
+static unsigned char lut1[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
                               
-unsigned tb64senc(const unsigned char *in, unsigned inlen, unsigned char *out) {
-  static unsigned char lut1[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+size_t tb64senc(const unsigned char *in, size_t inlen, unsigned char *out) {
   const  unsigned char *ip    = in;
          unsigned char *op    = out;
-         unsigned      outlen = TB64ENCLEN(inlen);
-
-  if(outlen >= 128+4)
-    for(; op <= out+(outlen-(128+4)); op += 128, ip += (128/4)*3) {                     // 96->128 bytes
-      LI32(0); LI32(1); LI32( 2); LI32( 3); LI32( 4); LI32( 5); LI32( 6); LI32( 7);         
-      LI32(8); LI32(9); LI32(10); LI32(11); LI32(12); LI32(13); LI32(14); LI32(15);    PREFETCH(ip,256, 0);
+         size_t        outlen = TB64ENCLEN(inlen);
+ 		 
+  if(outlen >= 16+4) {
+    #if NES >= 64	  
+    for(; op <= (out+outlen)-(NES+4); op += NES, ip += (NES/4)*3) {                     // 96/48->128/64 bytes
+      LI32(0); LI32(1); LI32( 2); LI32( 3); LI32( 4); LI32( 5); LI32( 6); LI32( 7); 
+        #if NES >= 128	  
+      LI32(8); LI32(9); LI32(10); LI32(11); LI32(12); LI32(13); LI32(14); LI32(15);    
+	    #endif
+	                                                                                  PREFETCH(ip,256, 0);
     }
+	#endif
+    for(; op <= (out+outlen)-(16+4); op += 16, ip += (16/4)*3) { LI32(0); LI32(1); }
+  }
   ETAIL(); 
   return outlen;
 }
@@ -356,20 +373,33 @@ static const unsigned short lut2[1<<12] = {
   ctou32(op+_i_*8) = _u0; ctou32(op+_i_*8+4) = _u1; \
 }                  
 
-unsigned tb64xenc(const unsigned char *in, unsigned inlen, unsigned char *out) {
-  static unsigned char lut1[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-  const  unsigned char *ip = in;
-         unsigned char *op = out;
-         unsigned      outlen = TB64ENCLEN(inlen);
+size_t tb64xenc(const unsigned char *in, size_t inlen, unsigned char *out) {
+  const  unsigned char *ip    = in;
+         unsigned char *op    = out;
+         size_t        outlen = TB64ENCLEN(inlen);
   
-  if(outlen >= 128+4) {
+  if(outlen >= 16+4) {
     unsigned u0x = BSWAP32(ctou32(ip  )),
              u1x = BSWAP32(ctou32(ip+3));
-    for(; op <= out+(outlen-(128+4)); op += 128, ip += (128/4)*3) { // unrolling 96->128 bytes
-      EI32(0); EI32(1); EI32( 2); EI32( 3); EI32( 4); EI32( 5); EI32( 6); EI32( 7);      
-      EI32(8); EI32(9); EI32(10); EI32(11); EI32(12); EI32(13); EI32(14); EI32(15);      PREFETCH(ip,256, 0);
+	  #if NEX >= 64		 
+    for(; op <= (out+outlen)-(NEX+4); op += NEX, ip += (NEX/4)*3) { // unrolling 96/48->128/64 bytes
+      EI32(0); EI32(1); EI32( 2); EI32( 3); EI32( 4); EI32( 5); EI32( 6); EI32( 7);     
+        #if NEX >= 128	  
+      EI32(8); EI32(9); EI32(10); EI32(11); EI32(12); EI32(13); EI32(14); EI32(15);      
+	    #endif
+																						PREFETCH(ip,256, 0);
     }
+	  #endif
+    for(; op <= (out+outlen)-(16+4); op += 16, ip += (16/4)*3) { EI32(0); EI32(1); } // unrolling 12->16 bytes
   }
+  ETAIL();
+  return outlen;
+}
+
+size_t _tb64xenc(const unsigned char *in, size_t inlen, unsigned char *out) {
+  const  unsigned char *ip    = in;
+         unsigned char *op    = out;
+         size_t        outlen = TB64ENCLEN(inlen);
   ETAIL();
   return outlen;
 }

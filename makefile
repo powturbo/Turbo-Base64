@@ -4,7 +4,9 @@ CC ?= gcc
 CXX ?= g++
 
 #CC=powerpc64le-linux-gnu-gcc
-
+#DEBUG=-DDEBUG -g
+#DEFS=$(DEBUG)
+#CFLAGS=$(DEBUG)
 #------- OS/ARCH -------------------
 ifneq (,$(filter Windows%,$(OS)))
   OS := Windows
@@ -55,8 +57,12 @@ endif
 all: tb64app 
 #libtb64.so
 
+ifeq ($(NCHECK),1)
+DEFS+=-DNB64CHECK
+else
 ifeq ($(FULLCHECK),1)
 DEFS+=-DB64CHECK
+endif
 endif
 
 turbob64c.o: turbob64c.c
@@ -75,7 +81,7 @@ turbob64avx.o: turbob64sse.c
 	$(CC) -O3 $(DEFS) $(FPIC) -march=corei7-avx -mtune=corei7-avx -mno-aes -fstrict-aliasing $< -c -o turbob64avx.o 
 
 turbob64avx2.o: turbob64avx2.c
-	$(CC) -O3 $(FPIC) -march=haswell -fstrict-aliasing -falign-loops $< -c -o $@ 
+	$(CC) -O3 $(FPIC) $(DEFS) -march=haswell -fstrict-aliasing -falign-loops $< -c -o $@ 
 
 turbob64avx512.o: turbob64avx512.c
 	$(CC) -O3 $(FPIC) -march=skylake-avx512 -mavx512vl -fstrict-aliasing -falign-loops $< -c -o $@ 
@@ -117,7 +123,7 @@ tb64test: $(LIB) tb64test.o
 	
 	
 .c.o:
-	$(CC) -O3 $(CFLAGS)  $(MARCH) $< -c -o $@
+	$(CC) -O3 $(CFLAGS) $(MARCH) $< -c -o $@
 
 clean:
 	@find . -type f -name "*\.o" -delete -or -name "*\~" -delete -or -name "core" -delete -or -name "tb64app" -delete -or -name "_tb64.so" -delete -or -name "_tb64.c" -delete -or -name "xlibtb64.so"  -delete -or -name "libtb64.a"

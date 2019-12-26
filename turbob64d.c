@@ -34,6 +34,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "conf.h"
 #include "turbob64.h"
 
+  #if defined(TB64SHORT) && TB64SHORT < 128
+#define NDS 64    
+#define NDX 64 
+  #else
+#define NDS 128    
+#define NDX 128 
+  #endif	
+
 #define PREFETCH(_ip_,_i_,_rw_) __builtin_prefetch(_ip_+(_i_),_rw_)
 
   #if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
@@ -42,12 +50,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define BSWAP32(a) bswap32(a)
   #endif  
 
-//#define B64CHECK
-#define CHECK0(a) a
-  #ifdef B64CHECK
-#define CHECK1(a) a
-  #else
+  #ifdef NB64CHECK
+#define CHECK0(a)
 #define CHECK1(a)
+  #else
+#define CHECK0(a) a
+    #ifdef B64CHECK
+#define CHECK1(a) a
+    #else
+#define CHECK1(a)
+    #endif
   #endif
 
 //--------------------- Decoding with small lut (only 64 bytes used)------------------------------------
@@ -101,19 +113,25 @@ static const unsigned char lut[] = {
 }
   #endif
 
-unsigned tb64sdec(const unsigned char *in, unsigned inlen, unsigned char *out) {
+size_t tb64sdec(const unsigned char *in, size_t inlen, unsigned char *out) {
   const unsigned char *ip = in;
         unsigned char *op = out;
         unsigned cu = 0;
   if(!inlen || (inlen&3)) return 0;
-
-  if(inlen >= 128+4)
-    for(; ip <= in+(inlen-(128+4)); ip += 128, op += (128/4)*3) {		// decode 128->96 bytes			
-      LI32C(0); LI32(1); LI32( 2); LI32( 3); LI32( 4); LI32( 5); LI32( 6); LI32( 7);     
-      LI32(8);  LI32(9); LI32(10); LI32(11); LI32(12); LI32(13); LI32(14); LI32(15);   	PREFETCH(ip,384, 0);
+  
+    #if NDS >= 64
+  if(inlen >= 16+4) {
+    for(; ip <= (in+inlen)-(NDS+4); ip += NDS, op += (NDS/4)*3) {		    // decode 128/64->96/48 bytes			
+      LI32C(0); LI32(1); LI32( 2); LI32( 3); LI32( 4); LI32( 5); LI32( 6); LI32( 7);  
+        #if NDS >= 128	  
+      LI32(8);  LI32(9); LI32(10); LI32(11); LI32(12); LI32(13); LI32(14); LI32(15);   	
+	    #endif
+	                                                                                  PREFETCH(ip,384, 0);
     }
-  if(inlen - (ip-in) > 4)												// decode rest
-    for(; ip < in+(inlen-4); ip += 4, op += 3) { unsigned u = ctou32(ip); cu |= LU32C(u); u = LU32(u); ctou32(op) = u; }
+	#endif
+    for(; ip <= (in+inlen)-(16+4); ip += 16, op += (16/4)*3) { LI32C(0); LI32(1); }
+  }
+  for(; ip < (in+inlen)-4; ip += 4, op += 3) { unsigned u = ctou32(ip); cu |= LU32C(u); u = LU32(u); ctou32(op) = u; }
 
   unsigned u = 0, l = inlen - (ip-in);  
   if(l == 4) 															// last 4 bytes
@@ -323,10 +341,10 @@ static const unsigned lut3[] = {
 #define DI32(a) DI32C(a)
   #endif
 
-unsigned tb64declen(const unsigned char *in, unsigned inlen) {
+size_t tb64declen(const unsigned char *in, size_t inlen) {
   if(!inlen || (inlen&3)) return 0;
 
-  unsigned outlen = (inlen/4)*3;
+  size_t outlen = (inlen/4)*3;
   const unsigned char *ip = in+inlen;
   if(    ip[-1]=='=') { outlen--; 
     if(  ip[-2]=='=') { outlen--; 
@@ -336,40 +354,64 @@ unsigned tb64declen(const unsigned char *in, unsigned inlen) {
   return outlen;
 }
   
-unsigned tb64xdec(const unsigned char *in, unsigned inlen, unsigned char *out) { 
+size_t tb64xdec(const unsigned char *in, size_t inlen, unsigned char *out) { 
   const unsigned char *ip    = in;
         unsigned char *op    = out;  
         unsigned      cu     = 0;
   if(!inlen || (inlen&3)) return 0;
   
     #ifdef B64CHECK
-  #define N 64
+  #define NDX 64
     #else
-  #define N 128
+  #define NDX 128
 	#endif
-  if(inlen >= N+4) { 															// 8/16x loop unrolling: decode 128/64->96/48 bytes
+  if(inlen >= 16+4) { 															// 8/16x loop unrolling: decode 128/64->96/48 bytes
     unsigned ux = ctou32(ip), 
 	         vx = ctou32(ip+4);
-	
-    for(; ip < in+(inlen-(N+4)); ip += N, op += (N/4)*3) {
+	  #if NDX >= 64
+    for(; ip < (in+inlen)-(NDX+4); ip += NDX, op += (NDX/4)*3) {
       DI32C(0); DI32(1); DI32( 2); DI32( 3); DI32( 4); DI32( 5); DI32( 6); DI32( 7); 
-	    #if N > 64
+	    #if NDX > 64
 	  DI32(8);  DI32(9); DI32(10); DI32(11); DI32(12); DI32(13); DI32(14); DI32(15);
 	    #endif
 																					PREFETCH(ip, 256, 0);  
     }
+	  #endif
+    for(; ip < (in+inlen)-(16+4); ip += 16, op += (16/4)*3) { DI32C(0); DI32(1); }
   }
-  if(inlen - (ip-in) > 4)                                                     // decode the rest 4->3 	
-    for(; ip < in+(inlen-4); ip += 4, op += 3) { unsigned u = ctou32(ip); u = DU32(u); ctou32(op) = u; cu |= u; } 
+  for(; ip < (in+inlen)-4; ip += 4, op += 3) { unsigned u = ctou32(ip); u = DU32(u); ctou32(op) = u; cu |= u; }
 
-  unsigned u = 0, l = inlen - (ip-in); 
+  unsigned u = 0, l = (in+inlen) - ip; 
   if(l == 4) 																	// last 4 bytes
     if(    ip[3]=='=') { l = 3; 
       if(  ip[2]=='=') { l = 2; 
         if(ip[1]=='=')   l = 1; 
 	  }
 	}
-  unsigned char *up=(unsigned char *)&u;
+  unsigned char *up = (unsigned char *)&u;
+  switch(l) {
+    case 4: u = ctou32(ip); u = DU32(u);                 *op++ = up[0]; *op++ = up[1]; *op++ = up[2]; cu |= u; break; // 4->3 bytes
+    case 3: u = lut0[ip[0]] | lut1[ip[1]] | lut2[ip[2]]; *op++ = up[0]; *op++ = up[1];                cu |= u; break; // 3->2 bytes
+    case 2: u = lut0[ip[0]] | lut1[ip[1]];               *op++ = up[0];                               cu |= u; break; // 2->1 byte
+    case 1: u = lut0[ip[0]];                             *op++ = up[0];                               cu |= u; break; // 1->1 byte
+  }
+  return (cu == -1)?0:(op-out);
+}
+
+size_t _tb64xdec(const unsigned char *in, size_t inlen, unsigned char *out) { 
+  const unsigned char *ip    = in;
+        unsigned char *op    = out;  
+        unsigned      cu     = 0;
+  for(; ip < (in+inlen)-4; ip += 4, op += 3) { unsigned u = ctou32(ip); u = DU32(u); ctou32(op) = u; cu |= u; }
+
+  unsigned u = 0, l = (in+inlen) - ip; 
+  if(l == 4) 																	// last 4 bytes
+    if(    ip[3]=='=') { l = 3; 
+      if(  ip[2]=='=') { l = 2; 
+        if(ip[1]=='=')   l = 1; 
+	  }
+	}
+  unsigned char *up = (unsigned char *)&u;
   switch(l) {
     case 4: u = ctou32(ip); u = DU32(u);                 *op++ = up[0]; *op++ = up[1]; *op++ = up[2]; cu |= u; break; // 4->3 bytes
     case 3: u = lut0[ip[0]] | lut1[ip[1]] | lut2[ip[2]]; *op++ = up[0]; *op++ = up[1];                cu |= u; break; // 3->2 bytes

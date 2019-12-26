@@ -10,7 +10,7 @@ Turbo Base64:Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/powt
  * TurboBase64 AVX2 decoding is ~2x faster than other AVX2 libs.
  * :new: (2019.12) Fastest **ARM Neon** base64
  * :+1: Dynamic CPU detection and **JIT scalar/sse/avx/avx2** switching
- * Base64 robust **error checking**
+ * Base64 robust **error checking**, optimzed for **long+short** strings
  * Portable library, 32/64 bits, **SSE/AVX/AVX2**, **ARM Neon**, **Power9 Altivec**
  * OS:Linux amd64, arm64, Power9, MacOs, s390x. Windows: Mingw, visual c++
  * Big+Little endian
@@ -131,5 +131,5 @@ Turbo Base64:Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/powt
   * :green_book:[Faster Base64 Encoding and Decoding Using AVX2 Instructions](https://arxiv.org/abs/1704.00605)
   * :green_book:[RFC 4648:The Base16, Base32, and Base64 Data Encodings](https://tools.ietf.org/html/rfc4648)
 
-Last update: 22 Dec 2019
+Last update: 26 Dec 2019
 

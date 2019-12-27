@@ -213,7 +213,7 @@ int main(int argc, char* argv[]) {
   if(smax < smin) { unsigned tmp = smin; smin = smax; smax = tmp; }
     #endif
 
-  tb64ini(0); 
+  tb64ini(0,0); 
   printf("detected simd (id=%x->'%s')\n\n", cpuini(0), cpustr(cpuini(0))); 
   printf("  E MB/s    size     ratio%%   D MB/s   function\n");  
   char _scmd[33]; sprintf(_scmd, "1-%d", ID_MEMCPY);

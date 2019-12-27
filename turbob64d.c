@@ -113,6 +113,7 @@ static const unsigned char lut[] = {
 }
   #endif
 
+#define OVS 4
 size_t tb64sdec(const unsigned char *in, size_t inlen, unsigned char *out) {
   const unsigned char *ip = in;
         unsigned char *op = out;
@@ -120,8 +121,9 @@ size_t tb64sdec(const unsigned char *in, size_t inlen, unsigned char *out) {
   if(!inlen || (inlen&3)) return 0;
   
     #if NDS >= 64
-  if(inlen >= 16+4) {
-    for(; ip <= (in+inlen)-(NDS+4); ip += NDS, op += (NDS/4)*3) {		    // decode 128/64->96/48 bytes			
+  if(inlen >= 8+OVS) {
+    size_t _inlen = inlen - OVS;
+    for(; ip < (in+inlen)-(NDS+OVS); ip += NDS, op += (NDS/4)*3) {		    // decode 128/64->96/48 bytes			
       LI32C(0); LI32(1); LI32( 2); LI32( 3); LI32( 4); LI32( 5); LI32( 6); LI32( 7);  
         #if NDS >= 128	  
       LI32(8);  LI32(9); LI32(10); LI32(11); LI32(12); LI32(13); LI32(14); LI32(15);   	
@@ -129,7 +131,8 @@ size_t tb64sdec(const unsigned char *in, size_t inlen, unsigned char *out) {
 	                                                                                  PREFETCH(ip,384, 0);
     }
 	#endif
-    for(; ip <= (in+inlen)-(16+4); ip += 16, op += (16/4)*3) { LI32C(0); LI32(1); }
+    for(; ip < (in+inlen)-(16+OVS); ip += 16, op += (16/4)*3) { LI32(0); LI32(1); }
+    if(   ip < (in+inlen)-( 8+OVS))                           { LI32(0); ip += 8; op += (8/4)*3; }
   }
   for(; ip < (in+inlen)-4; ip += 4, op += 3) { unsigned u = ctou32(ip); cu |= LU32C(u); u = LU32(u); ctou32(op) = u; }
 
@@ -336,10 +339,14 @@ static const unsigned lut3[] = {
                    }
   #endif				
 
-  #ifdef B64CHECK
+  #ifdef NCHECK
+#define DI32C(a) DI32(a)
+  #else
+    #ifdef B64CHECK
 #undef DI32
 #define DI32(a) DI32C(a)
-  #endif
+    #endif
+#endif
 
 size_t tb64declen(const unsigned char *in, size_t inlen) {
   if(!inlen || (inlen&3)) return 0;
@@ -353,7 +360,8 @@ size_t tb64declen(const unsigned char *in, size_t inlen) {
   }
   return outlen;
 }
-  
+
+#define OVX 4  
 size_t tb64xdec(const unsigned char *in, size_t inlen, unsigned char *out) { 
   const unsigned char *ip    = in;
         unsigned char *op    = out;  
@@ -365,11 +373,11 @@ size_t tb64xdec(const unsigned char *in, size_t inlen, unsigned char *out) {
     #else
   #define NDX 128
 	#endif
-  if(inlen >= 16+4) { 															// 8/16x loop unrolling: decode 128/64->96/48 bytes
+  if(inlen >= 8+OVX) { 															// 8/16x loop unrolling: decode 128/64->96/48 bytes
     unsigned ux = ctou32(ip), 
 	         vx = ctou32(ip+4);
 	  #if NDX >= 64
-    for(; ip < (in+inlen)-(NDX+4); ip += NDX, op += (NDX/4)*3) {
+    for(; ip < (in+inlen)-(NDX+OVX); ip += NDX, op += (NDX/4)*3) {
       DI32C(0); DI32(1); DI32( 2); DI32( 3); DI32( 4); DI32( 5); DI32( 6); DI32( 7); 
 	    #if NDX > 64
 	  DI32(8);  DI32(9); DI32(10); DI32(11); DI32(12); DI32(13); DI32(14); DI32(15);
@@ -377,7 +385,8 @@ size_t tb64xdec(const unsigned char *in, size_t inlen, unsigned char *out) {
 																					PREFETCH(ip, 256, 0);  
     }
 	  #endif
-    for(; ip < (in+inlen)-(16+4); ip += 16, op += (16/4)*3) { DI32C(0); DI32(1); }
+    for(; ip < (in+inlen)-(16+OVX); ip += 16, op += (16/4)*3) { DI32(0); DI32(1); }
+    if(   ip < (in+inlen)-(8+OVX))                            { DI32(0); ip += 8, op += (8/4)*3; }
   }
   for(; ip < (in+inlen)-4; ip += 4, op += 3) { unsigned u = ctou32(ip); u = DU32(u); ctou32(op) = u; cu |= u; }
 

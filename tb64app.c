@@ -75,7 +75,10 @@ int getpagesize_() {
   #endif
 
   #ifdef BASE64
+#define FAC 2
 #include "xb64test.h"
+  #else
+#define FAC 1
   #endif
 
 //------------------------------- malloc ------------------------------------------------
@@ -226,9 +229,9 @@ int main(int argc, char* argv[]) {
       #endif																
     unsigned n = 100*Mb, insize = SIZE_ROUNDUP(n, pagesize), outsize = tb64enclen(insize);
     unsigned char *_in;
-    if(!(_in = (unsigned char*)_valloc(insize,1))) die("malloc error in size=%u\n", insize); //_in[insize]=0;
+    if(!(_in = (unsigned char*)_valloc(insize+64, 1))) die("malloc error in size=%u\n", insize); //_in[insize]=0;
   
-    unsigned char *_cpy = _in, *cpy=_cpy, *in = _in, *_out = (unsigned char*)_valloc(outsize,2),*out=_out;  if(!_out) die("malloc error out size=%u\n", outsize);
+    unsigned char *_cpy = _in, *cpy=_cpy, *in = _in, *_out = (unsigned char*)_valloc(outsize*FAC,2),*out=_out;  if(!_out) die("malloc error out size=%u\n", outsize);
     if(cmp && !(_cpy = (unsigned char*)_valloc(outsize,3))) die("malloc error cpy size=%u\n", insize);
 
     for(int s = 0; sizes[s]; s++) {
@@ -274,7 +277,7 @@ int main(int argc, char* argv[]) {
       if(n <= 0) exit(0);
       tm_init(tm_Rep, tm_Rep2);  
 
-      tb64ini(0); 
+      tb64ini(0,0); 
       printf("detected simd=%s\n\n", cpustr(cpuini(0))); 
 
       printf("  E MB/s    size     ratio    D MB/s   function\n");  

@@ -180,7 +180,6 @@ size_t tb64avx2enc(const unsigned char* in, size_t inlen, unsigned char *out) {
 // can read beyond the input buffer end, 
 // therefore input buffer size must be 32 bytes larger than input length
 
-
 #define _PACK8TO6(v) {\
   const __m128i merge_ab_and_bc = _mm_maddubs_epi16(v,            _mm_set1_epi32(0x01400140));  /*/dec_reshuffle: https://arxiv.org/abs/1704.00605 P.17*/\
                               v = _mm_madd_epi16(merge_ab_and_bc, _mm_set1_epi32(0x00011000));\

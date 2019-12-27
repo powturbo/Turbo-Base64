@@ -66,6 +66,13 @@ size_t tb64enc(const unsigned char *in, size_t inlen, unsigned char *out);
 //                0 Error (invalid base64 input or input length = 0)
 size_t tb64dec(const unsigned char *in, size_t inlen, unsigned char *out);
 
+// Direct call to tb64enc + tb64dec saving a function call + a check instruction
+// use only for short strings. Calls: _tb64e(in, inlen, out) or _tb64d(in, inlen, out)
+typedef size_t (*TB64FUNC)(const unsigned char *in, size_t n, unsigned char *out);
+
+extern TB64FUNC _tb64e;
+extern TB64FUNC _tb64d;
+
 //---------------------- base64 Internal functions ------------------------------
 // Space efficient scalar but (slower) version
 size_t tb64senc(   const unsigned char *in, size_t inlen, unsigned char *out);

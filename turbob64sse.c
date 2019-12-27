@@ -509,10 +509,8 @@ char *cpustr(unsigned cpuisa) {
 }
 
 //---------------------------------------------------------------------------------
-typedef size_t (*TPFUNC)(const unsigned char *in, size_t n, unsigned char *out);
-
-static TPFUNC _tb64e = tb64xenc;
-static TPFUNC _tb64d = tb64xdec;
+TB64FUNC _tb64e = tb64xenc;
+TB64FUNC _tb64d = tb64xdec;
 
 static int tb64set;
  

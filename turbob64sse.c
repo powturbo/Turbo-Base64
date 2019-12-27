@@ -30,7 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     - twitter  : https://twitter.com/powturbo
     - email    : powturbo [_AT_] gmail [_DOT_] com
 **/
-// TubeBase64: ssse3 + arm neon functions (see also turbob64avx2)
+// TubeBase64: ssse3 + arm neon functions  (see also turbob64avx2)
 
 #include <string.h>
 

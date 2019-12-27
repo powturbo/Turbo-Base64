@@ -4,7 +4,7 @@ arch:
   - amd64
   - arm64
   - s390x
-# - ppc64le (gcc > 8.0)
+# - ppc64le (gcc > 8.0) for altivec
 
 compiler: 
   - gcc

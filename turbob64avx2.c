@@ -73,24 +73,26 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                         vx = _mm256_or_si256(vx, chk);\
 }
 
+#define OVD 8
 size_t tb64avx2dec(const unsigned char *in, size_t inlen, unsigned char *out) {
-  const unsigned char *ip = in;
-        unsigned char *op = out; 
-        
-  if(inlen >= 32+4) {
+  if(inlen >= 32+OVD) { 
+    const unsigned char *ip;
+          unsigned char *op; 
     __m256i vx = _mm256_setzero_si256();
     const __m256i delta_asso   = _mm256_setr_epi8(0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,   0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x0f,
                                                   0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,   0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x0f);
     const __m256i delta_values = _mm256_setr_epi8(0x00, 0x00, 0x00, 0x13, 0x04, 0xbf, 0xbf, 0xb9,   0xb9, 0x00, 0x10, 0xc3, 0xbf, 0xbf, 0xb9, 0xb9,
                                                   0x00, 0x00, 0x00, 0x13, 0x04, 0xbf, 0xbf, 0xb9,   0xb9, 0x00, 0x10, 0xc3, 0xbf, 0xbf, 0xb9, 0xb9);
+      #ifndef NB64CHECK
     const __m256i check_asso   = _mm256_setr_epi8(0x0d, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,   0x01, 0x01, 0x03, 0x07, 0x0b, 0x0b, 0x0b, 0x0f,
                                                   0x0d, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,   0x01, 0x01, 0x03, 0x07, 0x0b, 0x0b, 0x0b, 0x0f);
     const __m256i check_values = _mm256_setr_epi8(0x80, 0x80, 0x80, 0x80, 0xcf, 0xbf, 0xd5, 0xa6,   0xb5, 0x86, 0xd1, 0x80, 0xb1, 0x80, 0x91, 0x80,
-                                                  0x80, 0x80, 0x80, 0x80, 0xcf, 0xbf, 0xd5, 0xa6,   0xb5, 0x86, 0xd1, 0x80, 0xb1, 0x80, 0x91, 0x80),
-                           cpv = _mm256_set_epi8( -1, -1, -1, -1, 12, 13, 14,  8,    9, 10,  4,  5,  6,  0,  1,  2,
+                                                  0x80, 0x80, 0x80, 0x80, 0xcf, 0xbf, 0xd5, 0xa6,   0xb5, 0x86, 0xd1, 0x80, 0xb1, 0x80, 0x91, 0x80);
+      #endif
+          __m256i          cpv = _mm256_set_epi8( -1, -1, -1, -1, 12, 13, 14,  8,    9, 10,  4,  5,  6,  0,  1,  2,
                                                   -1, -1, -1, -1, 12, 13, 14,  8,    9, 10,  4,  5,  6,  0,  1,  2);
 
-    for(        ; ip < (in+inlen)-(64+4); ip += 64, op += (64/4)*3) {           PREFETCH(ip,1024,0);
+    for(ip = in, op = out; ip < (in+inlen)-(64+OVD); ip += 64, op += (64/4)*3) {           PREFETCH(ip,1024,0);
       __m256i          iv0 = _mm256_loadu_si256((__m256i *)ip);    
       __m256i          iv1 = _mm256_loadu_si256((__m256i *)(ip+32)); 
    
@@ -106,7 +108,7 @@ size_t tb64avx2dec(const unsigned char *in, size_t inlen, unsigned char *out) {
       CHECK1(B64CHK(iv1, shifted1, vx));
     }
 
-    if(ip < (in+inlen)-(32+4)) {
+    if(ip < (in+inlen)-(32+OVD)) {
       __m256i          iv0 = _mm256_loadu_si256((__m256i *)ip);      
       __m256i ov0,shifted0; MAP8TO6(iv0, shifted0, ov0); PACK8TO6(ov0);
       
@@ -114,13 +116,13 @@ size_t tb64avx2dec(const unsigned char *in, size_t inlen, unsigned char *out) {
       _mm_storeu_si128((__m128i*)(op + 12), _mm256_extracti128_si256(ov0, 1));                          
       ip +=  32;
       op += (32/4)*3;
-      CHECK0(B64CHK(iv0, shifted0, vx));
+      CHECK1(B64CHK(iv0, shifted0, vx));
     }
     size_t rc;
     if(!(rc = _tb64xdec(ip, inlen-(ip-in), op)) || _mm256_movemask_epi8(vx)) return 0;
     return (op-out)+rc; 
   }
-  return _tb64xdec(ip, inlen-(ip-in), op);
+  return _tb64xdec(in, inlen, out);
 }
 
 //-------------------- Encode ----------------------------------------------------------------------
@@ -147,8 +149,8 @@ size_t tb64avx2enc(const unsigned char* in, size_t inlen, unsigned char *out) {
         unsigned char *op = out;
         size_t   outlen = TB64ENCLEN(inlen);
   
-  if(outlen >= 32+4) {
-    for(; op <= (out+outlen)-(64+4); op += 64, ip += (64/4)*3) {     PREFETCH(ip,1024,0);            
+  if(outlen >= 32+OVD) {
+    for(; op <= (out+outlen)-(64+OVD); op += 64, ip += (64/4)*3) {     PREFETCH(ip,1024,0);            
       __m256i v0 = _mm256_castsi128_si256(    _mm_loadu_si128((__m128i *) ip));      
               v0 = _mm256_inserti128_si256(v0,_mm_loadu_si128((__m128i *)(ip+12)),1);   
       __m256i v1 = _mm256_castsi128_si256(    _mm_loadu_si128((__m128i *)(ip+24)));      
@@ -160,7 +162,7 @@ size_t tb64avx2enc(const unsigned char* in, size_t inlen, unsigned char *out) {
      _mm256_storeu_si256((__m256i*) op,     v0);                                            
      _mm256_storeu_si256((__m256i*)(op+32), v1);    
     }
-    if(op <= (out+outlen)-(32+4)) {
+    if(op <= (out+outlen)-(32+OVD)) {
       __m256i v0 = _mm256_castsi128_si256(    _mm_loadu_si128((__m128i *) ip));      
               v0 = _mm256_inserti128_si256(v0,_mm_loadu_si128((__m128i *)(ip+12)),1);   
       v0 = unpack6to8(v0); v0 = map6to8(v0);                                                                                                           
@@ -168,6 +170,80 @@ size_t tb64avx2enc(const unsigned char* in, size_t inlen, unsigned char *out) {
       op +=  32; 
       ip += (32/4)*3;
     }
+  }
+  _tb64xenc(ip, inlen-(ip-in), op);
+  return outlen;
+}
+
+//------- optimized functions for short strings only --------------------------
+// decoding without checking  
+// can read beyond the input buffer end, 
+// therefore input buffer size must be 32 bytes larger than input length
+size_t _tb64avx2dec(const unsigned char *in, size_t inlen, unsigned char *out) {
+  if(inlen >= 16) { 
+    const unsigned char *ip;
+          unsigned char *op; 
+    __m256i vx = _mm256_setzero_si256();
+    const __m256i delta_asso   = _mm256_setr_epi8(0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,   0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x0f,
+                                                  0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,   0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x0f);
+    const __m256i delta_values = _mm256_setr_epi8(0x00, 0x00, 0x00, 0x13, 0x04, 0xbf, 0xbf, 0xb9,   0xb9, 0x00, 0x10, 0xc3, 0xbf, 0xbf, 0xb9, 0xb9,
+                                                  0x00, 0x00, 0x00, 0x13, 0x04, 0xbf, 0xbf, 0xb9,   0xb9, 0x00, 0x10, 0xc3, 0xbf, 0xbf, 0xb9, 0xb9);
+          __m256i          cpv = _mm256_set_epi8( -1, -1, -1, -1, 12, 13, 14,  8,    9, 10,  4,  5,  6,  0,  1,  2,
+                                                  -1, -1, -1, -1, 12, 13, 14,  8,    9, 10,  4,  5,  6,  0,  1,  2);
+
+    for(ip = in, op = out; ip < (in+inlen)-32; ip += 32, op += (32/4)*3) {
+      __m256i          iv0 = _mm256_loadu_si256((__m256i *)ip);      
+      __m256i ov0,shifted0; MAP8TO6(iv0, shifted0, ov0); PACK8TO6(ov0);
+      
+      _mm_storeu_si128((__m128i*) op,       _mm256_castsi256_si128(ov0));
+      _mm_storeu_si128((__m128i*)(op + 12), _mm256_extracti128_si256(ov0, 1));                          
+    }
+    if(ip < (in+inlen)-16) {
+      __m128i iv0 = _mm_loadu_si128((__m128i *) ip);
+      __m128i ov0, shifted0; _MAP8TO6(iv0, shifted0, ov0); _PACK8TO6(ov0);
+      _mm_storeu_si128((__m128i*) op, ov0);  
+      ip += 16; op += (16/4)*3;                                                
+    }
+    size_t rc;
+    if(!(rc = _tb64xdec(ip, inlen-(ip-in), op)) || _mm256_movemask_epi8(vx)) return 0;
+    return (op-out)+rc; 
+  }
+  return _tb64xdec(in, inlen, out);
+}
+
+static ALWAYS_INLINE __m128i _map6to8(const __m128i v) {
+  const __m128i offsets = _mm_set_epi8(0, 0, -16, -19, -4, -4, -4, -4,   -4, -4, -4, -4, -4, -4, 71, 65);
+
+  __m128i vidx = _mm_subs_epu8(v,   _mm_set1_epi8(51));
+          vidx = _mm_sub_epi8(vidx, _mm_cmpgt_epi8(v, _mm_set1_epi8(25)));
+  return _mm_add_epi8(v, _mm_shuffle_epi8(offsets, vidx));
+}
+
+static ALWAYS_INLINE __m128i _unpack6to8(__m128i v) {
+  __m128i va = _mm_mulhi_epu16(_mm_and_si128(v, _mm_set1_epi32(0x0fc0fc00)), _mm_set1_epi32(0x04000040));
+  __m128i vb = _mm_mullo_epi16(_mm_and_si128(v, _mm_set1_epi32(0x003f03f0)), _mm_set1_epi32(0x01000010));
+  return       _mm_or_si128(va, vb);                        
+}
+
+size_t _tb64avx2enc(const unsigned char* in, size_t inlen, unsigned char *out) {
+  const unsigned char *ip = in; 
+        unsigned char *op = out;
+        size_t   outlen = TB64ENCLEN(inlen);
+  
+  for(; op <= (out+outlen)-32; op += 32, ip += (32/4)*3) {   
+    __m256i v0 = _mm256_castsi128_si256(    _mm_loadu_si128((__m128i *) ip));      
+            v0 = _mm256_inserti128_si256(v0,_mm_loadu_si128((__m128i *)(ip+12)),1);   
+    v0 = unpack6to8(v0); v0 = map6to8(v0);                                                                                                           
+    _mm256_storeu_si256((__m256i*) op,     v0);                                            
+  }
+  if(op <= (out+outlen)-16) {
+    const __m128i shuf = _mm_set_epi8(10,11,  9, 10,  7,  8,  6,  7,    4,  5,  3,  4,  1,  2,  0,  1);
+    __m128i v0 = _mm_loadu_si128((__m128i*)ip);
+            v0 = _mm_shuffle_epi8(v0, shuf);
+            v0 = _unpack6to8(v0);
+            v0 = _map6to8(v0);
+    _mm_storeu_si128((__m128i*) op, v0);                                          
+    op += 16; ip += (16/4)*3;
   }
   _tb64xenc(ip, inlen-(ip-in), op);
   return outlen;

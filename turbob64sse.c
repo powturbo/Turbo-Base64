@@ -554,11 +554,11 @@ void tb64ini(unsigned id, unsigned isshort) {
 }
 
 size_t tb64enc(const unsigned char *in, size_t inlen, unsigned char *out) {
-  if(!tb64set) tb64ini(0);
+  if(!tb64set) tb64ini(0,0);
   return _tb64e(in,inlen,out);
 }
 size_t tb64dec(const unsigned char *in, size_t inlen, unsigned char *out) {
-  if(!tb64set) tb64ini(0);
+  if(!tb64set) tb64ini(0,0);
   return _tb64d(in,inlen,out);
 }
 #endif

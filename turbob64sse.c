@@ -225,23 +225,26 @@ size_t tb64sseenc(const unsigned char* in, size_t inlen, unsigned char *out) {
                         vx = _mm_or_si128(vx, chk);\
 }
  
+#define OVD 8
 size_t TEMPLATE2(FUNPREF, dec)(const unsigned char *in, size_t inlen, unsigned char *out) {
-  const unsigned char *ip = in;
-        unsigned char *op = out; 
-    #ifdef __AVX__
-  #define ND 64
-    #else
-  #define ND 32
-    #endif
-  if(inlen >= 16+4) {
+  if(inlen >= 16+OVD) {
+    const unsigned char *ip;
+          unsigned char *op; 
+      #ifdef __AVX__
+    #define ND 64
+      #else
+    #define ND 32
+      #endif
     __m128i vx = _mm_setzero_si128();
     const __m128i delta_asso   = _mm_setr_epi8(0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,  0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x0f);
     const __m128i delta_values = _mm_setr_epi8(0x00, 0x00, 0x00, 0x13, 0x04, 0xbf, 0xbf, 0xb9,  0xb9, 0x00, 0x10, 0xc3, 0xbf, 0xbf, 0xb9, 0xb9);
+      #ifndef NB64CHECK
     const __m128i check_asso   = _mm_setr_epi8(0x0d, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,  0x01, 0x01, 0x03, 0x07, 0x0b, 0x0b, 0x0b, 0x0f);
     const __m128i check_values = _mm_setr_epi8(0x80, 0x80, 0x80, 0x80, 0xcf, 0xbf, 0xd5, 0xa6,  0xb5, 0x86, 0xd1, 0x80, 0xb1, 0x80, 0x91, 0x80);    
+      #endif
     const __m128i          cpv = _mm_set_epi8( -1, -1, -1, -1, 12, 13, 14,  8,    9, 10,  4,  5,  6,  0,  1,  2);
 
-	for(; ip < (in+inlen)-(ND+4); ip += ND, op += (ND/4)*3) {
+    for(ip = in, op = out; ip < (in+inlen)-(ND+OVD); ip += ND, op += (ND/4)*3) {
       __m128i iv0 = _mm_loadu_si128((__m128i *) ip),
               iv1 = _mm_loadu_si128((__m128i *)(ip+16));
                                                                                 
@@ -269,17 +272,17 @@ size_t TEMPLATE2(FUNPREF, dec)(const unsigned char *in, size_t inlen, unsigned c
       CHECK1(B64CHK(iv3, shifted3, vx));
         #endif
     }
-	for(; ip < (in+inlen)-(16+4); ip += 16, op += (16/4)*3) {
-      __m128i iv0 = _mm_loadu_si128((__m128i *) ip);                                                                                 
+    for(; ip < (in+inlen)-(16+OVD); ip += 16, op += (16/4)*3) {
+      __m128i iv0 = _mm_loadu_si128((__m128i *) ip);
       __m128i ov0, shifted0; MAP8TO6(iv0, shifted0, ov0); PACK8TO6(ov0);
       _mm_storeu_si128((__m128i*) op, ov0);                                                  
-      CHECK0(B64CHK(iv0, shifted0, vx));
+      CHECK1(B64CHK(iv0, shifted0, vx));
     }
     size_t rc;
     if(!(rc = tb64xdec(ip, inlen-(ip-in), op)) || _mm_movemask_epi8(vx)) return 0;
     return (op-out)+rc;
   }
-  return _tb64xdec(ip, inlen, op);
+  return _tb64xdec(in, inlen, out);
 }
 
 static ALWAYS_INLINE __m128i map6to8(const __m128i v) {
@@ -296,6 +299,7 @@ static ALWAYS_INLINE __m128i unpack6to8(__m128i v) {
   return       _mm_or_si128(va, vb);                        
 }
 
+#define OVE 8
 size_t TEMPLATE2(FUNPREF, enc)(const unsigned char* in, size_t inlen, unsigned char *out) { 
   const unsigned char *ip = in; 
         unsigned char *op = out;
@@ -305,11 +309,11 @@ size_t TEMPLATE2(FUNPREF, enc)(const unsigned char* in, size_t inlen, unsigned c
     #else
   #define NE 32
     #endif
-  if(outlen >= 16+4) {
+  if(outlen >= 16+OVE) {
     const __m128i shuf    = _mm_set_epi8(10,11,  9, 10,  7,  8,  6,  7,    4,  5,  3,  4,  1,  2,  0,  1);
     const __m128i offsets = _mm_set_epi8( 0, 0,-16,-19, -4, -4, -4, -4,   -4, -4, -4, -4, -4, -4, 71, 65);
 
-    for(; op <= (out+outlen)-(NE+4); op += NE, ip += (NE/4)*3) {                       PREFETCH(ip,1024,0);            
+    for(; op <= (out+outlen)-(NE+OVE); op += NE, ip += (NE/4)*3) {                       PREFETCH(ip,1024,0);            
       __m128i v0 = _mm_loadu_si128((__m128i*)ip),   
               v1 = _mm_loadu_si128((__m128i*)(ip+12)); 
         #if NE > 32
@@ -336,7 +340,7 @@ size_t TEMPLATE2(FUNPREF, enc)(const unsigned char* in, size_t inlen, unsigned c
         #endif            
     }
 
-    for(; op <= (out+outlen)-(16+4); op += 16, ip += (16/4)*3) {
+    for(; op <= (out+outlen)-(16+OVE); op += 16, ip += (16/4)*3) {
       __m128i v0 = _mm_loadu_si128((__m128i*)ip);
               v0 = _mm_shuffle_epi8(v0, shuf);
               v0 = unpack6to8(v0);
@@ -514,7 +518,7 @@ TB64FUNC _tb64d = tb64xdec;
 
 static int tb64set;
  
-void tb64ini(int id) { 
+void tb64ini(unsigned id, unsigned isshort) { 
   int i; 
   if(tb64set) return; 
   tb64set++;   
@@ -528,8 +532,8 @@ void tb64ini(int id) {
       #endif
       #ifndef NO_AVX2
   if(i >= IS_AVX2) {  
-    _tb64e = tb64avx2enc; 
-    _tb64d = tb64avx2dec;
+    _tb64e = isshort?_tb64avx2enc:tb64avx2enc; 
+    _tb64d = isshort?_tb64avx2dec:tb64avx2dec;
   } else 
       #endif
       #ifndef NO_AVX

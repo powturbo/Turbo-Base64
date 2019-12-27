@@ -179,6 +179,20 @@ size_t tb64avx2enc(const unsigned char* in, size_t inlen, unsigned char *out) {
 // decoding without checking  
 // can read beyond the input buffer end, 
 // therefore input buffer size must be 32 bytes larger than input length
+
+
+#define _PACK8TO6(v) {\
+  const __m128i merge_ab_and_bc = _mm_maddubs_epi16(v,            _mm_set1_epi32(0x01400140));  /*/dec_reshuffle: https://arxiv.org/abs/1704.00605 P.17*/\
+                              v = _mm_madd_epi16(merge_ab_and_bc, _mm_set1_epi32(0x00011000));\
+                              v = _mm_shuffle_epi8(v, _mm256_castsi256_si128(cpv));\
+}
+
+#define _MAP8TO6(iv, shifted, ov) { /*map 8-bits ascii to 6-bits bin*/\
+                shifted    = _mm_srli_epi32(iv, 3);\
+  const __m128i delta_hash = _mm_avg_epu8(_mm_shuffle_epi8(_mm256_castsi256_si128(delta_asso), iv), shifted);\
+                        ov = _mm_add_epi8(_mm_shuffle_epi8(_mm256_castsi256_si128(delta_values), delta_hash), iv);\
+}
+
 size_t _tb64avx2dec(const unsigned char *in, size_t inlen, unsigned char *out) {
   if(inlen >= 16) { 
     const unsigned char *ip;

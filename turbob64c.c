@@ -81,23 +81,24 @@ size_t tb64enclen(size_t n) { return TB64ENCLEN(n); }
 }
 
 static unsigned char lut1[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                              
+
+#define OVS 8
 size_t tb64senc(const unsigned char *in, size_t inlen, unsigned char *out) {
   const  unsigned char *ip    = in;
          unsigned char *op    = out;
          size_t        outlen = TB64ENCLEN(inlen);
  		 
-  if(outlen >= 16+4) {
-    #if NES >= 64	  
-    for(; op <= (out+outlen)-(NES+4); op += NES, ip += (NES/4)*3) {                     // 96/48->128/64 bytes
+  if(outlen >= 16+OVS) {
+      #if NES >= 64	  
+    for(; op <= (out+outlen)-(NES+OVS); op += NES, ip += (NES/4)*3) {                     // 96/48->128/64 bytes
       LI32(0); LI32(1); LI32( 2); LI32( 3); LI32( 4); LI32( 5); LI32( 6); LI32( 7); 
         #if NES >= 128	  
       LI32(8); LI32(9); LI32(10); LI32(11); LI32(12); LI32(13); LI32(14); LI32(15);    
 	    #endif
 	                                                                                  PREFETCH(ip,256, 0);
     }
-	#endif
-    for(; op <= (out+outlen)-(16+4); op += 16, ip += (16/4)*3) { LI32(0); LI32(1); }
+	  #endif
+    for(; op <= (out+outlen)-(16+OVS); op += 16, ip += (16/4)*3) { LI32(0); LI32(1); }
   }
   ETAIL(); 
   return outlen;
@@ -373,16 +374,17 @@ static const unsigned short lut2[1<<12] = {
   ctou32(op+_i_*8) = _u0; ctou32(op+_i_*8+4) = _u1; \
 }                  
 
+#define OVX 12
 size_t tb64xenc(const unsigned char *in, size_t inlen, unsigned char *out) {
   const  unsigned char *ip    = in;
          unsigned char *op    = out;
          size_t        outlen = TB64ENCLEN(inlen);
   
-  if(outlen >= 16+4) {
+  if(outlen >= 8+OVX) {
     unsigned u0x = BSWAP32(ctou32(ip  )),
              u1x = BSWAP32(ctou32(ip+3));
 	  #if NEX >= 64		 
-    for(; op <= (out+outlen)-(NEX+4); op += NEX, ip += (NEX/4)*3) { // unrolling 96/48->128/64 bytes
+    for(; op <= (out+outlen)-(NEX+OVX); op += NEX, ip += (NEX/4)*3) { // unrolling 96/48->128/64 bytes
       EI32(0); EI32(1); EI32( 2); EI32( 3); EI32( 4); EI32( 5); EI32( 6); EI32( 7);     
         #if NEX >= 128	  
       EI32(8); EI32(9); EI32(10); EI32(11); EI32(12); EI32(13); EI32(14); EI32(15);      
@@ -390,7 +392,8 @@ size_t tb64xenc(const unsigned char *in, size_t inlen, unsigned char *out) {
 																						PREFETCH(ip,256, 0);
     }
 	  #endif
-    for(; op <= (out+outlen)-(16+4); op += 16, ip += (16/4)*3) { EI32(0); EI32(1); } // unrolling 12->16 bytes
+    for(; op <= (out+outlen)-(16+OVX); op += 16, ip += (16/4)*3) { EI32(0); EI32(1); } // unrolling 12->16 bytes
+     if(  op <= (out+outlen)-( 8+OVX))                           { EI32(0); op += 8, ip += (8/4)*3; }
   }
   ETAIL();
   return outlen;

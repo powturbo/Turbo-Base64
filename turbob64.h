@@ -40,7 +40,6 @@ extern "C" {
 //---------------------- base64 API functions ----------------------------------
 // Base64 output length after encoding 
 #define TB64ENCLEN(_n_) ((_n_ + 2)/3 * 4)
-size_t tb64memcpy(const unsigned char *in, size_t inlen, unsigned char *out);
 
 // return the base64 buffer length after encoding
 size_t tb64enclen(size_t inlen);
@@ -97,7 +96,10 @@ size_t tb64avx2dec(const unsigned char *in, size_t inlen, unsigned char *out);
 size_t tb64avx512enc(const unsigned char *in, size_t inlen, unsigned char *out);
 size_t tb64avx512dec(const unsigned char *in, size_t inlen, unsigned char *out);
 
-void tb64ini(int id);  // detect cpu && set the default run time functions for tb64enc/tb64dec
+// detect cpu && set the default run time functions for tb64enc/tb64dec
+// isshort = 0 : default
+// isshort > 0 : set optimized short strings version (actually only avx2)
+void tb64ini(unsigned id, unsigned isshort);  
  
 //------- CPU instruction set ----------------------
 // cpuisa  = 0: return current simd set, 
@@ -111,7 +113,14 @@ char *cpustr(unsigned cpuisa);
   #ifdef TB64_IN  // internal functions
 size_t _tb64xenc(   const unsigned char *in, size_t inlen, unsigned char *out);
 size_t _tb64xdec(   const unsigned char *in, size_t inlen, unsigned char *out);
+size_t tb64memcpy(const unsigned char *in, size_t inlen, unsigned char *out);
   #endif
+//------- optimized functions for short strings only --------------------------
+// decoding without checking  
+// can read beyond the input buffer end, 
+// therefore input buffer size must be 32 bytes larger than input length
+size_t _tb64avx2enc(const unsigned char *in, size_t inlen, unsigned char *out);
+size_t _tb64avx2dec(const unsigned char *in, size_t inlen, unsigned char *out);
 
 #ifdef __cplusplus
 }

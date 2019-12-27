@@ -19,13 +19,13 @@ script:
 
 matrix:
   include:
-    - name: linux-ppc64le-gcc-9
-      env: CC=gcc-9
-      arch: ppc64le
-      before_install:
-        - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-        - sudo apt-get -y update
-        - sudo apt-get -y install gcc-9
+#    - name: linux-ppc64le-gcc-9
+#      env: CC=gcc-9
+#      arch: ppc64le
+#      before_install:
+#        - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+#        - sudo apt-get -y update
+#        - sudo apt-get -y install gcc-9
 
     - name: windows-mingw-w64
       arch: amd64 

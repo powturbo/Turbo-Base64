@@ -16,6 +16,7 @@ branches:
  
 script:
   - make
+  - ./tb64app
 
 matrix:
   include:
@@ -31,6 +32,8 @@ matrix:
       arch: amd64 
       os: windows
       script: 
+        - mingw32-make
+        - ./tb64app
 
     - name: macOS, xcode
       os: osx

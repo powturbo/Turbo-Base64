@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     - email    : powturbo [_AT_] gmail [_DOT_] com
 **/
 //------------- TurboBase64 : Base64 encoding ----------------------
+#define UA_MEMCPY
 #include "conf.h"
 #include "turbob64.h"
 
@@ -59,10 +60,9 @@ size_t tb64enclen(size_t n) { return TB64ENCLEN(n); }
                    lut1[(_u_>>26) & 0x3f])
 
 #define ETAIL() \
-  if(outlen - (op-out) > 4)\
-    for(; op < out+(outlen-4); op += 4, ip+= 3) { unsigned _u = BSWAP32(ctou32(ip)); ctou32(op) = LU32(_u); }\
-  unsigned _l = inlen - (ip-in);\
-  if(_l == 3) { unsigned _u = ip[0]<<24 | ip[1]<<16 | ip[2]<<8; ctou32(op) = LU32(_u); op+=4; ip+=3; }\
+  for(; op < (out+outlen)-4; op += 4, ip += 3) { unsigned _u = BSWAP32(ctou32(ip)); stou32(op, LU32(_u)); }\
+  unsigned _l = (in+inlen) - ip;\
+  if(_l == 3) { unsigned _u = ip[0]<<24 | ip[1]<<16 | ip[2]<<8; stou32(op, LU32(_u)); op+=4; ip+=3; }\
   else if(_l) { *op++ = lut1[(ip[0]>>2)&0x3f];\
     if(_l == 2) *op++ = lut1[(ip[0] & 0x3) << 4 | (ip[1] & 0xf0) >> 4],\
                 *op++ = lut1[(ip[1] & 0xf) << 2];\
@@ -76,8 +76,8 @@ size_t tb64enclen(size_t n) { return TB64ENCLEN(n); }
   unsigned _u1 = BSWAP32(ctou32(ip+_i_*6 + 3));\
   _u0 = LU32(_u0);\
   _u1 = LU32(_u1);\
-  ctou32(op+_i_*8    ) = _u0;\
-  ctou32(op+_i_*8 + 4) = _u1;\
+  stou32(op+_i_*8    , _u0);\
+  stou32(op+_i_*8 + 4, _u1);\
 }
 
 static unsigned char lut1[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -371,7 +371,7 @@ static const unsigned short lut2[1<<12] = {
   u0x = BSWAP32(ctou32(ip+6+_i_*6  ));  \
   u1x = BSWAP32(ctou32(ip+6+_i_*6+3));\
   _u0 = EU32(_u0); _u1 = EU32(_u1); \
-  ctou32(op+_i_*8) = _u0; ctou32(op+_i_*8+4) = _u1; \
+  stou32(op+_i_*8, _u0); stou32(op+_i_*8+4, _u1); \
 }                  
 
 #define OVX 12

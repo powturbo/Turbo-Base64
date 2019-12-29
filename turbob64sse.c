@@ -225,7 +225,7 @@ size_t tb64sseenc(const unsigned char* in, size_t inlen, unsigned char *out) {
                         vx = _mm_or_si128(vx, chk);\
 }
  
-#define OVD 8
+#define OVD 4
 size_t TEMPLATE2(FUNPREF, dec)(const unsigned char *in, size_t inlen, unsigned char *out) {
   if(inlen >= 16+OVD) {
     const unsigned char *ip;
@@ -272,11 +272,18 @@ size_t TEMPLATE2(FUNPREF, dec)(const unsigned char *in, size_t inlen, unsigned c
       CHECK1(B64CHK(iv3, shifted3, vx));
         #endif
     }
+      #ifdef __AVX__
     for(; ip < (in+inlen)-(16+OVD); ip += 16, op += (16/4)*3) {
+      #else
+    if(ip < (in+inlen)-(16+OVD)) {
+      #endif
       __m128i iv0 = _mm_loadu_si128((__m128i *) ip);
       __m128i ov0, shifted0; MAP8TO6(iv0, shifted0, ov0); PACK8TO6(ov0);
       _mm_storeu_si128((__m128i*) op, ov0);                                                  
       CHECK1(B64CHK(iv0, shifted0, vx));
+        #ifndef __AVX__
+      ip += 16; op += (16/4)*3;
+        #endif
     }
     size_t rc;
     if(!(rc = tb64xdec(ip, inlen-(ip-in), op)) || _mm_movemask_epi8(vx)) return 0;

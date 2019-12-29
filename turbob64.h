@@ -114,6 +114,7 @@ char *cpustr(unsigned cpuisa);
 size_t _tb64xenc(   const unsigned char *in, size_t inlen, unsigned char *out);
 size_t _tb64xdec(   const unsigned char *in, size_t inlen, unsigned char *out);
 size_t tb64memcpy(const unsigned char *in, size_t inlen, unsigned char *out);
+size_t _tb64xd(const unsigned char *in, size_t inlen, unsigned char *out);
   #endif
 //------- optimized functions for short strings only --------------------------
 // decoding without checking  
@@ -121,7 +122,6 @@ size_t tb64memcpy(const unsigned char *in, size_t inlen, unsigned char *out);
 // therefore input buffer size must be 32 bytes larger than input length
 size_t _tb64avx2enc(const unsigned char *in, size_t inlen, unsigned char *out);
 size_t _tb64avx2dec(const unsigned char *in, size_t inlen, unsigned char *out);
-
 #ifdef __cplusplus
 }
 #endif

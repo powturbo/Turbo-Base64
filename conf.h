@@ -145,8 +145,22 @@ static inline double round(double num) { return (num > 0.0) ? floor(num + 0.5) :
 #define popcnt16(x) popcnt32(x) 
 
 //--------------- Unaligned memory access -------------------------------------
-/*# || defined(i386) || defined(_X86_) || defined(__THW_INTEL)*/
-  #if defined(__i386__) || defined(__x86_64__) || \
+  #ifdef UA_MEMCPY
+#include <string.h>
+static inline unsigned short     ctou16(const void *cp) { unsigned short     x; memcpy(&x, cp, sizeof(x)); return x; }
+static inline unsigned           ctou32(const void *cp) { unsigned           x; memcpy(&x, cp, sizeof(x)); return x; }
+static inline unsigned long long ctou64(const void *cp) { unsigned long long x; memcpy(&x, cp, sizeof(x)); return x; }
+static inline size_t             ctousz(const void *cp) { size_t             x; memcpy(&x, cp, sizeof(x)); return x; }
+static inline float              ctof32(const void *cp) { float              x; memcpy(&x, cp, sizeof(x)); return x; }
+static inline double             ctof64(const void *cp) { double             x; memcpy(&x, cp, sizeof(x)); return x; }
+
+static inline void               stou16(      void *cp, unsigned short     x) { memcpy(cp, &x, sizeof(x)); }
+static inline void               stou32(      void *cp, unsigned           x) { memcpy(cp, &x, sizeof(x)); }
+static inline void               stou64(      void *cp, unsigned long long x) { memcpy(cp, &x, sizeof(x)); }
+static inline void               stousz(      void *cp, size_t             x) { memcpy(cp, &x, sizeof(x)); }
+static inline void               stof32(      void *cp, float              x) { memcpy(cp, &x, sizeof(x)); }
+static inline void               stof64(      void *cp, double             x) { memcpy(cp, &x, sizeof(x)); }
+  #elif defined(__i386__) || defined(__x86_64__) || \
     defined(_M_IX86) || defined(_M_AMD64) || _MSC_VER ||\
     defined(__powerpc__) || defined(__s390__) ||\
     defined(__ARM_FEATURE_UNALIGNED) || defined(__aarch64__) || defined(__arm__) ||\
@@ -181,27 +195,6 @@ struct _PACKED doubleu   { double             d; };
 #define ctof64(_cp_) ((struct doubleu   *)(_cp_))->d
   #else
 #error "unknown cpu"	  
-  #endif
-
-  #ifdef ctou16
-//#define utoc16(_x_,_cp_) ctou16(_cp_) = _x_
-  #else
-static inline unsigned short     ctou16(void *cp) { unsigned short     x; memcpy((void *)&x, cp, (unsigned int)sizeof(x)); return x; }
-//static inline               void utoc16(unsigned short     x, void *cp ) { memcpy(cp, &x, sizeof(x)); }
-  #endif
-
-  #ifdef ctou32
-//#define utoc32(_x_,_cp_) ctou32(_cp_) = _x_
-  #else
-static inline unsigned           ctou32(void *cp) { unsigned           x; memcpy(void *)&x, cp, (unsigned int)sizeof(x)); return x; }
-//static inline               void utoc32(unsigned           x, void *cp ) { memcpy(cp, &x, sizeof(x)); }
-  #endif
-
-  #ifdef ctou64
-//#define utoc64(_x_,_cp_) ctou64(_cp_) = _x_
-  #else
-static inline uint64_t ctou64(void *cp) { uint64_t x; memcpy((void *)&x, cp, (unsigned int)sizeof(x)); return x; }
-//static inline               void utoc64(uint64_t x, void *cp ) { memcpy(cp, &x, sizeof(x)); }
   #endif
 
 #define ctou24(_cp_) (ctou32(_cp_) & 0xffffff)

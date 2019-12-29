@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     - email    : powturbo [_AT_] gmail [_DOT_] com
 **/
 //------------- TurboBase64 : Base64 decoding -------------------
+#define UA_MEMCPY
 #include "conf.h"
 #include "turbob64.h"
 
@@ -98,8 +99,8 @@ static const unsigned char lut[] = {
 #define LI32C(_i_) {\
   unsigned _u = ctou32(ip+_i_*8);   CHECK0(cu|= LU32C(_u)); _u = LU32(_u);\
   unsigned _v = ctou32(ip+_i_*8+4); CHECK1(cu|= LU32C(_v)); _v = LU32(_v);\
-  ctou32(op+ _i_*6  ) = _u;\
-  ctou32(op+ _i_*6+3) = _v;\
+  stou32(op+ _i_*6  , _u);\
+  stou32(op+ _i_*6+3, _v);\
 }
 
   #ifdef B64CHECK
@@ -108,8 +109,8 @@ static const unsigned char lut[] = {
 #define LI32(_i_) { \
   unsigned _u = ctou32(ip+_i_*8);    _u = LU32(_u);\
   unsigned _v = ctou32(ip+_i_*8+4);  _v = LU32(_v);\
-  ctou32(op+ _i_*6  ) = _u;\
-  ctou32(op+ _i_*6+3) = _v;\
+  stou32(op+ _i_*6  , _u);\
+  stou32(op+ _i_*6+3, _v);\
 }
   #endif
 
@@ -134,7 +135,7 @@ size_t tb64sdec(const unsigned char *in, size_t inlen, unsigned char *out) {
     for(; ip < (in+inlen)-(16+OVS); ip += 16, op += (16/4)*3) { LI32(0); LI32(1); }
     if(   ip < (in+inlen)-( 8+OVS))                           { LI32(0); ip += 8; op += (8/4)*3; }
   }
-  for(; ip < (in+inlen)-4; ip += 4, op += 3) { unsigned u = ctou32(ip); cu |= LU32C(u); u = LU32(u); ctou32(op) = u; }
+  for(; ip < (in+inlen)-4; ip += 4, op += 3) { unsigned u = ctou32(ip); cu |= LU32C(u); u = LU32(u); stou32(op, u); }
 
   unsigned u = 0, l = inlen - (ip-in);  
   if(l == 4) 															// last 4 bytes
@@ -322,20 +323,20 @@ static const unsigned lut3[] = {
   #ifdef __ARM_NEON
 #define DI32(_i_)  { unsigned _u = ux; ux = ctou32(ip+8+_i_*8);\
                      unsigned _v = vx; vx = ctou32(ip+8+_i_*8+4);\
-                     ctou64(op+ _i_*6  ) = DU32(_u);\
-                     ctou32(op+ _i_*6+3) = DU32(_v);\
+                     _ctou64(op+ _i_*6  , DU32(_u));\
+                     stou32(op+ _i_*6+3, DU32(_v));\
 				   }
 #define DI32C(_i_) { unsigned _u = ux; ux = ctou32(ip+8+_i_*8);\
                      unsigned _v = vx; vx = ctou32(ip+8+_i_*8+4);\
-                     _u = DU32(_u); CHECK0(cu |= _u); ctou64(op+ _i_*6  ) = _u;\
-                     _v = DU32(_v); CHECK1(cu |= _v); ctou32(op+ _i_*6+3) = _v;\
+                     _u = DU32(_u); CHECK0(cu |= _u); _ctou64(op+ _i_*6  , _u);\
+                     _v = DU32(_v); CHECK1(cu |= _v); stou32(op+ _i_*6+3, _v);\
                    }
   #else                   
-#define DI32(_i_)  { unsigned _u = ux; ux = ctou32(ip+8+_i_*8);   ctou32(op+ _i_*6  ) = DU32(_u);\
-                     unsigned _v = vx; vx = ctou32(ip+8+_i_*8+4); ctou32(op+ _i_*6+3) = DU32(_v);\
+#define DI32(_i_)  { unsigned _u = ux; ux = ctou32(ip+8+_i_*8);   stou32(op+ _i_*6  , DU32(_u));\
+                     unsigned _v = vx; vx = ctou32(ip+8+_i_*8+4); stou32(op+ _i_*6+3, DU32(_v));\
                    }
-#define DI32C(_i_) { unsigned _u = ux; ux = ctou32(ip+8+_i_*8);   _u = DU32(_u); CHECK0(cu |= _u); ctou32(op+ _i_*6  ) = _u;\
-                     unsigned _v = vx; vx = ctou32(ip+8+_i_*8+4); _v = DU32(_v); CHECK1(cu |= _v); ctou32(op+ _i_*6+3) = _v;\
+#define DI32C(_i_) { unsigned _u = ux; ux = ctou32(ip+8+_i_*8);   _u = DU32(_u); CHECK0(cu |= _u); stou32(op+ _i_*6  , _u);\
+                     unsigned _v = vx; vx = ctou32(ip+8+_i_*8+4); _v = DU32(_v); CHECK1(cu |= _v); stou32(op+ _i_*6+3, _v);\
                    }
   #endif				
 
@@ -388,7 +389,7 @@ size_t tb64xdec(const unsigned char *in, size_t inlen, unsigned char *out) {
     for(; ip < (in+inlen)-(16+OVX); ip += 16, op += (16/4)*3) { DI32(0); DI32(1); }
     if(   ip < (in+inlen)-(8+OVX))                            { DI32(0); ip += 8, op += (8/4)*3; }
   }
-  for(; ip < (in+inlen)-4; ip += 4, op += 3) { unsigned u = ctou32(ip); u = DU32(u); ctou32(op) = u; cu |= u; }
+  for(; ip < (in+inlen)-4; ip += 4, op += 3) { unsigned u = ctou32(ip); u = DU32(u); stou32(op, u); cu |= u; }
 
   unsigned u = 0, l = (in+inlen) - ip; 
   if(l == 4) 																	// last 4 bytes
@@ -411,7 +412,7 @@ size_t _tb64xdec(const unsigned char *in, size_t inlen, unsigned char *out) {
   const unsigned char *ip    = in;
         unsigned char *op    = out;  
         unsigned      cu     = 0;
-  for(; ip < (in+inlen)-4; ip += 4, op += 3) { unsigned u = ctou32(ip); u = DU32(u); ctou32(op) = u; cu |= u; }
+  for(; ip < (in+inlen)-4; ip += 4, op += 3) { unsigned u = ctou32(ip); u = DU32(u); stou32(op, u); cu |= u; }
 
   unsigned u = 0, l = (in+inlen) - ip; 
   if(l == 4) 																	// last 4 bytes

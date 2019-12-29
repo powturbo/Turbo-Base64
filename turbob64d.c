@@ -323,12 +323,12 @@ static const unsigned lut3[] = {
   #ifdef __ARM_NEON
 #define DI32(_i_)  { unsigned _u = ux; ux = ctou32(ip+8+_i_*8);\
                      unsigned _v = vx; vx = ctou32(ip+8+_i_*8+4);\
-                     _ctou64(op+ _i_*6  , DU32(_u));\
+                     stou64(op+ _i_*6  , DU32(_u));\
                      stou32(op+ _i_*6+3, DU32(_v));\
 				   }
 #define DI32C(_i_) { unsigned _u = ux; ux = ctou32(ip+8+_i_*8);\
                      unsigned _v = vx; vx = ctou32(ip+8+_i_*8+4);\
-                     _u = DU32(_u); CHECK0(cu |= _u); _ctou64(op+ _i_*6  , _u);\
+                     _u = DU32(_u); CHECK0(cu |= _u); stou64(op+ _i_*6  , _u);\
                      _v = DU32(_v); CHECK1(cu |= _v); stou32(op+ _i_*6+3, _v);\
                    }
   #else                   

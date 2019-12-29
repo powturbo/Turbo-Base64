@@ -196,7 +196,6 @@ size_t _tb64avx2dec(const unsigned char *in, size_t inlen, unsigned char *out) {
   if(inlen >= 16) { 
     const unsigned char *ip;
           unsigned char *op; 
-    __m256i vx = _mm256_setzero_si256();
     const __m256i delta_asso   = _mm256_setr_epi8(0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,   0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x0f,
                                                   0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,   0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x0f);
     const __m256i delta_values = _mm256_setr_epi8(0x00, 0x00, 0x00, 0x13, 0x04, 0xbf, 0xbf, 0xb9,   0xb9, 0x00, 0x10, 0xc3, 0xbf, 0xbf, 0xb9, 0xb9,
@@ -217,11 +216,9 @@ size_t _tb64avx2dec(const unsigned char *in, size_t inlen, unsigned char *out) {
       _mm_storeu_si128((__m128i*) op, ov0);  
       ip += 16; op += (16/4)*3;                                                
     }
-    size_t rc;
-    if(!(rc = _tb64xdec(ip, inlen-(ip-in), op)) || _mm256_movemask_epi8(vx)) return 0;
-    return (op-out)+rc; 
+    return (op-out)+_tb64xd(ip, inlen-(ip-in), op);
   }
-  return _tb64xdec(in, inlen, out);
+  return _tb64xd(in, inlen, out);
 }
 
 static ALWAYS_INLINE __m128i _map6to8(const __m128i v) {

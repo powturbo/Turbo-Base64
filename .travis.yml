@@ -13,7 +13,8 @@ compiler:
 branches:
   only:
     - master 
-
+    - ./tb64app
+ 
 script:
   - make
 
@@ -32,6 +33,7 @@ matrix:
       os: windows
       script: 
         - mingw32-make
+        - ./tb64app
 
     - name: macOS, xcode
       os: osx

@@ -46,7 +46,7 @@ extern const unsigned short tb64lutxe[];
 #define XU32(_u_) (tb64lutxe[(_u_ >>  8) & 0xfff] << 16 |\
                    tb64lutxe[ _u_ >> 20])
 			   
-static inline size_t _tb64xenc(const unsigned char *in, size_t inlen, unsigned char *out) {
+static ALWAYS_INLINE size_t _tb64xenc(const unsigned char *in, size_t inlen, unsigned char *out) {
          size_t        outlen = TB64ENCLEN(inlen);
   const  unsigned char *ip    = in;
          unsigned char *op    = out;
@@ -66,7 +66,7 @@ extern const unsigned tb64lutxd1[];
 extern const unsigned tb64lutxd2[];
 extern const unsigned tb64lutxd3[];
 				   
-static inline size_t _tb64xd(const unsigned char *in, size_t inlen, unsigned char *out) {
+static ALWAYS_INLINE size_t _tb64xd(const unsigned char *in, size_t inlen, unsigned char *out) {
   const unsigned char *ip    = in;
         unsigned char *op    = out;  
   for(; ip < (in+inlen)-4; ip += 4, op += 3) { unsigned u = ctou32(ip); u = DU32(u); stou32(op, u); }

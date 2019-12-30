@@ -339,8 +339,8 @@ const unsigned short tb64lutxe[1<<12] = {
   unsigned _u0 = u0x, _u1 = u1x;\
   u0x = BSWAP32(ctou32(ip+6+_i_*6  ));  \
   u1x = BSWAP32(ctou32(ip+6+_i_*6+3));\
-  _u0 = XU32(_u0); _u1 = XU32(_u1); \
-  stou32(op+_i_*8, _u0); stou32(op+_i_*8+4, _u1); \
+  _u0 = XU32(_u0); stou32(op+_i_*8, _u0);\
+  _u1 = XU32(_u1); stou32(op+_i_*8+4, _u1); \
 }                  
 
 #define OVX 12
@@ -350,21 +350,21 @@ size_t tb64xenc(const unsigned char *in, size_t inlen, unsigned char *out) {
          size_t        outlen = TB64ENCLEN(inlen);
   
   if(outlen >= 8+OVX) {
-    unsigned u0x = BSWAP32(ctou32(ip  )),
-             u1x = BSWAP32(ctou32(ip+3));
+    unsigned           u0x = BSWAP32(ctou32(ip  )),
+                       u1x = BSWAP32(ctou32(ip+3));
 	  #if NEX >= 64		 
-    for(; op <= (out+outlen)-(NEX+OVX); op += NEX, ip += (NEX/4)*3) { // unrolling 96/48->128/64 bytes
+    for(; op <= (out+outlen)-(NEX+OVX); op += NEX, ip += (NEX/4)*3) { PREFETCH(ip,256, 0);// unrolling 96/48->128/64 bytes
       XI32(0); XI32(1); XI32( 2); XI32( 3); XI32( 4); XI32( 5); XI32( 6); XI32( 7);     
         #if NEX >= 128	  
       XI32(8); XI32(9); XI32(10); XI32(11); XI32(12); XI32(13); XI32(14); XI32(15);      
-	    #endif
-																						PREFETCH(ip,256, 0);
+	    #endif																						
     }
 	  #endif
     for(; op <= (out+outlen)-(16+OVX); op += 16, ip += (16/4)*3) { XI32(0); XI32(1); } // unrolling 12->16 bytes
-     if(  op <= (out+outlen)-( 8+OVX))                           { XI32(0); op += 8, ip += (8/4)*3; }
+     if(  op <= (out+outlen)-( 8+OVX))                           { XI32(0); op += 8, ip += (8/4)*3; }		  
   }
   for(; op < (out+outlen)-4; op += 4, ip += 3) { unsigned _u = BSWAP32(ctou32(ip)); stou32(op, XU32(_u)); }\
   ETAIL();
   return outlen;
 }
+

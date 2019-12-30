@@ -55,11 +55,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <arm_neon.h>
   #endif
   
+#define UA_MEMCPY
 #include "conf.h"
-#define TB64_IN
 #include "turbob64.h"
+#include "turbob64_.h"
 
-#define PREFETCH(_ip_,_i_,_rw_) __builtin_prefetch(_ip_+(_i_),_rw_)
+/*#define PREFETCH(_ip_,_i_,_rw_) __builtin_prefetch(_ip_+(_i_),_rw_)
 
   #ifdef NB64CHECK
 #define CHECK0(a)
@@ -71,7 +72,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     #else
 #define CHECK1(a)
     #endif
-  #endif
+  #endif*/
 
 #ifdef __ARM_NEON  //----------------------------------- arm neon --------------------------------
 
@@ -110,7 +111,7 @@ static inline uint8x16x4_t vld1q_u8_x4(const uint8_t *lut) {
 	ov.val[2] = vorrq_u8(vshlq_n_u8(iv.val[2], 6),            iv.val[3]    );\
 }
 
-#define B64CHK(iv, xv) xv = vorrq_u8(xv, vorrq_u8(vorrq_u8(iv.val[0], iv.val[1]), vorrq_u8(iv.val[2], iv.val[3])))
+#define MM_B64CHK(iv, xv) xv = vorrq_u8(xv, vorrq_u8(vorrq_u8(iv.val[0], iv.val[1]), vorrq_u8(iv.val[2], iv.val[3])))
 
 size_t tb64ssedec(const unsigned char *in, size_t inlen, unsigned char *out) {
   const unsigned char *ip;
@@ -126,11 +127,11 @@ size_t tb64ssedec(const unsigned char *in, size_t inlen, unsigned char *out) {
 	uint8x16x3_t ov0,ov1; 
     B64D(iv0, ov0);
       #if ND > 128
-	CHECK1(B64CHK(iv0,xv));
+	CHECK1(MM_B64CHK(iv0,xv));
       #else
-	CHECK0(B64CHK(iv0,xv));
+	CHECK0(MM_B64CHK(iv0,xv));
       #endif
-	B64D(iv1, ov1); CHECK1(B64CHK(iv1,xv));
+	B64D(iv1, ov1); CHECK1(MM_B64CHK(iv1,xv));
       #if ND > 128
     iv0 = vld4q_u8(ip+128);
     iv1 = vld4q_u8(ip+192);              
@@ -138,11 +139,11 @@ size_t tb64ssedec(const unsigned char *in, size_t inlen, unsigned char *out) {
 	vst3q_u8(op,    ov0);       
 	vst3q_u8(op+48, ov1);                                                                                                                                                                       
       #if ND > 128
-	B64D(iv0,ov0);	CHECK1(B64CHK(iv0,xv));
+	B64D(iv0,ov0);	CHECK1(MM_B64CHK(iv0,xv));
 	B64D(iv1,ov1); 
 	vst3q_u8(op+ 96, ov0);       
 	vst3q_u8(op+144, ov1);                                                                                                                                                                       
-	CHECK0(B64CHK(iv1,xv));
+	CHECK0(MM_B64CHK(iv1,xv));
       #endif
   }
   for(                 ; ip != in+(inlen&~(64-1)); ip += 64, op += (64/4)*3) { 	
@@ -207,20 +208,8 @@ size_t tb64sseenc(const unsigned char* in, size_t inlen, unsigned char *out) {
 
 #elif defined(__SSSE3__) //----------------- SSSE3 / SSE4.1 / AVX (derived from the AVX2 functions ) -----------------------------------------------------------------
 
-#define PACK8TO6(v) {\
-  const __m128i merge_ab_and_bc = _mm_maddubs_epi16(v,            _mm_set1_epi32(0x01400140));  /*/dec_reshuffle: https://arxiv.org/abs/1704.00605 P.17*/\
-                              v = _mm_madd_epi16(merge_ab_and_bc, _mm_set1_epi32(0x00011000));\
-                              v = _mm_shuffle_epi8(v, cpv);\
-}
-
-#define MAP8TO6(iv, shifted, ov) { /*map 8-bits ascii to 6-bits bin*/\
-                shifted    = _mm_srli_epi32(iv, 3);\
-  const __m128i delta_hash = _mm_avg_epu8(_mm_shuffle_epi8(delta_asso, iv), shifted);\
-                        ov = _mm_add_epi8(_mm_shuffle_epi8(delta_values, delta_hash), iv);\
-}
-
-#define B64CHK(iv, shifted, vx) {\
-  const __m128i check_hash = _mm_avg_epu8(_mm_shuffle_epi8(check_asso, iv), shifted);\
+#define MM_B64CHK(iv, shifted, vx) {\
+  const __m128i check_hash = _mm_avg_epu8( _mm_shuffle_epi8(check_asso, iv), shifted);\
   const __m128i        chk = _mm_adds_epi8(_mm_shuffle_epi8(check_values, check_hash), iv);\
                         vx = _mm_or_si128(vx, chk);\
 }
@@ -248,8 +237,8 @@ size_t TEMPLATE2(FUNPREF, dec)(const unsigned char *in, size_t inlen, unsigned c
       __m128i iv0 = _mm_loadu_si128((__m128i *) ip),
               iv1 = _mm_loadu_si128((__m128i *)(ip+16));
                                                                                 
-      __m128i ov0,shifted0; MAP8TO6(iv0, shifted0, ov0); PACK8TO6(ov0);
-      __m128i ov1,shifted1; MAP8TO6(iv1, shifted1, ov1); PACK8TO6(ov1);
+      __m128i ov0,shifted0; MM_MAP8TO6(iv0, shifted0,delta_asso, delta_values, ov0); MM_PACK8TO6(ov0, cpv);
+      __m128i ov1,shifted1; MM_MAP8TO6(iv1, shifted1,delta_asso, delta_values, ov1); MM_PACK8TO6(ov1, cpv);
 
       _mm_storeu_si128((__m128i*) op,     ov0);                                                  
       _mm_storeu_si128((__m128i*)(op+12), ov1);                                             PREFETCH(ip,1024,0);                                        
@@ -259,17 +248,17 @@ size_t TEMPLATE2(FUNPREF, dec)(const unsigned char *in, size_t inlen, unsigned c
               iv3 = _mm_loadu_si128((__m128i *)(ip+48));
         #endif
       
-      CHECK0(B64CHK(iv0, shifted0, vx));
-      CHECK1(B64CHK(iv1, shifted1, vx));
+      CHECK0(MM_B64CHK(iv0, shifted0, vx));
+      CHECK1(MM_B64CHK(iv1, shifted1, vx));
 
         #if ND > 32
-      __m128i ov2,shifted2; MAP8TO6(iv2, shifted2, ov2); PACK8TO6(ov2);
-      __m128i ov3,shifted3; MAP8TO6(iv3, shifted3, ov3); PACK8TO6(ov3);
+      __m128i ov2,shifted2; MM_MAP8TO6(iv2, shifted2,delta_asso, delta_values, ov2); MM_PACK8TO6(ov2, cpv);
+      __m128i ov3,shifted3; MM_MAP8TO6(iv3, shifted3,delta_asso, delta_values, ov3); MM_PACK8TO6(ov3, cpv);
     
       _mm_storeu_si128((__m128i*)(op+24), ov2);                                                  
       _mm_storeu_si128((__m128i*)(op+36), ov3);                                                                                 
-      CHECK1(B64CHK(iv2, shifted2, vx));
-      CHECK1(B64CHK(iv3, shifted3, vx));
+      CHECK1(MM_B64CHK(iv2, shifted2, vx));
+      CHECK1(MM_B64CHK(iv3, shifted3, vx));
         #endif
     }
       #ifdef __AVX__
@@ -278,9 +267,9 @@ size_t TEMPLATE2(FUNPREF, dec)(const unsigned char *in, size_t inlen, unsigned c
     if(ip < (in+inlen)-(16+OVD)) {
       #endif
       __m128i iv0 = _mm_loadu_si128((__m128i *) ip);
-      __m128i ov0, shifted0; MAP8TO6(iv0, shifted0, ov0); PACK8TO6(ov0);
+      __m128i ov0, shifted0; MM_MAP8TO6(iv0, shifted0,delta_asso, delta_values, ov0); MM_PACK8TO6(ov0, cpv);
       _mm_storeu_si128((__m128i*) op, ov0);                                                  
-      CHECK1(B64CHK(iv0, shifted0, vx));
+      CHECK1(MM_B64CHK(iv0, shifted0, vx));
         #ifndef __AVX__
       ip += 16; op += (16/4)*3;
         #endif
@@ -292,7 +281,7 @@ size_t TEMPLATE2(FUNPREF, dec)(const unsigned char *in, size_t inlen, unsigned c
   return _tb64xdec(in, inlen, out);
 }
 
-static ALWAYS_INLINE __m128i map6to8(const __m128i v) {
+/*static ALWAYS_INLINE __m128i mm_map6to8(const __m128i v) {
   const __m128i offsets = _mm_set_epi8(0, 0, -16, -19, -4, -4, -4, -4,   -4, -4, -4, -4, -4, -4, 71, 65);
 
   __m128i vidx = _mm_subs_epu8(v,   _mm_set1_epi8(51));
@@ -300,11 +289,11 @@ static ALWAYS_INLINE __m128i map6to8(const __m128i v) {
   return _mm_add_epi8(v, _mm_shuffle_epi8(offsets, vidx));
 }
 
-static ALWAYS_INLINE __m128i unpack6to8(__m128i v) {
+static ALWAYS_INLINE __m128i mm_unpack6to8(__m128i v) {
   __m128i va = _mm_mulhi_epu16(_mm_and_si128(v, _mm_set1_epi32(0x0fc0fc00)), _mm_set1_epi32(0x04000040));
   __m128i vb = _mm_mullo_epi16(_mm_and_si128(v, _mm_set1_epi32(0x003f03f0)), _mm_set1_epi32(0x01000010));
   return       _mm_or_si128(va, vb);                        
-}
+}*/
 
 #define OVE 8
 size_t TEMPLATE2(FUNPREF, enc)(const unsigned char* in, size_t inlen, unsigned char *out) { 
@@ -329,19 +318,19 @@ size_t TEMPLATE2(FUNPREF, enc)(const unsigned char* in, size_t inlen, unsigned c
         #endif
               v0 = _mm_shuffle_epi8(v0, shuf);
               v1 = _mm_shuffle_epi8(v1, shuf);
-              v0 = unpack6to8(v0);
-              v1 = unpack6to8(v1);
-              v0 = map6to8(v0);
-              v1 = map6to8(v1);
+              v0 = mm_unpack6to8(v0);
+              v1 = mm_unpack6to8(v1);
+              v0 = mm_map6to8(v0);
+              v1 = mm_map6to8(v1);
       _mm_storeu_si128((__m128i*) op,     v0);                                          
       _mm_storeu_si128((__m128i*)(op+16), v1);                                          
         #if NE > 32
               v2 = _mm_shuffle_epi8(v2, shuf);
               v3 = _mm_shuffle_epi8(v3, shuf);
-              v2 = unpack6to8(v2);
-              v3 = unpack6to8(v3);
-              v2 = map6to8(v2);
-              v3 = map6to8(v3);
+              v2 = mm_unpack6to8(v2);
+              v3 = mm_unpack6to8(v3);
+              v2 = mm_map6to8(v2);
+              v3 = mm_map6to8(v3);
       _mm_storeu_si128((__m128i*)(op+32), v2);                                          
       _mm_storeu_si128((__m128i*)(op+48), v3);                                          
         #endif            
@@ -350,8 +339,8 @@ size_t TEMPLATE2(FUNPREF, enc)(const unsigned char* in, size_t inlen, unsigned c
     for(; op <= (out+outlen)-(16+OVE); op += 16, ip += (16/4)*3) {
       __m128i v0 = _mm_loadu_si128((__m128i*)ip);
               v0 = _mm_shuffle_epi8(v0, shuf);
-              v0 = unpack6to8(v0);
-              v0 = map6to8(v0);
+              v0 = mm_unpack6to8(v0);
+              v0 = mm_map6to8(v0);
       _mm_storeu_si128((__m128i*) op, v0);                                          
     }
   }

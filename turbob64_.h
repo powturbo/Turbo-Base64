@@ -85,7 +85,8 @@ static inline size_t _tb64xd(const unsigned char *in, size_t inlen, unsigned cha
 }
 //--------------------------- sse -----------------------------------------------------------------
 
-#ifdef __SSSE3__
+#if defined(__SSSE3__)
+#include <tmmintrin.h>
 #define MM_PACK8TO6(v, cpv) {\
   const __m128i merge_ab_and_bc = _mm_maddubs_epi16(v,            _mm_set1_epi32(0x01400140));  /*/dec_reshuffle: https://arxiv.org/abs/1704.00605 P.17*/\
                               v = _mm_madd_epi16(merge_ab_and_bc, _mm_set1_epi32(0x00011000));\

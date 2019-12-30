@@ -34,53 +34,24 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define UA_MEMCPY
 #include "conf.h"
 #include "turbob64.h"
+#include "turbob64_.h"
 
-  #if defined(TB64SHORT) && TB64SHORT < 128
-#define NES 64    
-#define NEX 64 
-  #else
 #define NES 128    
 #define NEX 128 
-  #endif	
-
-#define PREFETCH(_ip_,_i_,_rw_) __builtin_prefetch(_ip_+(_i_),_rw_)
-
-  #if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
-#define BSWAP32(a) a 
-  #else
-#define BSWAP32(a) bswap32(a)
-  #endif  
 
 size_t tb64enclen(size_t n) { return TB64ENCLEN(n); }
 
-//--------------------------------------------------------------
-#define LU32(_u_) (lut1[(_u_>> 8) & 0x3f] << 24 |\
-                   lut1[(_u_>>14) & 0x3f] << 16 |\
-                   lut1[(_u_>>20) & 0x3f] <<  8 |\
-                   lut1[(_u_>>26) & 0x3f])
-
-#define ETAIL() \
-  for(; op < (out+outlen)-4; op += 4, ip += 3) { unsigned _u = BSWAP32(ctou32(ip)); stou32(op, LU32(_u)); }\
-  unsigned _l = (in+inlen) - ip;\
-  if(_l == 3) { unsigned _u = ip[0]<<24 | ip[1]<<16 | ip[2]<<8; stou32(op, LU32(_u)); op+=4; ip+=3; }\
-  else if(_l) { *op++ = lut1[(ip[0]>>2)&0x3f];\
-    if(_l == 2) *op++ = lut1[(ip[0] & 0x3) << 4 | (ip[1] & 0xf0) >> 4],\
-                *op++ = lut1[(ip[1] & 0xf) << 2];\
-    else        *op++ = lut1[(ip[0] & 0x3) << 4], *op++ = '=';\
-    *op++ = '=';\
-  }
-
 //----------------------- small 64 bytes lut encoding ---------------------------------------
-#define LI32(_i_) { \
+#define SI32(_i_) { \
   unsigned _u0 = BSWAP32(ctou32(ip+_i_*6    ));\
   unsigned _u1 = BSWAP32(ctou32(ip+_i_*6 + 3));\
-  _u0 = LU32(_u0);\
-  _u1 = LU32(_u1);\
+  _u0 = SU32(_u0);\
+  _u1 = SU32(_u1);\
   stou32(op+_i_*8    , _u0);\
   stou32(op+_i_*8 + 4, _u1);\
 }
 
-static unsigned char lut1[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+unsigned char tb64lutse[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 #define OVS 8
 size_t tb64senc(const unsigned char *in, size_t inlen, unsigned char *out) {
@@ -91,21 +62,22 @@ size_t tb64senc(const unsigned char *in, size_t inlen, unsigned char *out) {
   if(outlen >= 16+OVS) {
       #if NES >= 64	  
     for(; op <= (out+outlen)-(NES+OVS); op += NES, ip += (NES/4)*3) {                     // 96/48->128/64 bytes
-      LI32(0); LI32(1); LI32( 2); LI32( 3); LI32( 4); LI32( 5); LI32( 6); LI32( 7); 
+      SI32(0); SI32(1); SI32( 2); SI32( 3); SI32( 4); SI32( 5); SI32( 6); SI32( 7); 
         #if NES >= 128	  
-      LI32(8); LI32(9); LI32(10); LI32(11); LI32(12); LI32(13); LI32(14); LI32(15);    
+      SI32(8); SI32(9); SI32(10); SI32(11); SI32(12); SI32(13); SI32(14); SI32(15);    
 	    #endif
 	                                                                                  PREFETCH(ip,256, 0);
     }
 	  #endif
-    for(; op <= (out+outlen)-(16+OVS); op += 16, ip += (16/4)*3) { LI32(0); LI32(1); }
+    for(; op <= (out+outlen)-(16+OVS); op += 16, ip += (16/4)*3) { SI32(0); SI32(1); }
   }
+  for(; op < (out+outlen)-4; op += 4, ip += 3) { unsigned _u = BSWAP32(ctou32(ip)); stou32(op, SU32(_u)); }\
   ETAIL(); 
   return outlen;
 }
 
 //---------------------- Fast encoding with 4k LUT ------------------------------------------------------------
-static const unsigned short lut2[1<<12] = { 
+const unsigned short tb64lutxe[1<<12] = { 
 0x4141,0x4241,0x4341,0x4441,0x4541,0x4641,0x4741,0x4841,0x4941,0x4a41,0x4b41,0x4c41,0x4d41,0x4e41,0x4f41,0x5041,
 0x5141,0x5241,0x5341,0x5441,0x5541,0x5641,0x5741,0x5841,0x5941,0x5a41,0x6141,0x6241,0x6341,0x6441,0x6541,0x6641,
 0x6741,0x6841,0x6941,0x6a41,0x6b41,0x6c41,0x6d41,0x6e41,0x6f41,0x7041,0x7141,0x7241,0x7341,0x7441,0x7541,0x7641,
@@ -363,14 +335,11 @@ static const unsigned short lut2[1<<12] = {
 0x672f,0x682f,0x692f,0x6a2f,0x6b2f,0x6c2f,0x6d2f,0x6e2f,0x6f2f,0x702f,0x712f,0x722f,0x732f,0x742f,0x752f,0x762f,
 0x772f,0x782f,0x792f,0x7a2f,0x302f,0x312f,0x322f,0x332f,0x342f,0x352f,0x362f,0x372f,0x382f,0x392f,0x2b2f,0x2f2f };
  
-#define EU32(_u_) (lut2[(_u_ >>  8) & 0xfff] << 16 |\
-                   lut2[ _u_ >> 20])
-                             
-#define EI32(_i_) {\
+#define XI32(_i_) {\
   unsigned _u0 = u0x, _u1 = u1x;\
   u0x = BSWAP32(ctou32(ip+6+_i_*6  ));  \
   u1x = BSWAP32(ctou32(ip+6+_i_*6+3));\
-  _u0 = EU32(_u0); _u1 = EU32(_u1); \
+  _u0 = XU32(_u0); _u1 = XU32(_u1); \
   stou32(op+_i_*8, _u0); stou32(op+_i_*8+4, _u1); \
 }                  
 
@@ -385,25 +354,17 @@ size_t tb64xenc(const unsigned char *in, size_t inlen, unsigned char *out) {
              u1x = BSWAP32(ctou32(ip+3));
 	  #if NEX >= 64		 
     for(; op <= (out+outlen)-(NEX+OVX); op += NEX, ip += (NEX/4)*3) { // unrolling 96/48->128/64 bytes
-      EI32(0); EI32(1); EI32( 2); EI32( 3); EI32( 4); EI32( 5); EI32( 6); EI32( 7);     
+      XI32(0); XI32(1); XI32( 2); XI32( 3); XI32( 4); XI32( 5); XI32( 6); XI32( 7);     
         #if NEX >= 128	  
-      EI32(8); EI32(9); EI32(10); EI32(11); EI32(12); EI32(13); EI32(14); EI32(15);      
+      XI32(8); XI32(9); XI32(10); XI32(11); XI32(12); XI32(13); XI32(14); XI32(15);      
 	    #endif
 																						PREFETCH(ip,256, 0);
     }
 	  #endif
-    for(; op <= (out+outlen)-(16+OVX); op += 16, ip += (16/4)*3) { EI32(0); EI32(1); } // unrolling 12->16 bytes
-     if(  op <= (out+outlen)-( 8+OVX))                           { EI32(0); op += 8, ip += (8/4)*3; }
+    for(; op <= (out+outlen)-(16+OVX); op += 16, ip += (16/4)*3) { XI32(0); XI32(1); } // unrolling 12->16 bytes
+     if(  op <= (out+outlen)-( 8+OVX))                           { XI32(0); op += 8, ip += (8/4)*3; }
   }
+  for(; op < (out+outlen)-4; op += 4, ip += 3) { unsigned _u = BSWAP32(ctou32(ip)); stou32(op, XU32(_u)); }\
   ETAIL();
   return outlen;
 }
-
-size_t _tb64xenc(const unsigned char *in, size_t inlen, unsigned char *out) {
-  const  unsigned char *ip    = in;
-         unsigned char *op    = out;
-         size_t        outlen = TB64ENCLEN(inlen);
-  ETAIL();
-  return outlen;
-}
-

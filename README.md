@@ -29,33 +29,33 @@ Turbo Base64:Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/powt
 ###### Benchmark Intel CPU: Skylake i7-6700 3.4GHz gcc 9.2
 |E Size|ratio%|E MB/s|D MB/s|Name|1MB binary 2019.12 |
 |--------:|-----:|--------:|--------:|----------------|----------------|
-|1333336|133.3|**16.247**|**26.032**|[**TB64avx2**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx2**|
-|1333336|133.3|**9.838**|**15.630**|[**TB64avx**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx**|
-|1333336|133.3|**8.891**|**12.097**|[**TB64sse**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 sse**|
-|1333336|133.3|12.973|13.986|[fb64avx2](https://github.com/lemire/fastbase64)|Fastbase64 avx2|
-|1333336|133.3|12.962|13.970|[b64avx2](https://github.com/aklomp/base64)|Base64 avx2|
-|1333336|133.3|8.392|8.717|[b64avx](https://github.com/aklomp/base64)|Base64 avx|
-|1333336|133.3|6.899|7.477|[b64sse](https://github.com/aklomp/base64)|Base64 sse41|
-|1000000|100.0|29.934|29.992|memcpy||
+|1333336|133.3|**16329**|**26032**|[**TB64avx2**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx2**|
+|1333336|133.3|**9920**|**16207**|[**TB64avx**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx**|
+|1333336|133.3|**8891**|**12132**|[**TB64sse**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 sse**|
+|1333336|133.3|12973|13986|[fb64avx2](https://github.com/lemire/fastbase64)|Fastbase64 avx2|
+|1333336|133.3|12962|13970|[b64avx2](https://github.com/aklomp/base64)|Base64 avx2|
+|1333336|133.3|8392|8717|[b64avx](https://github.com/aklomp/base64)|Base64 avx|
+|1333336|133.3|6899|7477|[b64sse](https://github.com/aklomp/base64)|Base64 sse41|
+|1000000|100.0|29934|29992|memcpy||
 
 |E Size|ratio%|E MB/s|D MB/s|Name| 20MB binary 2019.12|
 |--------:|-----:|--------:|--------:|----------------|----------------|
-|26666668|133.3|**8.920**|**12.706**|[**TB64avx2**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx2**|
-|26666668|133.3|**8.466**|**12.401**|[**TB64avx**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx**|
-|26666668|133.3|**8.026**|**11.291**|[**TB64sse**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 sse**|
-|26666668|133.3|7.795|10.452|[fb64avx2](https://github.com/lemire/fastbase64)|Fastbase64 avx2|
-|26666668|133.3|7.809|10.381|[b64avx2](https://github.com/aklomp/base64)|Base64 avx2|
-|26666668|133.3|7.161|8.172|[b64avx](https://github.com/aklomp/base64)|Base64 avx|
-|26666668|133.3|6.420|7.042|[b64sse](https://github.com/aklomp/base64)|Base64 sse41|
+|26666668|133.3|**8920**|**12706**|[**TB64avx2**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx2**|
+|26666668|133.3|**8466**|**12401**|[**TB64avx**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx**|
+|26666668|133.3|**8080**|**11291**|[**TB64sse**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 sse**|
+|26666668|133.3|7795|10452|[fb64avx2](https://github.com/lemire/fastbase64)|Fastbase64 avx2|
+|26666668|133.3|7809|10381|[b64avx2](https://github.com/aklomp/base64)|Base64 avx2|
+|26666668|133.3|7161|8172|[b64avx](https://github.com/aklomp/base64)|Base64 avx|
+|26666668|133.3|6420|7042|[b64sse](https://github.com/aklomp/base64)|Base64 sse41|
 |||||||
-|26666668|133.3|**3.925**|**4.246**|[**TB64x**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 scalar**|
-|26666668|133.3|1.840|3.320|[b64plain](https://github.com/aklomp/base64)|Base64 plain|
-|26666668|133.3|1.908|2.638|[TB64s](https://github.com/powturbo/TurboBase64)|**Turbo Base64 scalar**|
-|26666668|133.3|1.522|3.198|[chrome](https://github.com/lemire/fastbase64)|Google Chrome base64|
-|26666668|133.3|1.871|1.612|[fb64plain](https://github.com/lemire/fastbase64)|FastBase64 plain|
-|26666668|133.3|1.122|816|[quicktime](https://github.com/lemire/fastbase64)|Apple Quicktime base64|
-|27083334|135.4|1.100|178|[linux](https://github.com/lemire/fastbase64)|Linux base64|
-|20000000|100.0|14.432|14.464|memcpy||
+|26666668|133.3|**3925**|**4281**|[**TB64x**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 scalar**|
+|26666668|133.3|1840|3320|[b64plain](https://github.com/aklomp/base64)|Base64 plain|
+|26666668|133.3|1908|2750|[TB64s](https://github.com/powturbo/TurboBase64)|**Turbo Base64 scalar**|
+|26666668|133.3|1522|3198|[chrome](https://github.com/lemire/fastbase64)|Google Chrome base64|
+|26666668|133.3|1871|1612|[fb64plain](https://github.com/lemire/fastbase64)|FastBase64 plain|
+|26666668|133.3|1122|816|[quicktime](https://github.com/lemire/fastbase64)|Apple Quicktime base64|
+|27083334|135.4|1100|178|[linux](https://github.com/lemire/fastbase64)|Linux base64|
+|20000000|100.0|14432|14464|memcpy||
 
 ###### Benchmark ARM Neon: ARMv8 A73-ODROID-N2 1.8GHz (clang 6.0)
 |E Size|ratio%|E MB/s|D MB/s|Name|30MB binary 2019.12|

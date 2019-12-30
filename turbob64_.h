@@ -5,8 +5,10 @@ size_t tb64memcpy(const unsigned char *in, size_t inlen, unsigned char *out);
 
   #if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
 #define BSWAP32(a) a 
+#define BSWAP64(a) a 
   #else
 #define BSWAP32(a) bswap32(a)
+#define BSWAP64(a) bswap64(a)
   #endif  
 
   #ifdef NB64CHECK
@@ -23,6 +25,7 @@ size_t tb64memcpy(const unsigned char *in, size_t inlen, unsigned char *out);
 
 //--------------------- Encoding ----------------------------------------------------------
 extern unsigned char tb64lutse[];
+
 #define SU32(_u_) (tb64lutse[(_u_>> 8) & 0x3f] << 24 |\
                    tb64lutse[(_u_>>14) & 0x3f] << 16 |\
                    tb64lutse[(_u_>>20) & 0x3f] <<  8 |\
@@ -42,7 +45,7 @@ extern unsigned char tb64lutse[];
 extern const unsigned short tb64lutxe[];
 #define XU32(_u_) (tb64lutxe[(_u_ >>  8) & 0xfff] << 16 |\
                    tb64lutxe[ _u_ >> 20])
-                             
+			   
 static inline size_t _tb64xenc(const unsigned char *in, size_t inlen, unsigned char *out) {
          size_t        outlen = TB64ENCLEN(inlen);
   const  unsigned char *ip    = in;
@@ -57,6 +60,7 @@ static inline size_t _tb64xenc(const unsigned char *in, size_t inlen, unsigned c
                    tb64lutxd1[(unsigned char)(_u_>>  8)] |\
                    tb64lutxd2[(unsigned char)(_u_>> 16)] |\
                    tb64lutxd3[                _u_>> 24 ] )
+
 extern const unsigned tb64lutxd0[];
 extern const unsigned tb64lutxd1[];
 extern const unsigned tb64lutxd2[];

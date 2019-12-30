@@ -202,7 +202,7 @@ size_t tb64sseenc(const unsigned char* in, size_t inlen, unsigned char *out) {
     B64E(iv, ov); 
 	vst4q_u8(op,ov);                                                       
   } 
-  tb64xenc(ip, outlen&(64-1), op);
+  _tb64xenc(ip, outlen&(64-1), op);
   return outlen;
 }
 
@@ -275,7 +275,7 @@ size_t TEMPLATE2(FUNPREF, dec)(const unsigned char *in, size_t inlen, unsigned c
         #endif
     }
     size_t rc;
-    if(!(rc = tb64xdec(ip, inlen-(ip-in), op)) || _mm_movemask_epi8(vx)) return 0;
+    if(!(rc = _tb64xdec(ip, inlen-(ip-in), op)) || _mm_movemask_epi8(vx)) return 0;
     return (op-out)+rc;
   }
   return _tb64xdec(in, inlen, out);

@@ -193,8 +193,8 @@ int main(int argc, char* argv[]) {
       case 'k': bid++;                  break;
       case 'f': fuzz = atoi(optarg);    break;
         #ifdef BASE64
-      case 'm': smin = atoi(optarg);    break;
-      case 'M': smax = atoi(optarg);if(smax > 256) smax = 256; break;
+      case 'm': if(!(smin = atoi(optarg))) smin = 1;    break;
+      case 'M': smask = atoi(optarg); if(smask&(smask-1)) die("Range must be power of 2"); smask--; break;
         #endif
       case 'e': scmd = optarg;          break;
       case 'I': if((tm_Rep  = atoi(optarg))<=0) tm_rep =tm_Rep=1; break;
@@ -209,10 +209,6 @@ int main(int argc, char* argv[]) {
         exit(0); 
     }
   }
-    #ifdef BASE64
-  if(smax < smin) { unsigned tmp = smin; smin = smax; smax = tmp; }
-    #endif
-
   tb64ini(0,0); 
   printf("detected simd (id=%x->'%s')\n\n", cpuini(0), cpustr(cpuini(0))); 
   printf("  E MB/s    size     ratio%%   D MB/s   function\n");  

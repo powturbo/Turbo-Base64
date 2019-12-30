@@ -36,38 +36,26 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // https://gist.github.com/aqrit/a2ccea48d7cac7e9d4d99f19d4759666 (decode)
 
 #include <immintrin.h>
-#include "conf.h"
-#define TB64_IN
-#include "turbob64.h"
 
-#define PREFETCH(_ip_,_i_,_rw_) __builtin_prefetch(_ip_+(_i_),_rw_)
+#define UA_MEMCPY
+#include "conf.h"
+#include "turbob64.h"
+#include "turbob64_.h"
 
 //--------------------- Decode ----------------------------------------------------------------------
-  #ifdef NB64CHECK
-#define CHECK0(a)
-#define CHECK1(a)
-  #else
-#define CHECK0(a) a
-    #ifdef B64CHECK
-#define CHECK1(a) a
-    #else
-#define CHECK1(a)
-    #endif
-  #endif
-
-#define PACK8TO6(v) {\
+#define MM256_PACK8TO6(v,cpv) {\
   const __m256i merge_ab_and_bc = _mm256_maddubs_epi16(v,            _mm256_set1_epi32(0x01400140));\
                               v = _mm256_madd_epi16(merge_ab_and_bc, _mm256_set1_epi32(0x00011000));\
                               v = _mm256_shuffle_epi8(v, cpv);\
 }
 
-#define MAP8TO6(iv, shifted, ov) { /*map 8-bits ascii to 6-bits bin*/\
+#define MM256_MAP8TO6(iv, shifted, delta_asso, delta_values, ov) { /*map 8-bits ascii to 6-bits bin*/\
                 shifted    = _mm256_srli_epi32(iv, 3);\
   const __m256i delta_hash = _mm256_avg_epu8(_mm256_shuffle_epi8(delta_asso, iv), shifted);\
                         ov = _mm256_add_epi8(_mm256_shuffle_epi8(delta_values, delta_hash), iv);\
 }
 
-#define B64CHK(iv, shifted, vx) {\
+#define MM256_B64CHK(iv, shifted, vx) {\
   const __m256i check_hash = _mm256_avg_epu8( _mm256_shuffle_epi8(check_asso, iv), shifted);\
   const __m256i        chk = _mm256_adds_epi8(_mm256_shuffle_epi8(check_values, check_hash), iv);\
                         vx = _mm256_or_si256(vx, chk);\
@@ -96,27 +84,27 @@ size_t tb64avx2dec(const unsigned char *in, size_t inlen, unsigned char *out) {
       __m256i          iv0 = _mm256_loadu_si256((__m256i *)ip);    
       __m256i          iv1 = _mm256_loadu_si256((__m256i *)(ip+32)); 
    
-      __m256i ov0,shifted0; MAP8TO6(iv0, shifted0, ov0); PACK8TO6(ov0);
-      __m256i ov1,shifted1; MAP8TO6(iv1, shifted1, ov1); PACK8TO6(ov1);
+      __m256i ov0,shifted0; MM256_MAP8TO6(iv0, shifted0, delta_asso, delta_values, ov0); MM256_PACK8TO6(ov0, cpv);
+      __m256i ov1,shifted1; MM256_MAP8TO6(iv1, shifted1, delta_asso, delta_values, ov1); MM256_PACK8TO6(ov1, cpv);
       
       _mm_storeu_si128((__m128i*) op,       _mm256_castsi256_si128(ov0));
       _mm_storeu_si128((__m128i*)(op + 12), _mm256_extracti128_si256(ov0, 1));                          
       _mm_storeu_si128((__m128i*)(op + 24), _mm256_castsi256_si128(ov1));
       _mm_storeu_si128((__m128i*)(op + 36), _mm256_extracti128_si256(ov1, 1));                          
  
-      CHECK0(B64CHK(iv0, shifted0, vx));
-      CHECK1(B64CHK(iv1, shifted1, vx));
+      CHECK0(MM256_B64CHK(iv0, shifted0, vx));
+      CHECK1(MM256_B64CHK(iv1, shifted1, vx));
     }
 
     if(ip < (in+inlen)-(32+OVD)) {
       __m256i          iv0 = _mm256_loadu_si256((__m256i *)ip);      
-      __m256i ov0,shifted0; MAP8TO6(iv0, shifted0, ov0); PACK8TO6(ov0);
+      __m256i ov0,shifted0; MM256_MAP8TO6(iv0, shifted0, delta_asso, delta_values, ov0); MM256_PACK8TO6(ov0, cpv);
       
       _mm_storeu_si128((__m128i*) op,       _mm256_castsi256_si128(ov0));
       _mm_storeu_si128((__m128i*)(op + 12), _mm256_extracti128_si256(ov0, 1));                          
       ip +=  32;
       op += (32/4)*3;
-      CHECK1(B64CHK(iv0, shifted0, vx));
+      CHECK1(MM256_B64CHK(iv0, shifted0, vx));
     }
     size_t rc;
     if(!(rc = _tb64xdec(ip, inlen-(ip-in), op)) || _mm256_movemask_epi8(vx)) return 0;
@@ -126,7 +114,7 @@ size_t tb64avx2dec(const unsigned char *in, size_t inlen, unsigned char *out) {
 }
 
 //-------------------- Encode ----------------------------------------------------------------------
-static ALWAYS_INLINE __m256i map6to8(const __m256i v) { /*map 6-bits bin to 8-bits ascii (https://arxiv.org/abs/1704.00605) */
+static ALWAYS_INLINE __m256i mm256_map6to8(const __m256i v) { /*map 6-bits bin to 8-bits ascii (https://arxiv.org/abs/1704.00605) */
   __m256i vidx = _mm256_subs_epu8(v,   _mm256_set1_epi8(51));
           vidx = _mm256_sub_epi8(vidx, _mm256_cmpgt_epi8(v, _mm256_set1_epi8(25)));
 
@@ -135,7 +123,7 @@ static ALWAYS_INLINE __m256i map6to8(const __m256i v) { /*map 6-bits bin to 8-bi
   return _mm256_add_epi8(v, _mm256_shuffle_epi8(offsets, vidx));
 }
 
-static ALWAYS_INLINE __m256i unpack6to8(__m256i v) { /* https://arxiv.org/abs/1704.00605 p.12*/
+static ALWAYS_INLINE __m256i mm256_unpack6to8(__m256i v) { /* https://arxiv.org/abs/1704.00605 p.12*/
   const __m256i shuf = _mm256_set_epi8(10,11, 9,10, 7, 8, 6, 7, 4,   5, 3, 4, 1, 2, 0, 1,
                                        10,11, 9,10, 7, 8, 6, 7, 4,   5, 3, 4, 1, 2, 0, 1);
           v  = _mm256_shuffle_epi8(v, shuf);
@@ -156,8 +144,8 @@ size_t tb64avx2enc(const unsigned char* in, size_t inlen, unsigned char *out) {
       __m256i v1 = _mm256_castsi128_si256(    _mm_loadu_si128((__m128i *)(ip+24)));      
               v1 = _mm256_inserti128_si256(v1,_mm_loadu_si128((__m128i *)(ip+36)),1);   
 
-      v0 = unpack6to8(v0); v0 = map6to8(v0);                                                                                                           
-      v1 = unpack6to8(v1); v1 = map6to8(v1);
+      v0 = mm256_unpack6to8(v0); v0 = mm256_map6to8(v0);                                                                                                           
+      v1 = mm256_unpack6to8(v1); v1 = mm256_map6to8(v1);
 
      _mm256_storeu_si256((__m256i*) op,     v0);                                            
      _mm256_storeu_si256((__m256i*)(op+32), v1);    
@@ -165,7 +153,7 @@ size_t tb64avx2enc(const unsigned char* in, size_t inlen, unsigned char *out) {
     if(op <= (out+outlen)-(32+OVD)) {
       __m256i v0 = _mm256_castsi128_si256(    _mm_loadu_si128((__m128i *) ip));      
               v0 = _mm256_inserti128_si256(v0,_mm_loadu_si128((__m128i *)(ip+12)),1);   
-      v0 = unpack6to8(v0); v0 = map6to8(v0);                                                                                                           
+      v0 = mm256_unpack6to8(v0); v0 = mm256_map6to8(v0);                                                                                                           
       _mm256_storeu_si256((__m256i*) op,     v0);                                            
       op +=  32; 
       ip += (32/4)*3;
@@ -180,18 +168,6 @@ size_t tb64avx2enc(const unsigned char* in, size_t inlen, unsigned char *out) {
 // can read beyond the input buffer end, 
 // therefore input buffer size must be 32 bytes larger than input length
 
-#define _PACK8TO6(v) {\
-  const __m128i merge_ab_and_bc = _mm_maddubs_epi16(v,            _mm_set1_epi32(0x01400140));  /*/dec_reshuffle: https://arxiv.org/abs/1704.00605 P.17*/\
-                              v = _mm_madd_epi16(merge_ab_and_bc, _mm_set1_epi32(0x00011000));\
-                              v = _mm_shuffle_epi8(v, _mm256_castsi256_si128(cpv));\
-}
-
-#define _MAP8TO6(iv, shifted, ov) { /*map 8-bits ascii to 6-bits bin*/\
-                shifted    = _mm_srli_epi32(iv, 3);\
-  const __m128i delta_hash = _mm_avg_epu8(_mm_shuffle_epi8(_mm256_castsi256_si128(delta_asso), iv), shifted);\
-                        ov = _mm_add_epi8(_mm_shuffle_epi8(_mm256_castsi256_si128(delta_values), delta_hash), iv);\
-}
-
 size_t _tb64avx2dec(const unsigned char *in, size_t inlen, unsigned char *out) {
   if(inlen >= 16) { 
     const unsigned char *ip;
@@ -205,34 +181,21 @@ size_t _tb64avx2dec(const unsigned char *in, size_t inlen, unsigned char *out) {
 
     for(ip = in, op = out; ip < (in+inlen)-32; ip += 32, op += (32/4)*3) {
       __m256i          iv0 = _mm256_loadu_si256((__m256i *)ip);      
-      __m256i ov0,shifted0; MAP8TO6(iv0, shifted0, ov0); PACK8TO6(ov0);
+      __m256i ov0,shifted0; MM256_MAP8TO6(iv0, shifted0, delta_asso, delta_values, ov0); MM256_PACK8TO6(ov0, cpv);
       
       _mm_storeu_si128((__m128i*) op,       _mm256_castsi256_si128(ov0));
       _mm_storeu_si128((__m128i*)(op + 12), _mm256_extracti128_si256(ov0, 1));                          
     }
     if(ip < (in+inlen)-16) {
       __m128i iv0 = _mm_loadu_si128((__m128i *) ip);
-      __m128i ov0, shifted0; _MAP8TO6(iv0, shifted0, ov0); _PACK8TO6(ov0);
+      __m128i ov0, shifted0; MM_MAP8TO6( iv0, shifted0,_mm256_castsi256_si128(delta_asso),_mm256_castsi256_si128(delta_values), ov0); 
+	                         MM_PACK8TO6(ov0, _mm256_castsi256_si128(cpv));
       _mm_storeu_si128((__m128i*) op, ov0);  
       ip += 16; op += (16/4)*3;                                                
     }
     return (op-out)+_tb64xd(ip, inlen-(ip-in), op);
   }
   return _tb64xd(in, inlen, out);
-}
-
-static ALWAYS_INLINE __m128i _map6to8(const __m128i v) {
-  const __m128i offsets = _mm_set_epi8(0, 0, -16, -19, -4, -4, -4, -4,   -4, -4, -4, -4, -4, -4, 71, 65);
-
-  __m128i vidx = _mm_subs_epu8(v,   _mm_set1_epi8(51));
-          vidx = _mm_sub_epi8(vidx, _mm_cmpgt_epi8(v, _mm_set1_epi8(25)));
-  return _mm_add_epi8(v, _mm_shuffle_epi8(offsets, vidx));
-}
-
-static ALWAYS_INLINE __m128i _unpack6to8(__m128i v) {
-  __m128i va = _mm_mulhi_epu16(_mm_and_si128(v, _mm_set1_epi32(0x0fc0fc00)), _mm_set1_epi32(0x04000040));
-  __m128i vb = _mm_mullo_epi16(_mm_and_si128(v, _mm_set1_epi32(0x003f03f0)), _mm_set1_epi32(0x01000010));
-  return       _mm_or_si128(va, vb);                        
 }
 
 size_t _tb64avx2enc(const unsigned char* in, size_t inlen, unsigned char *out) {
@@ -243,19 +206,18 @@ size_t _tb64avx2enc(const unsigned char* in, size_t inlen, unsigned char *out) {
   for(; op <= (out+outlen)-32; op += 32, ip += (32/4)*3) {   
     __m256i v0 = _mm256_castsi128_si256(    _mm_loadu_si128((__m128i *) ip));      
             v0 = _mm256_inserti128_si256(v0,_mm_loadu_si128((__m128i *)(ip+12)),1);   
-    v0 = unpack6to8(v0); v0 = map6to8(v0);                                                                                                           
+    v0 = mm256_unpack6to8(v0); v0 = mm256_map6to8(v0);                                                                                                           
     _mm256_storeu_si256((__m256i*) op,     v0);                                            
   }
   if(op <= (out+outlen)-16) {
     const __m128i shuf = _mm_set_epi8(10,11,  9, 10,  7,  8,  6,  7,    4,  5,  3,  4,  1,  2,  0,  1);
     __m128i v0 = _mm_loadu_si128((__m128i*)ip);
             v0 = _mm_shuffle_epi8(v0, shuf);
-            v0 = _unpack6to8(v0);
-            v0 = _map6to8(v0);
+            v0 = mm_unpack6to8(v0);
+            v0 = mm_map6to8(v0);
     _mm_storeu_si128((__m128i*) op, v0);                                          
     op += 16; ip += (16/4)*3;
   }
   _tb64xenc(ip, inlen-(ip-in), op);
   return outlen;
 }
-

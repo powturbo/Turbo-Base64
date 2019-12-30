@@ -34,6 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define UA_MEMCPY
 #include "conf.h"
 #include "turbob64.h"
+#include "turbob64_.h"
 
   #if defined(TB64SHORT) && TB64SHORT < 128
 #define NDS 64    
@@ -42,26 +43,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define NDS 128    
 #define NDX 128 
   #endif	
-
-#define PREFETCH(_ip_,_i_,_rw_) __builtin_prefetch(_ip_+(_i_),_rw_)
-
-  #if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
-#define BSWAP32(a) a 
-  #else
-#define BSWAP32(a) bswap32(a)
-  #endif  
-
-  #ifdef NB64CHECK
-#define CHECK0(a)
-#define CHECK1(a)
-  #else
-#define CHECK0(a) a
-    #ifdef B64CHECK
-#define CHECK1(a) a
-    #else
-#define CHECK1(a)
-    #endif
-  #endif
 
 //--------------------- Decoding with small lut (only 64 bytes used)------------------------------------
 
@@ -135,6 +116,7 @@ size_t tb64sdec(const unsigned char *in, size_t inlen, unsigned char *out) {
     for(; ip < (in+inlen)-(16+OVS); ip += 16, op += (16/4)*3) { LI32(0); LI32(1); }
     if(   ip < (in+inlen)-( 8+OVS))                           { LI32(0); ip += 8; op += (8/4)*3; }
   }
+  
   for(; ip < (in+inlen)-4; ip += 4, op += 3) { unsigned u = ctou32(ip); cu |= LU32C(u); u = LU32(u); stou32(op, u); }
 
   unsigned u = 0, l = inlen - (ip-in);  
@@ -158,7 +140,7 @@ size_t tb64sdec(const unsigned char *in, size_t inlen, unsigned char *out) {
 
   #if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
 #define _ -1 // invalid entry
-const unsigned lut0[] = {
+const unsigned tb64lutxd0[] = {
          _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _, 
          _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _,
          _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _,0xf8000000,         _,         _,         _,0xfc000000,
@@ -177,7 +159,7 @@ const unsigned lut0[] = {
          _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _
 };
 
-const unsigned lut1[] = {
+const unsigned tb64lutxd1[] = {
         _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,
         _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,
         _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,0x3e00000,        _,        _,        _,0x3f00000,
@@ -196,7 +178,7 @@ const unsigned lut1[] = {
         _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,         _
 };
 
-const unsigned lut2[] = {
+const unsigned tb64lutxd2[] = {
       _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,
       _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,
       _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,0xf8000,      _,      _,      _,0xfc000,
@@ -215,7 +197,7 @@ const unsigned lut2[] = {
       _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _
 };
 
-const unsigned lut3[] = {
+const unsigned tb64lutxd3[] = {
      _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,
      _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,
      _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,0x3e00,     _,     _,     _,0x3f00,
@@ -237,7 +219,7 @@ const unsigned lut3[] = {
 
   #else
 #define _ -1 // invalid entry
-static const unsigned lut0[] = { 
+const unsigned tb64lutxd0[] = { 
    _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,
    _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,
    _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,0xf8,   _,   _,   _,0xfc,
@@ -256,7 +238,7 @@ static const unsigned lut0[] = {
    _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _
 };
 
-static const unsigned lut1[] = {
+const unsigned tb64lutxd1[] = {
      _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,
      _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,
      _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,0xe003,     _,     _,     _,0xf003,
@@ -275,7 +257,7 @@ static const unsigned lut1[] = {
      _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _
 };
 
-static const unsigned lut2[] = {
+const unsigned tb64lutxd2[] = {
        _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,
        _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,
        _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,0x800f00,       _,       _,       _,0xc00f00,
@@ -294,7 +276,7 @@ static const unsigned lut2[] = {
        _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _
 };
 
-static const unsigned lut3[] = {
+const unsigned tb64lutxd3[] = {
        _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,
        _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,
        _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,0x3e0000,       _,       _,       _,0x3f0000,
@@ -314,11 +296,6 @@ static const unsigned lut3[] = {
 };
 #undef _
   #endif
-
-#define DU32(_u_) (lut0[(unsigned char)(_u_     )] |\
-                   lut1[(unsigned char)(_u_>>  8)] |\
-                   lut2[(unsigned char)(_u_>> 16)] |\
-                   lut3[                _u_>> 24 ] )
 
   #ifdef __ARM_NEON
 #define DI32(_i_)  { unsigned _u = ux; ux = ctou32(ip+8+_i_*8);\
@@ -401,9 +378,9 @@ size_t tb64xdec(const unsigned char *in, size_t inlen, unsigned char *out) {
   unsigned char *up = (unsigned char *)&u;
   switch(l) {
     case 4: u = ctou32(ip); u = DU32(u);                 *op++ = up[0]; *op++ = up[1]; *op++ = up[2]; cu |= u; break; // 4->3 bytes
-    case 3: u = lut0[ip[0]] | lut1[ip[1]] | lut2[ip[2]]; *op++ = up[0]; *op++ = up[1];                cu |= u; break; // 3->2 bytes
-    case 2: u = lut0[ip[0]] | lut1[ip[1]];               *op++ = up[0];                               cu |= u; break; // 2->1 byte
-    case 1: u = lut0[ip[0]];                             *op++ = up[0];                               cu |= u; break; // 1->1 byte
+    case 3: u = tb64lutxd0[ip[0]] | tb64lutxd1[ip[1]] | tb64lutxd2[ip[2]]; *op++ = up[0]; *op++ = up[1];                cu |= u; break; // 3->2 bytes
+    case 2: u = tb64lutxd0[ip[0]] | tb64lutxd1[ip[1]];               *op++ = up[0];                               cu |= u; break; // 2->1 byte
+    case 1: u = tb64lutxd0[ip[0]];                             *op++ = up[0];                               cu |= u; break; // 1->1 byte
   }
   return (cu == -1)?0:(op-out);
 }
@@ -424,32 +401,9 @@ size_t _tb64xdec(const unsigned char *in, size_t inlen, unsigned char *out) {
   unsigned char *up = (unsigned char *)&u;
   switch(l) {
     case 4: u = ctou32(ip); u = DU32(u);                 *op++ = up[0]; *op++ = up[1]; *op++ = up[2]; cu |= u; break; // 4->3 bytes
-    case 3: u = lut0[ip[0]] | lut1[ip[1]] | lut2[ip[2]]; *op++ = up[0]; *op++ = up[1];                cu |= u; break; // 3->2 bytes
-    case 2: u = lut0[ip[0]] | lut1[ip[1]];               *op++ = up[0];                               cu |= u; break; // 2->1 byte
-    case 1: u = lut0[ip[0]];                             *op++ = up[0];                               cu |= u; break; // 1->1 byte
+    case 3: u = tb64lutxd0[ip[0]] | tb64lutxd1[ip[1]] | tb64lutxd2[ip[2]]; *op++ = up[0]; *op++ = up[1];                cu |= u; break; // 3->2 bytes
+    case 2: u = tb64lutxd0[ip[0]] | tb64lutxd1[ip[1]];               *op++ = up[0];                               cu |= u; break; // 2->1 byte
+    case 1: u = tb64lutxd0[ip[0]];                             *op++ = up[0];                               cu |= u; break; // 1->1 byte
   }
   return (cu == -1)?0:(op-out);
 }
-
-size_t _tb64xd(const unsigned char *in, size_t inlen, unsigned char *out) { 
-  const unsigned char *ip    = in;
-        unsigned char *op    = out;  
-  for(; ip < (in+inlen)-4; ip += 4, op += 3) { unsigned u = ctou32(ip); u = DU32(u); stou32(op, u); }
-
-  unsigned u = 0, l = (in+inlen) - ip; 
-  if(l == 4) 																	// last 4 bytes
-    if(    ip[3]=='=') { l = 3; 
-      if(  ip[2]=='=') { l = 2; 
-        if(ip[1]=='=')   l = 1; 
-	  }
-	}
-  unsigned char *up = (unsigned char *)&u;
-  switch(l) {
-    case 4: u = ctou32(ip); u = DU32(u);                 *op++ = up[0]; *op++ = up[1]; *op++ = up[2]; break; // 4->3 bytes
-    case 3: u = lut0[ip[0]] | lut1[ip[1]] | lut2[ip[2]]; *op++ = up[0]; *op++ = up[1];                break; // 3->2 bytes
-    case 2: u = lut0[ip[0]] | lut1[ip[1]];               *op++ = up[0];                               break; // 2->1 byte
-    case 1: u = lut0[ip[0]];                             *op++ = up[0];                               break; // 1->1 byte
-  }
-  return op-out;
-}
-

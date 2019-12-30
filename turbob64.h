@@ -38,9 +38,6 @@ extern "C" {
 
 #define TB64_VERSION 100
 //---------------------- base64 API functions ----------------------------------
-// Base64 output length after encoding 
-#define TB64ENCLEN(_n_) ((_n_ + 2)/3 * 4)
-
 // return the base64 buffer length after encoding
 size_t tb64enclen(size_t inlen);
 
@@ -65,6 +62,7 @@ size_t tb64enc(const unsigned char *in, size_t inlen, unsigned char *out);
 //                0 Error (invalid base64 input or input length = 0)
 size_t tb64dec(const unsigned char *in, size_t inlen, unsigned char *out);
 
+//------ Direct call to tb64enc + tb64dec ---------------------------------------
 // Direct call to tb64enc + tb64dec saving a function call + a check instruction
 // call tb64ini, then call _tb64e(in, inlen, out) or _tb64d(in, inlen, out)
 typedef size_t (*TB64FUNC)(const unsigned char *in, size_t n, unsigned char *out);
@@ -73,26 +71,30 @@ extern TB64FUNC _tb64e;
 extern TB64FUNC _tb64d;
 
 //---------------------- base64 Internal functions ------------------------------
-// Space efficient scalar but (slower) version
+// Base64 output length after encoding 
+#define TB64ENCLEN(_n_) ((_n_ + 2)/3 * 4)
+
+// Memory efficient (small lookup tables) scalar but (slower) version
 size_t tb64senc(   const unsigned char *in, size_t inlen, unsigned char *out);
 size_t tb64sdec(   const unsigned char *in, size_t inlen, unsigned char *out);
 
-// Fast scalar base64
+// Fast scalar
 size_t tb64xenc(   const unsigned char *in, size_t inlen, unsigned char *out);
 size_t tb64xdec(   const unsigned char *in, size_t inlen, unsigned char *out);
 
-// ssse3 base64 
+// ssse3  
 size_t tb64sseenc( const unsigned char *in, size_t inlen, unsigned char *out);
 size_t tb64ssedec( const unsigned char *in, size_t inlen, unsigned char *out);
 
-// avx base64 
+// avx 
 size_t tb64avxenc( const unsigned char *in, size_t inlen, unsigned char *out);
 size_t tb64avxdec( const unsigned char *in, size_t inlen, unsigned char *out);
 
-// avx2 base 64
+// avx2
 size_t tb64avx2enc(const unsigned char *in, size_t inlen, unsigned char *out);
 size_t tb64avx2dec(const unsigned char *in, size_t inlen, unsigned char *out);
 
+// avx512
 size_t tb64avx512enc(const unsigned char *in, size_t inlen, unsigned char *out);
 size_t tb64avx512dec(const unsigned char *in, size_t inlen, unsigned char *out);
 
@@ -100,7 +102,14 @@ size_t tb64avx512dec(const unsigned char *in, size_t inlen, unsigned char *out);
 // isshort = 0 : default
 // isshort > 0 : set optimized short strings version (actually only avx2)
 void tb64ini(unsigned id, unsigned isshort);  
- 
+
+//------- optimized functions for short strings only --------------------------
+// - decoding without checking  
+// - can read beyond the input buffer end, 
+//   therefore input buffer size must be 32 bytes larger than input length
+size_t _tb64avx2enc(const unsigned char *in, size_t inlen, unsigned char *out);
+size_t _tb64avx2dec(const unsigned char *in, size_t inlen, unsigned char *out);
+
 //------- CPU instruction set ----------------------
 // cpuisa  = 0: return current simd set, 
 // cpuisa != 0: set simd set 0:scalar, 0x33:sse2, 0x60:avx2
@@ -110,20 +119,7 @@ unsigned cpuini(unsigned cpuisa);
 // Ex.: printf("current cpu set=%s\n", cpustr(cpuini(0)) ); 
 char *cpustr(unsigned cpuisa); 
 
-  #ifdef TB64_IN  // internal functions
-size_t _tb64xenc(   const unsigned char *in, size_t inlen, unsigned char *out);
-size_t _tb64xdec(   const unsigned char *in, size_t inlen, unsigned char *out);
-size_t tb64memcpy(const unsigned char *in, size_t inlen, unsigned char *out);
-size_t _tb64xd(const unsigned char *in, size_t inlen, unsigned char *out);
-  #endif
-//------- optimized functions for short strings only --------------------------
-// decoding without checking  
-// can read beyond the input buffer end, 
-// therefore input buffer size must be 32 bytes larger than input length
-size_t _tb64avx2enc(const unsigned char *in, size_t inlen, unsigned char *out);
-size_t _tb64avx2dec(const unsigned char *in, size_t inlen, unsigned char *out);
 #ifdef __cplusplus
 }
 #endif
 #endif
-

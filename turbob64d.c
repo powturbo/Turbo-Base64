@@ -400,10 +400,11 @@ size_t _tb64xdec(const unsigned char *in, size_t inlen, unsigned char *out) {
 	}
   unsigned char *up = (unsigned char *)&u;
   switch(l) {
-    case 4: u = ctou32(ip); u = DU32(u);                 *op++ = up[0]; *op++ = up[1]; *op++ = up[2]; cu |= u; break; // 4->3 bytes
+    case 4: u = ctou32(ip); u = DU32(u);                                   *op++ = up[0]; *op++ = up[1]; *op++ = up[2]; cu |= u; break; // 4->3 bytes
     case 3: u = tb64lutxd0[ip[0]] | tb64lutxd1[ip[1]] | tb64lutxd2[ip[2]]; *op++ = up[0]; *op++ = up[1];                cu |= u; break; // 3->2 bytes
-    case 2: u = tb64lutxd0[ip[0]] | tb64lutxd1[ip[1]];               *op++ = up[0];                               cu |= u; break; // 2->1 byte
-    case 1: u = tb64lutxd0[ip[0]];                             *op++ = up[0];                               cu |= u; break; // 1->1 byte
+    case 2: u = tb64lutxd0[ip[0]] | tb64lutxd1[ip[1]];                     *op++ = up[0];                               cu |= u; break; // 2->1 byte
+    case 1: u = tb64lutxd0[ip[0]];                                         *op++ = up[0];                               cu |= u; break; // 1->1 byte
   }
   return (cu == -1)?0:(op-out);
 }
+

@@ -42,7 +42,7 @@ Turbo Base64:Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/powt
 |--------:|-----:|--------:|--------:|----------------|----------------|
 |26666668|133.3|**8920**|**12706**|[**TB64avx2**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx2**|
 |26666668|133.3|**8466**|**12401**|[**TB64avx**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx**|
-|26666668|133.3|**8080**|**11291**|[**TB64sse**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 sse**|
+|26666668|133.3|**8103**|**11291**|[**TB64sse**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 sse**|
 |26666668|133.3|7795|10452|[fb64avx2](https://github.com/lemire/fastbase64)|Fastbase64 avx2|
 |26666668|133.3|7809|10381|[b64avx2](https://github.com/aklomp/base64)|Base64 avx2|
 |26666668|133.3|7161|8172|[b64avx](https://github.com/aklomp/base64)|Base64 avx|
@@ -50,7 +50,7 @@ Turbo Base64:Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/powt
 |||||||
 |26666668|133.3|**3925**|**4281**|[**TB64x**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 scalar**|
 |26666668|133.3|1840|3320|[b64plain](https://github.com/aklomp/base64)|Base64 plain|
-|26666668|133.3|1908|2750|[TB64s](https://github.com/powturbo/TurboBase64)|**Turbo Base64 scalar**|
+|26666668|133.3|1908|2752|[TB64s](https://github.com/powturbo/TurboBase64)|**Turbo Base64 scalar**|
 |26666668|133.3|1522|3198|[chrome](https://github.com/lemire/fastbase64)|Google Chrome base64|
 |26666668|133.3|1871|1612|[fb64plain](https://github.com/lemire/fastbase64)|FastBase64 plain|
 |26666668|133.3|1122|816|[quicktime](https://github.com/lemire/fastbase64)|Apple Quicktime base64|
@@ -131,5 +131,5 @@ Turbo Base64:Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/powt
   * :green_book:[Faster Base64 Encoding and Decoding Using AVX2 Instructions](https://arxiv.org/abs/1704.00605)
   * :green_book:[RFC 4648:The Base16, Base32, and Base64 Data Encodings](https://tools.ietf.org/html/rfc4648)
 
-Last update: 26 Dec 2019
+Last update: 31 Dec 2019
 

@@ -188,7 +188,7 @@ size_t tb64sseenc(const unsigned char* in, size_t inlen, unsigned char *out) {
     B64E(iv, ov); 
 	vst4q_u8(op,ov);                                                       
   } 
-  for(; op < (out+outlen)-4; op += 4, ip += 3) { unsigned _u = BSWAP32(ctou32(ip)); stou32(op, XU32(_u)); } ETAIL();
+  EXTAIL();
   return outlen;
 }
 
@@ -315,8 +315,7 @@ size_t TEMPLATE2(FUNPREF, enc)(const unsigned char* in, size_t inlen, unsigned c
       _mm_storeu_si128((__m128i*) op, v0);                                          
     }
   }
-  for(; op < (out+outlen)-4; op += 4, ip += 3) { unsigned _u = BSWAP32(ctou32(ip)); stou32(op, XU32(_u)); } 
-  ETAIL();
+  EXTAIL();
   return outlen;
 }
 #endif

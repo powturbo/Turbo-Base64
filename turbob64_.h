@@ -1,5 +1,5 @@
-size_t _tb64xdec(   const unsigned char *in, size_t inlen, unsigned char *out);
-size_t tb64memcpy(const unsigned char *in, size_t inlen, unsigned char *out);
+size_t _tb64xdec( const unsigned char *in, size_t inlen, unsigned char *out);
+size_t tb64memcpy(const unsigned char *in, size_t inlen, unsigned char *out);  // testing only
 
 #define PREFETCH(_ip_,_i_,_rw_) __builtin_prefetch(_ip_+(_i_),_rw_)
 
@@ -46,15 +46,6 @@ extern const unsigned short tb64lutxe[];
 #define XU32(_u_) (tb64lutxe[(_u_ >>  8) & 0xfff] << 16 |\
                    tb64lutxe[ _u_ >> 20])
 			   
-static ALWAYS_INLINE size_t _tb64xenc(const unsigned char *in, size_t inlen, unsigned char *out) {
-         size_t        outlen = TB64ENCLEN(inlen);
-  const  unsigned char *ip    = in;
-         unsigned char *op    = out;
-  for(; op < (out+outlen)-4; op += 4, ip += 3) { unsigned _u = BSWAP32(ctou32(ip)); stou32(op, XU32(_u)); }\
-  ETAIL();
-  return outlen;
-}
-
 //--------------------- Decoding ----------------------------------------------------------  
 #define DU32(_u_) (tb64lutxd0[(unsigned char)(_u_     )] |\
                    tb64lutxd1[(unsigned char)(_u_>>  8)] |\
@@ -104,7 +95,7 @@ static ALWAYS_INLINE size_t _tb64xd(const unsigned char *in, size_t inlen, unsig
 }
 
 static ALWAYS_INLINE __m128i mm_map6to8(const __m128i v) {
-  const __m128i offsets = _mm_set_epi8(0, 0, -16, -19, -4, -4, -4, -4,   -4, -4, -4, -4, -4, -4, 71, 65);
+  const __m128i offsets = _mm_set_epi8( 0, 0,-16,-19, -4, -4, -4, -4,   -4, -4, -4, -4, -4, -4, 71, 65);
 
   __m128i vidx = _mm_subs_epu8(v,   _mm_set1_epi8(51));
           vidx = _mm_sub_epi8(vidx, _mm_cmpgt_epi8(v, _mm_set1_epi8(25)));
@@ -117,3 +108,4 @@ static ALWAYS_INLINE __m128i mm_unpack6to8(__m128i v) {
   return       _mm_or_si128(va, vb);                        
 }
 #endif
+

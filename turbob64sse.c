@@ -188,7 +188,7 @@ size_t tb64sseenc(const unsigned char* in, size_t inlen, unsigned char *out) {
     B64E(iv, ov); 
 	vst4q_u8(op,ov);                                                       
   } 
-  _tb64xenc(ip, outlen&(64-1), op);
+  for(; op < (out+outlen)-4; op += 4, ip += 3) { unsigned _u = BSWAP32(ctou32(ip)); stou32(op, XU32(_u)); } ETAIL();
   return outlen;
 }
 

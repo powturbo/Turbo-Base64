@@ -45,7 +45,8 @@ extern unsigned char tb64lutse[];
 extern const unsigned short tb64lutxe[];
 #define XU32(_u_) (tb64lutxe[(_u_ >>  8) & 0xfff] << 16 |\
                    tb64lutxe[ _u_ >> 20])
-			   
+
+#define EXTAIL() for(; op < (out+outlen)-4; op += 4, ip += 3) { unsigned _u = BSWAP32(ctou32(ip)); stou32(op, XU32(_u)); } ETAIL()			   
 //--------------------- Decoding ----------------------------------------------------------  
 #define DU32(_u_) (tb64lutxd0[(unsigned char)(_u_     )] |\
                    tb64lutxd1[(unsigned char)(_u_>>  8)] |\

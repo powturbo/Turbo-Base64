@@ -363,8 +363,7 @@ size_t tb64xenc(const unsigned char *in, size_t inlen, unsigned char *out) {
     for(; op <= (out+outlen)-(16+OVX); op += 16, ip += (16/4)*3) { XI32(0); XI32(1); } // unrolling 12->16 bytes
      if(  op <= (out+outlen)-( 8+OVX))                           { XI32(0); op += 8, ip += (8/4)*3; }		  
   }
-  for(; op < (out+outlen)-4; op += 4, ip += 3) { unsigned _u = BSWAP32(ctou32(ip)); stou32(op, XU32(_u)); }\
-  ETAIL();
+  EXTAIL();
   return outlen;
 }
 

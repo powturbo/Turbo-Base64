@@ -60,20 +60,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "turbob64.h"
 #include "turbob64_.h"
 
-/*#define PREFETCH(_ip_,_i_,_rw_) __builtin_prefetch(_ip_+(_i_),_rw_)
-
-  #ifdef NB64CHECK
-#define CHECK0(a)
-#define CHECK1(a)
-  #else
-#define CHECK0(a) a
-    #ifdef B64CHECK
-#define CHECK1(a) a
-    #else
-#define CHECK1(a)
-    #endif
-  #endif*/
-
 #ifdef __ARM_NEON  //----------------------------------- arm neon --------------------------------
 
 #define _ 0xff // invald entry
@@ -281,20 +267,6 @@ size_t TEMPLATE2(FUNPREF, dec)(const unsigned char *in, size_t inlen, unsigned c
   return _tb64xdec(in, inlen, out);
 }
 
-/*static ALWAYS_INLINE __m128i mm_map6to8(const __m128i v) {
-  const __m128i offsets = _mm_set_epi8(0, 0, -16, -19, -4, -4, -4, -4,   -4, -4, -4, -4, -4, -4, 71, 65);
-
-  __m128i vidx = _mm_subs_epu8(v,   _mm_set1_epi8(51));
-          vidx = _mm_sub_epi8(vidx, _mm_cmpgt_epi8(v, _mm_set1_epi8(25)));
-  return _mm_add_epi8(v, _mm_shuffle_epi8(offsets, vidx));
-}
-
-static ALWAYS_INLINE __m128i mm_unpack6to8(__m128i v) {
-  __m128i va = _mm_mulhi_epu16(_mm_and_si128(v, _mm_set1_epi32(0x0fc0fc00)), _mm_set1_epi32(0x04000040));
-  __m128i vb = _mm_mullo_epi16(_mm_and_si128(v, _mm_set1_epi32(0x003f03f0)), _mm_set1_epi32(0x01000010));
-  return       _mm_or_si128(va, vb);                        
-}*/
-
 #define OVE 8
 size_t TEMPLATE2(FUNPREF, enc)(const unsigned char* in, size_t inlen, unsigned char *out) { 
   const unsigned char *ip = in; 
@@ -307,7 +279,6 @@ size_t TEMPLATE2(FUNPREF, enc)(const unsigned char* in, size_t inlen, unsigned c
     #endif
   if(outlen >= 16+OVE) {
     const __m128i shuf    = _mm_set_epi8(10,11,  9, 10,  7,  8,  6,  7,    4,  5,  3,  4,  1,  2,  0,  1);
-    const __m128i offsets = _mm_set_epi8( 0, 0,-16,-19, -4, -4, -4, -4,   -4, -4, -4, -4, -4, -4, 71, 65);
 
     for(; op <= (out+outlen)-(NE+OVE); op += NE, ip += (NE/4)*3) {                       PREFETCH(ip,1024,0);            
       __m128i v0 = _mm_loadu_si128((__m128i*)ip),   
@@ -344,7 +315,8 @@ size_t TEMPLATE2(FUNPREF, enc)(const unsigned char* in, size_t inlen, unsigned c
       _mm_storeu_si128((__m128i*) op, v0);                                          
     }
   }
-  _tb64xenc(ip, (in+inlen)-ip, op);
+  for(; op < (out+outlen)-4; op += 4, ip += 3) { unsigned _u = BSWAP32(ctou32(ip)); stou32(op, XU32(_u)); } 
+  ETAIL();
   return outlen;
 }
 #endif
@@ -357,7 +329,6 @@ size_t tb64memcpy(const unsigned char* in, size_t inlen, unsigned char *out) {
 }
  
 static unsigned _cpuisa;
-  //#if defined(__ARM_NEON) || defined(__SSE__) || defined(__powerpc64__)
 //--------------------- CPU detection -------------------------------------------
     #if defined(__i386__) || defined(__x86_64__)
       #if _MSC_VER >=1300

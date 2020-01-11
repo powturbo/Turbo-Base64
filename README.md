@@ -58,7 +58,7 @@ Turbo Base64:Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/powt
 |27083334|135.4|1100|178|[linux](https://github.com/lemire/fastbase64)|Linux base64|
 |20000000|100.0|14432|14464|memcpy||
 
-<a name="short">[short]
+<a name="short">[short]</a>
 ###### TurboBase64 vs. Base64 for short strings (incl. checking)
 |String length|E MB/s|D MB/s|Name|1MB short strings 2020.01 |
 |------------:|--------:|--------:|----------------|----------------|

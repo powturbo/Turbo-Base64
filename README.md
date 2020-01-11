@@ -8,7 +8,8 @@ Turbo Base64:Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/powt
  * :new: (2019.12) Turbo Base64 **SSE** faster than other SSE/AVX/AVX2! base64 library
  * :new: (2019.12) Fastest **AVX2** implementation, damn near to memcpy 
  * TurboBase64 AVX2 decoding is ~2x faster than other AVX2 libs.
- * :new: (2019.12) Fastest **ARM Neon** base64
+ * :new: (2020.1) For short string, TurboBase64 is 3-4 times faster than other libs.
+ * :new: (2019.1) Fastest **ARM Neon** base64
  * :+1: Dynamic CPU detection and **JIT scalar/sse/avx/avx2** switching
  * Base64 robust **error checking**, optimzed for **long+short** strings
  * Portable library, 32/64 bits, **SSE/AVX/AVX2**, **ARM Neon**, **Power9 Altivec**
@@ -26,7 +27,7 @@ Turbo Base64:Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/powt
 - Small file + realistic and practical (no PURE cache) benchmark with large binary game assets corpus pd3d.tar (20 MB)
 - Unlike other benchmarks, the best of the best scalar+simd libraries are included
 
-###### Benchmark Intel CPU: Skylake i7-6700 3.4GHz gcc 9.2
+#### Benchmark Intel CPU: Skylake i7-6700 3.4GHz gcc 9.2
 |E Size|ratio%|E MB/s|D MB/s|Name|1MB binary 2019.12 |
 |--------:|-----:|--------:|--------:|----------------|----------------|
 |1333336|133.3|**16329**|**26032**|[**TB64avx2**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx2**|
@@ -57,6 +58,18 @@ Turbo Base64:Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/powt
 |27083334|135.4|1100|178|[linux](https://github.com/lemire/fastbase64)|Linux base64|
 |20000000|100.0|14432|14464|memcpy||
 
+###### TurboBase64 vs. Base64 for short strings (incl. checking)
+|String length|E MB/s|D MB/s|Name|1MB short strings 2020.01 |
+|------------:|--------:|--------:|----------------|----------------|
+| 4 - 16      |**1682**|**1843**|[**TB64avx2**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx2**|
+|             |559|622|[b64avx2](https://github.com/aklomp/base64)|Base64 avx2|
+| 8 - 32      |**2835**|**2965**|[**TB64avx2**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx2**|
+|             |838|818|[b64avx2](https://github.com/aklomp/base64)|Base64 avx2|
+| 16 - 64     |**4623**|**4893**|[**TB64avx2**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx2**|
+|             |1555|1229|[b64avx2](https://github.com/aklomp/base64)|Base64 avx2|
+| 32 - 128    |**7218**|**7533**|[**TB64avx2**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx2**|
+|             |2955|2365|[b64avx2](https://github.com/aklomp/base64)|Base64 avx2|
+
 ###### Benchmark ARM Neon: ARMv8 A73-ODROID-N2 1.8GHz (clang 6.0)
 |E Size|ratio%|E MB/s|D MB/s|Name|30MB binary 2019.12|
 |--------:|-----:|--------:|--------:|----------------|----------------|
@@ -73,6 +86,7 @@ Turbo Base64:Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/powt
 
 (**bold** = pareto in category)  MB=1.000.000<br />
 (E/D) : Encode/Decode
+
 
 <p>
 

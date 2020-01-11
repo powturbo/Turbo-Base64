@@ -95,6 +95,12 @@ static ALWAYS_INLINE size_t _tb64xd(const unsigned char *in, size_t inlen, unsig
                         ov = _mm_add_epi8(_mm_shuffle_epi8(delta_values, delta_hash), iv);\
 }
 
+#define MM_B64CHK(iv, shifted, check_asso, check_values, vx) {\
+  const __m128i check_hash = _mm_avg_epu8( _mm_shuffle_epi8(check_asso, iv), shifted);\
+  const __m128i        chk = _mm_adds_epi8(_mm_shuffle_epi8(check_values, check_hash), iv);\
+                        vx = _mm_or_si128(vx, chk);\
+}
+
 static ALWAYS_INLINE __m128i mm_map6to8(const __m128i v) {
   const __m128i offsets = _mm_set_epi8( 0, 0,-16,-19, -4, -4, -4, -4,   -4, -4, -4, -4, -4, -4, 71, 65);
 

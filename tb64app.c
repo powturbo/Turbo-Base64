@@ -247,6 +247,7 @@ int main(int argc, char* argv[]) {
         for(i = id; i <= idx; i++)
           bench(in, n, out,cpy,i);
       } while(*p++);
+      break;
     }
     //_vfree(_in); free(_out); if(cpy) free(cpy);   
     exit(0);

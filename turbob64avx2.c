@@ -55,7 +55,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                         ov = _mm256_add_epi8(_mm256_shuffle_epi8(delta_values, delta_hash), iv);\
 }
 
-#define MM256_B64CHK(iv, shifted, vx) {\
+#define MM256_B64CHK(iv, shifted, check_asso, check_values, vx) {\
   const __m256i check_hash = _mm256_avg_epu8( _mm256_shuffle_epi8(check_asso, iv), shifted);\
   const __m256i        chk = _mm256_adds_epi8(_mm256_shuffle_epi8(check_values, check_hash), iv);\
                         vx = _mm256_or_si256(vx, chk);\
@@ -92,8 +92,8 @@ size_t tb64avx2dec(const unsigned char *in, size_t inlen, unsigned char *out) {
       _mm_storeu_si128((__m128i*)(op + 24), _mm256_castsi256_si128(ov1));
       _mm_storeu_si128((__m128i*)(op + 36), _mm256_extracti128_si256(ov1, 1));                         
  
-      CHECK0(MM256_B64CHK(iv0, shifted0, vx));
-      CHECK1(MM256_B64CHK(iv1, shifted1, vx));
+      CHECK0(MM256_B64CHK(iv0, shifted0, check_asso, check_values, vx));
+      CHECK1(MM256_B64CHK(iv1, shifted1, delta_asso, delta_values, vx));
     }
 
     if(ip < (in+inlen)-(32+OVD)) {
@@ -104,7 +104,7 @@ size_t tb64avx2dec(const unsigned char *in, size_t inlen, unsigned char *out) {
       _mm_storeu_si128((__m128i*)(op + 12), _mm256_extracti128_si256(ov0, 1));                          
       ip +=  32;
       op += (32/4)*3;
-      CHECK1(MM256_B64CHK(iv0, shifted0, vx));
+      CHECK1(MM256_B64CHK(iv0, shifted0, check_asso, check_values, vx));
     }
     size_t rc;
     if(!(rc = _tb64xdec(ip, inlen-(ip-in), op)) || _mm256_movemask_epi8(vx)) return 0;
@@ -165,7 +165,6 @@ size_t tb64avx2enc(const unsigned char* in, size_t inlen, unsigned char *out) {
 }
 
 //------- optimized functions for short strings only --------------------------
-// decoding without checking  
 // can read beyond the input buffer end, 
 // therefore input buffer size must be 32 bytes larger than input length
 
@@ -177,24 +176,40 @@ size_t _tb64avx2dec(const unsigned char *in, size_t inlen, unsigned char *out) {
                                                   0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,   0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x0f);
     const __m256i delta_values = _mm256_setr_epi8(0x00, 0x00, 0x00, 0x13, 0x04, 0xbf, 0xbf, 0xb9,   0xb9, 0x00, 0x10, 0xc3, 0xbf, 0xbf, 0xb9, 0xb9,
                                                   0x00, 0x00, 0x00, 0x13, 0x04, 0xbf, 0xbf, 0xb9,   0xb9, 0x00, 0x10, 0xc3, 0xbf, 0xbf, 0xb9, 0xb9);
-          __m256i          cpv = _mm256_set_epi8( -1, -1, -1, -1, 12, 13, 14,  8,    9, 10,  4,  5,  6,  0,  1,  2,
+      #ifndef NB64CHECK
+    const __m256i check_asso   = _mm256_setr_epi8(0x0d, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,   0x01, 0x01, 0x03, 0x07, 0x0b, 0x0b, 0x0b, 0x0f,
+                                                  0x0d, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,   0x01, 0x01, 0x03, 0x07, 0x0b, 0x0b, 0x0b, 0x0f);
+    const __m256i check_values = _mm256_setr_epi8(0x80, 0x80, 0x80, 0x80, 0xcf, 0xbf, 0xd5, 0xa6,   0xb5, 0x86, 0xd1, 0x80, 0xb1, 0x80, 0x91, 0x80,
+                                                  0x80, 0x80, 0x80, 0x80, 0xcf, 0xbf, 0xd5, 0xa6,   0xb5, 0x86, 0xd1, 0x80, 0xb1, 0x80, 0x91, 0x80);
+      #endif
+    const __m256i          cpv = _mm256_set_epi8( -1, -1, -1, -1, 12, 13, 14,  8,    9, 10,  4,  5,  6,  0,  1,  2,
                                                   -1, -1, -1, -1, 12, 13, 14,  8,    9, 10,  4,  5,  6,  0,  1,  2);
-
+    __m256i vx = _mm256_setzero_si256();
     for(ip = in, op = out; ip < (in+inlen)-32; ip += 32, op += (32/4)*3) {
-      __m256i          iv0 = _mm256_loadu_si256((__m256i *)ip);      
+      __m256i          iv0 = _mm256_loadu_si256((__m256i *)ip);
       __m256i ov0,shifted0; MM256_MAP8TO6(iv0, shifted0, delta_asso, delta_values, ov0); MM256_PACK8TO6(ov0, cpv);
       
       _mm_storeu_si128((__m128i*) op,       _mm256_castsi256_si128(ov0));
       _mm_storeu_si128((__m128i*)(op + 12), _mm256_extracti128_si256(ov0, 1));                          
+      CHECK0(MM256_B64CHK(iv0, shifted0, check_asso, check_values, vx));
     }
+
+    unsigned cx;
     if(ip < (in+inlen)-16) {
       __m128i iv0 = _mm_loadu_si128((__m128i *) ip);
+      __m128i _vx = _mm_or_si128(_mm256_extracti128_si256(vx, 1), _mm256_castsi256_si128(vx));
       __m128i ov0, shifted0; MM_MAP8TO6( iv0, shifted0,_mm256_castsi256_si128(delta_asso),_mm256_castsi256_si128(delta_values), ov0); 
 	                         MM_PACK8TO6(ov0, _mm256_castsi256_si128(cpv));
       _mm_storeu_si128((__m128i*) op, ov0);  
-      ip += 16; op += (16/4)*3;                                                
-    }
-    return (op-out)+_tb64xd(ip, inlen-(ip-in), op);
+      ip += 16; op += (16/4)*3;
+      CHECK0(MM_B64CHK(iv0, shifted0, _mm256_castsi256_si128(check_asso), _mm256_castsi256_si128(check_values), _vx));
+      cx = _mm_movemask_epi8(_vx);
+    } else
+      cx = _mm256_movemask_epi8(vx);
+
+    size_t rc = _tb64xd(ip, inlen-(ip-in), op);
+    if(!rc || cx) return 0;
+    return (op-out)+rc;
   }
   return _tb64xd(in, inlen, out);
 }

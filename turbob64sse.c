@@ -97,7 +97,7 @@ static inline uint8x16x4_t vld1q_u8_x4(const uint8_t *lut) {
 	ov.val[2] = vorrq_u8(vshlq_n_u8(iv.val[2], 6),            iv.val[3]    );\
 }
 
-#define MM_B64CHK(iv, xv) xv = vorrq_u8(xv, vorrq_u8(vorrq_u8(iv.val[0], iv.val[1]), vorrq_u8(iv.val[2], iv.val[3])))
+#define _MM_B64CHK(iv, xv) xv = vorrq_u8(xv, vorrq_u8(vorrq_u8(iv.val[0], iv.val[1]), vorrq_u8(iv.val[2], iv.val[3])))
 
 size_t tb64ssedec(const unsigned char *in, size_t inlen, unsigned char *out) {
   const unsigned char *ip;
@@ -113,11 +113,11 @@ size_t tb64ssedec(const unsigned char *in, size_t inlen, unsigned char *out) {
 	uint8x16x3_t ov0,ov1; 
     B64D(iv0, ov0);
       #if ND > 128
-	CHECK1(MM_B64CHK(iv0,xv));
+	CHECK1(_MM_B64CHK(iv0,xv));
       #else
-	CHECK0(MM_B64CHK(iv0,xv));
+	CHECK0(_MM_B64CHK(iv0,xv));
       #endif
-	B64D(iv1, ov1); CHECK1(MM_B64CHK(iv1,xv));
+	B64D(iv1, ov1); CHECK1(_MM_B64CHK(iv1,xv));
       #if ND > 128
     iv0 = vld4q_u8(ip+128);
     iv1 = vld4q_u8(ip+192);              
@@ -125,11 +125,11 @@ size_t tb64ssedec(const unsigned char *in, size_t inlen, unsigned char *out) {
 	vst3q_u8(op,    ov0);       
 	vst3q_u8(op+48, ov1);                                                                                                                                                                       
       #if ND > 128
-	B64D(iv0,ov0);	CHECK1(MM_B64CHK(iv0,xv));
+	B64D(iv0,ov0);	CHECK1(_MM_B64CHK(iv0,xv));
 	B64D(iv1,ov1); 
 	vst3q_u8(op+ 96, ov0);       
 	vst3q_u8(op+144, ov1);                                                                                                                                                                       
-	CHECK0(MM_B64CHK(iv1,xv));
+	CHECK0(_MM_B64CHK(iv1,xv));
       #endif
   }
   for(                 ; ip != in+(inlen&~(64-1)); ip += 64, op += (64/4)*3) { 	
@@ -194,12 +194,6 @@ size_t tb64sseenc(const unsigned char* in, size_t inlen, unsigned char *out) {
 
 #elif defined(__SSSE3__) //----------------- SSSE3 / SSE4.1 / AVX (derived from the AVX2 functions ) -----------------------------------------------------------------
 
-#define MM_B64CHK(iv, shifted, vx) {\
-  const __m128i check_hash = _mm_avg_epu8( _mm_shuffle_epi8(check_asso, iv), shifted);\
-  const __m128i        chk = _mm_adds_epi8(_mm_shuffle_epi8(check_values, check_hash), iv);\
-                        vx = _mm_or_si128(vx, chk);\
-}
- 
 #define OVD 4
 size_t TEMPLATE2(FUNPREF, dec)(const unsigned char *in, size_t inlen, unsigned char *out) {
   if(inlen >= 16+OVD) {
@@ -234,8 +228,8 @@ size_t TEMPLATE2(FUNPREF, dec)(const unsigned char *in, size_t inlen, unsigned c
               iv3 = _mm_loadu_si128((__m128i *)(ip+48));
         #endif
       
-      CHECK0(MM_B64CHK(iv0, shifted0, vx));
-      CHECK1(MM_B64CHK(iv1, shifted1, vx));
+      CHECK0(MM_B64CHK(iv0, shifted0, check_asso, check_values, vx));
+      CHECK1(MM_B64CHK(iv1, shifted1, check_asso, check_values, vx));
 
         #if ND > 32
       __m128i ov2,shifted2; MM_MAP8TO6(iv2, shifted2,delta_asso, delta_values, ov2); MM_PACK8TO6(ov2, cpv);
@@ -243,8 +237,8 @@ size_t TEMPLATE2(FUNPREF, dec)(const unsigned char *in, size_t inlen, unsigned c
     
       _mm_storeu_si128((__m128i*)(op+24), ov2);                                                  
       _mm_storeu_si128((__m128i*)(op+36), ov3);                                                                                 
-      CHECK1(MM_B64CHK(iv2, shifted2, vx));
-      CHECK1(MM_B64CHK(iv3, shifted3, vx));
+      CHECK1(MM_B64CHK(iv2, shifted2, check_asso, check_values, vx));
+      CHECK1(MM_B64CHK(iv3, shifted3, check_asso, check_values, vx));
         #endif
     }
       #ifdef __AVX__
@@ -255,7 +249,7 @@ size_t TEMPLATE2(FUNPREF, dec)(const unsigned char *in, size_t inlen, unsigned c
       __m128i iv0 = _mm_loadu_si128((__m128i *) ip);
       __m128i ov0, shifted0; MM_MAP8TO6(iv0, shifted0,delta_asso, delta_values, ov0); MM_PACK8TO6(ov0, cpv);
       _mm_storeu_si128((__m128i*) op, ov0);                                                  
-      CHECK1(MM_B64CHK(iv0, shifted0, vx));
+      CHECK1(MM_B64CHK(iv0, shifted0, check_asso, check_values, vx));
         #ifndef __AVX__
       ip += 16; op += (16/4)*3;
         #endif

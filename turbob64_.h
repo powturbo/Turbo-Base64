@@ -48,16 +48,17 @@ extern const unsigned short tb64lutxe[];
 
 #define EXTAIL() for(; op < (out+outlen)-4; op += 4, ip += 3) { unsigned _u = BSWAP32(ctou32(ip)); stou32(op, XU32(_u)); } ETAIL()
 //--------------------- Decoding ----------------------------------------------------------  
+extern const unsigned tb64lutxd0[];
+extern const unsigned tb64lutxd1[];
+extern const unsigned tb64lutxd2[];
+extern const unsigned tb64lutxd3[];
+
 #define DU32(_u_) (tb64lutxd0[(unsigned char)(_u_     )] |\
                    tb64lutxd1[(unsigned char)(_u_>>  8)] |\
                    tb64lutxd2[(unsigned char)(_u_>> 16)] |\
                    tb64lutxd3[                _u_>> 24 ] )
 
-extern const unsigned tb64lutxd0[];
-extern const unsigned tb64lutxd1[];
-extern const unsigned tb64lutxd2[];
-extern const unsigned tb64lutxd3[];
-				   
+  #if 0
 static ALWAYS_INLINE size_t _tb64xd(const unsigned char *in, size_t inlen, unsigned char *out) {
   const unsigned char *ip    = in;
         unsigned char *op    = out;  
@@ -79,6 +80,30 @@ static ALWAYS_INLINE size_t _tb64xd(const unsigned char *in, size_t inlen, unsig
   }
   return op-out;
 }
+  #else
+static ALWAYS_INLINE size_t _tb64xd(const unsigned char *in, size_t inlen, unsigned char *out) { 
+  const unsigned char *ip    = in;
+        unsigned char *op    = out;  
+        unsigned      cu     = 0;
+  for(; ip < (in+inlen)-4; ip += 4, op += 3) { unsigned u = ctou32(ip); u = DU32(u); stou32(op, u); cu |= u; }
+
+  unsigned u = 0, l = (in+inlen) - ip; 
+  if(l == 4) 																	// last 4 bytes
+    if(    ip[3]=='=') { l = 3; 
+      if(  ip[2]=='=') { l = 2; 
+        if(ip[1]=='=')   l = 1; 
+	  }
+	}
+  unsigned char *up = (unsigned char *)&u;
+  switch(l) {
+    case 4: u = ctou32(ip); u = DU32(u);                                   *op++ = up[0]; *op++ = up[1]; *op++ = up[2]; cu |= u; break; // 4->3 bytes
+    case 3: u = tb64lutxd0[ip[0]] | tb64lutxd1[ip[1]] | tb64lutxd2[ip[2]]; *op++ = up[0]; *op++ = up[1];                cu |= u; break; // 3->2 bytes
+    case 2: u = tb64lutxd0[ip[0]] | tb64lutxd1[ip[1]];                     *op++ = up[0];                               cu |= u; break; // 2->1 byte
+    case 1: u = tb64lutxd0[ip[0]];                                         *op++ = up[0];                               cu |= u; break; // 1->1 byte
+  }
+  return (cu == -1)?0:(op-out);
+}
+  #endif
 //--------------------------- sse -----------------------------------------------------------------
 
 #if defined(__SSSE3__)

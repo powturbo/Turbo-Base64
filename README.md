@@ -58,8 +58,7 @@ Turbo Base64:Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/powt
 |27083334|135.4|1100|178|[linux](https://github.com/lemire/fastbase64)|Linux base64|
 |20000000|100.0|14432|14464|memcpy||
 
-<a name="short"></a>
-###### TurboBase64 vs. Base64 for short strings (incl. checking)
+<a name="short"></a> TurboBase64 vs. Base64 for short strings (incl. checking)
 |String length|E MB/s|D MB/s|Name|1MB short strings 2020.01 |
 |------------:|--------:|--------:|----------------|----------------|
 | 4 - 16      |**1682**|**1843**|[**TB64avx2**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx2**|
@@ -146,5 +145,5 @@ Turbo Base64:Fastest Base64 SIMD/Neon[![Build Status](https://travis-ci.org/powt
   * :green_book:[Faster Base64 Encoding and Decoding Using AVX2 Instructions](https://arxiv.org/abs/1704.00605)
   * :green_book:[RFC 4648:The Base16, Base32, and Base64 Data Encodings](https://tools.ietf.org/html/rfc4648)
 
-Last update: 31 Dec 2019
+Last update: 03 MAR 2020
 

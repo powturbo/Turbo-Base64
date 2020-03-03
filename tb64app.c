@@ -161,7 +161,7 @@ unsigned bench(unsigned char *in, unsigned n, unsigned char *out, unsigned char 
 }
 
 void usage(char *pgm) {
-  fprintf(stderr, "\nTurboBase64 Copyright (c) 2016-2019 Powturbo %s\n", __DATE__);
+  fprintf(stderr, "\nTurboBase64 Copyright (c) 2016-2020 Powturbo %s\n", __DATE__);
   fprintf(stderr, "Usage: %s [options] [file]\n", pgm);
   fprintf(stderr, " -e#      # = function ids separated by ',' or ranges '#-#' (default='1-%d')\n", ID_MEMCPY);
   fprintf(stderr, " -B#s     # = max. benchmark filesize (default 1GB) ex. -B4G\n");

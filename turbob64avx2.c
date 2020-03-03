@@ -159,8 +159,7 @@ size_t tb64avx2enc(const unsigned char* in, size_t inlen, unsigned char *out) {
       ip += (32/4)*3;
     }
   }
-  for(; op < (out+outlen)-4; op += 4, ip += 3) { unsigned _u = BSWAP32(ctou32(ip)); stou32(op, XU32(_u)); }
-  ETAIL();
+  EXTAIL();
   return outlen;
 }
 
@@ -218,7 +217,7 @@ size_t _tb64avx2enc(const unsigned char* in, size_t inlen, unsigned char *out) {
   const unsigned char *ip = in; 
         unsigned char *op = out;
         size_t   outlen = TB64ENCLEN(inlen);
-  if(outlen >= 32) { 
+  if(outlen >= 32+4) { 
     const __m256i    shuf = _mm256_set_epi8(10,11, 9,10, 7, 8, 6, 7, 4,   5, 3, 4, 1, 2, 0, 1,
                                             10,11, 9,10, 7, 8, 6, 7, 4,   5, 3, 4, 1, 2, 0, 1);
 
@@ -229,7 +228,7 @@ size_t _tb64avx2enc(const unsigned char* in, size_t inlen, unsigned char *out) {
       _mm256_storeu_si256((__m256i*) op,     v0);                                            
     }
   }
-  if(op <= (out+outlen)-16) {
+  if(op <= (out+outlen)-(16+4)) {
     const __m128i    shuf = _mm_set_epi8(10,11, 9,10, 7, 8, 6, 7, 4,   5, 3, 4, 1, 2, 0, 1);
 
     __m128i v0 = _mm_loadu_si128((__m128i*)ip);

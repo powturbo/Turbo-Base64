@@ -415,7 +415,7 @@ unsigned cpuisa(void) {
             if(c[1] & (1<<27))      _cpuisa |= AVX512ER;
             if(c[1] & (1<<28))      _cpuisa |= AVX512CD;
             if(c[1] & (1<<30))      _cpuisa |= AVX512BW;
-            if(c[1] & (1<<31))      _cpuisa |= AVX512VL;
+            if(c[1] & (1u<<31))     _cpuisa |= AVX512VL;
             if(c[2] & (1<< 1))      _cpuisa |= AVX512VBMI;
             if(c[2] & (1<<11))      _cpuisa |= AVX512VNNI;
             if(c[2] & (1<< 6))      _cpuisa |= AVX512VBMI2;

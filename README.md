@@ -1,4 +1,4 @@
-Turbo Base64:Fastest Base64 Scalar+SIMD/Neon/Power9 Altivec
+Turbo Base64:Fastest Base64 Scalar+SIMD
 =========================================================================================
 
 ###### **Fastest Base64 SIMD** Encoding library

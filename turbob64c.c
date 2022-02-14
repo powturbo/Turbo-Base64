@@ -1,5 +1,5 @@
 /**
-Copyright (c) 2016-2019, Powturbo
+Copyright (c) 2016-2022, Powturbo
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -30,54 +30,38 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     - twitter  : https://twitter.com/powturbo
     - email    : powturbo [_AT_] gmail [_DOT_] com
 **/
-//------------- TurboBase64 : Base64 encoding ----------------------
+// Turbo-Base64: Scalar encode
 #define UA_MEMCPY
 #include "conf.h"
 #include "turbob64.h"
 #include "turbob64_.h"
 
-#define NES 128    
-#define NEX 128 
-
 size_t tb64enclen(size_t n) { return TB64ENCLEN(n); }
-
-//----------------------- small 64 bytes lut encoding ---------------------------------------
-#define SI32(_i_) { \
-  unsigned _u0 = BSWAP32(ctou32(ip+_i_*6    ));\
-  unsigned _u1 = BSWAP32(ctou32(ip+_i_*6 + 3));\
-  _u0 = SU32(_u0);\
-  _u1 = SU32(_u1);\
-  stou32(op+_i_*8    , _u0);\
-  stou32(op+_i_*8 + 4, _u1);\
+ 
+//----------------------- small 64 bytes lut encoding ---------------------------------------------------------------------------------------------
+unsigned char tb64lutse[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+#define ES(_i_) { \
+  unsigned v = ctou32(ip+3+_i_*6  ); u = BSWAP32(u); stou32(op+_i_*8,   SU32(u));\
+           u = ctou32(ip+3+_i_*6+3); v = BSWAP32(v); stou32(op+_i_*8+4, SU32(v));\
 }
 
-unsigned char tb64lutse[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
-#define OVS 8
 size_t tb64senc(const unsigned char *in, size_t inlen, unsigned char *out) {
-  const  unsigned char *ip    = in;
-         unsigned char *op    = out;
-         size_t        outlen = TB64ENCLEN(inlen);
- 		 
-  if(outlen >= 16+OVS) {
-      #if NES >= 64	  
-    for(; op <= (out+outlen)-(NES+OVS); op += NES, ip += (NES/4)*3) {                     // 96/48->128/64 bytes
-      SI32(0); SI32(1); SI32( 2); SI32( 3); SI32( 4); SI32( 5); SI32( 6); SI32( 7); 
-        #if NES >= 128	  
-      SI32(8); SI32(9); SI32(10); SI32(11); SI32(12); SI32(13); SI32(14); SI32(15);    
-	    #endif
-	                                                                                  PREFETCH(ip,256, 0);
-    }
-	  #endif
-    for(; op <= (out+outlen)-(16+OVS); op += 16, ip += (16/4)*3) { SI32(0); SI32(1); }
+  const unsigned char *ip    = in;
+        unsigned char *op    = out;
+        size_t        outlen = TB64ENCLEN(inlen);
+		 
+  if(outlen > 4+8) { 
+	unsigned u = ctou32(ip); 
+    for(; op < (out+outlen)-(4+64); op += 64, ip += (64/4)*3) { ES(0); ES(1); ES( 2); ES( 3); ES( 4); ES( 5); ES( 6); ES( 7);  PREFETCH(ip,128, 0);	}
+    for(; op < (out+outlen)-(4+ 8); op +=  8, ip += ( 8/4)*3)   ES(0);
   }
-  for(; op < (out+outlen)-4; op += 4, ip += 3) { unsigned _u = BSWAP32(ctou32(ip)); stou32(op, SU32(_u)); }\
-  ETAIL(); 
+  for(;   op < (out+outlen)-4;      op +=  4, ip += 3) { unsigned _u = BSWAP32(ctou32(ip)); stou32(op, SU32(_u)); }
+  ETAIL();  
   return outlen;
 }
 
-//---------------------- Fast encoding with 4k LUT ------------------------------------------------------------
-const unsigned short tb64lutxe[1<<12] = { 
+//---------------------- Fast encoding with 4k LUT --------------------------------------------------------------------------------------------------
+const unsigned short tb64lute[1<<12] = { 
 0x4141,0x4241,0x4341,0x4441,0x4541,0x4641,0x4741,0x4841,0x4941,0x4a41,0x4b41,0x4c41,0x4d41,0x4e41,0x4f41,0x5041,
 0x5141,0x5241,0x5341,0x5441,0x5541,0x5641,0x5741,0x5841,0x5941,0x5a41,0x6141,0x6241,0x6341,0x6441,0x6541,0x6641,
 0x6741,0x6841,0x6941,0x6a41,0x6b41,0x6c41,0x6d41,0x6e41,0x6f41,0x7041,0x7141,0x7241,0x7341,0x7441,0x7541,0x7641,
@@ -334,36 +318,22 @@ const unsigned short tb64lutxe[1<<12] = {
 0x512f,0x522f,0x532f,0x542f,0x552f,0x562f,0x572f,0x582f,0x592f,0x5a2f,0x612f,0x622f,0x632f,0x642f,0x652f,0x662f,
 0x672f,0x682f,0x692f,0x6a2f,0x6b2f,0x6c2f,0x6d2f,0x6e2f,0x6f2f,0x702f,0x712f,0x722f,0x732f,0x742f,0x752f,0x762f,
 0x772f,0x782f,0x792f,0x7a2f,0x302f,0x312f,0x322f,0x332f,0x342f,0x352f,0x362f,0x372f,0x382f,0x392f,0x2b2f,0x2f2f };
- 
-#define XI32(_i_) {\
-  unsigned _u0 = u0x, _u1 = u1x;\
-  u0x = BSWAP32(ctou32(ip+6+_i_*6  ));  \
-  u1x = BSWAP32(ctou32(ip+6+_i_*6+3));\
-  _u0 = XU32(_u0); stou32(op+_i_*8, _u0);\
-  _u1 = XU32(_u1); stou32(op+_i_*8+4, _u1); \
-}                  
 
-#define OVX 12
+#define EX(_i_) {\
+  unsigned v = ctou32(ip+3+_i_*6  ); u = BSWAP32(u); stou32(op+_i_*8,   XU32(u));\
+           u = ctou32(ip+3+_i_*6+3); v = BSWAP32(v); stou32(op+_i_*8+4, XU32(v));\
+}
+
 size_t tb64xenc(const unsigned char *in, size_t inlen, unsigned char *out) {
   const  unsigned char *ip    = in;
          unsigned char *op    = out;
          size_t        outlen = TB64ENCLEN(inlen);
   
-  if(outlen >= 8+OVX) {
-    unsigned           u0x = BSWAP32(ctou32(ip  )),
-                       u1x = BSWAP32(ctou32(ip+3));
-	  #if NEX >= 64		 
-    for(; op <= (out+outlen)-(NEX+OVX); op += NEX, ip += (NEX/4)*3) { PREFETCH(ip,256, 0);// unrolling 96/48->128/64 bytes
-      XI32(0); XI32(1); XI32( 2); XI32( 3); XI32( 4); XI32( 5); XI32( 6); XI32( 7);     
-        #if NEX >= 128	  
-      XI32(8); XI32(9); XI32(10); XI32(11); XI32(12); XI32(13); XI32(14); XI32(15);      
-	    #endif																						
-    }
-	  #endif
-    for(; op <= (out+outlen)-(16+OVX); op += 16, ip += (16/4)*3) { XI32(0); XI32(1); } // unrolling 12->16 bytes
-     if(  op <= (out+outlen)-( 8+OVX))                           { XI32(0); op += 8, ip += (8/4)*3; }		  
+  if(outlen > 4+8) {
+	unsigned u = ctou32(ip);
+    for(; op < (out+outlen)-(4+64); op += 64, ip += (64/4)*3) { EX(0); EX(1); EX( 2); EX( 3); EX( 4); EX( 5); EX( 6); EX( 7); PREFETCH(ip,384, 0); }
+    for(; op < (out+outlen)-(4+ 8); op +=  8, ip += ( 8/4)*3)   EX(0);
   }
   EXTAIL();
   return outlen;
 }
-

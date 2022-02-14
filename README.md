@@ -60,8 +60,6 @@ Turbo Base64:Fastest Base64 Scalar+SIMD
 |1333336|133.3|2670|2299|[fb64plain](https://github.com/lemire/fastbase64)|FastBase64 plain|
 |1333334|135.4|1754|219|[linux](https://github.com/lemire/fastbase64)|Linux base64|
 |1000000|100.0|28688|28656|memcpy||
-|||||||
-|1335684|133.3|6797|9023|[crzy64 sse](https://github.com/ilyakurdyukov/crzy64)|crzy64 (not base64 compatible)|
 
 <a name="short"></a> TurboBase64 vs. Base64 for short strings (incl. checking)
 |String length|E MB/s|D MB/s|Name|1MB short strings 2020.01 |

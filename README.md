@@ -25,7 +25,7 @@ Turbo Base64:Fastest Base64 Scalar+SIMD
 ## Benchmark incl. the best SIMD Base64 libs:
 - Single thread
 - Including base64 error checking
-- Small file + realistic and practical (no PURE cache) benchmark with large binary game assets corpus pd3d.tar (20 MB)
+- Small file + realistic and practical (no PURE cache) benchmark 
 - Unlike other benchmarks, the best of the best scalar+simd libraries are included
 - all libraries with the latest version
 

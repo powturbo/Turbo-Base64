@@ -16,7 +16,7 @@ Turbo Base64:Fastest Base64 Scalar+SIMD
  * OS:Linux amd64, arm64, Power9, MacOs+Apple M1, s390x. Windows: Mingw, visual c++
  * Big endian + Little endian
  * Ready and simple to use library, no armada of files, no hassles dependencies
- * :new: the fastest now more faster
+ * :new: the fastest now more faster. Improved speed for short strings.
  * **LICENSE GPL 3**
 <p>
 

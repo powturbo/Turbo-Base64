@@ -1,3 +1,28 @@
+/**
+    Copyright (C) powturbo 2016-2022
+    GPL v3 License
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+    - homepage : https://sites.google.com/site/powturbo/
+    - github   : https://github.com/powturbo
+    - twitter  : https://twitter.com/powturbo
+    - email    : powturbo [_AT_] gmail [_DOT_] com
+**/
+// Turbo-Base64: internal include
+
 size_t _tb64xdec( const unsigned char *in, size_t inlen, unsigned char *out);
 size_t tb64memcpy(const unsigned char *in, size_t inlen, unsigned char *out);  // testing only
 
@@ -11,19 +36,19 @@ size_t tb64memcpy(const unsigned char *in, size_t inlen, unsigned char *out);  /
 #define BSWAP64(a) bswap64(a)
   #endif  
 
-  #ifdef NB64CHECK
+  #ifdef NB64CHECK  // decoding without checking
 #define CHECK0(a)
 #define CHECK1(a)
-  #else
+  #else             // decoding incl. checking 
 #define CHECK0(a) a
-    #ifdef B64CHECK
+    #ifdef B64CHECK // Full check
 #define CHECK1(a) a
     #else
 #define CHECK1(a)
     #endif
   #endif
 
-//--------------------- Encoding ----------------------------------------------------------
+//------- Encode: scalar helper macros & functions ----------------------------------------------------------
 extern unsigned char tb64lutse[];
 
 #define SU32(_u_) (tb64lutse[(_u_>> 8) & 0x3f] << 24 |\
@@ -32,84 +57,62 @@ extern unsigned char tb64lutse[];
                    tb64lutse[(_u_>>26) & 0x3f])
 
 #define ETAIL()\
-  unsigned _l = (in+inlen) - ip;\
-  if(_l == 3) { unsigned _u = ip[0]<<24 | ip[1]<<16 | ip[2]<<8; stou32(op, SU32(_u)); op+=4; ip+=3; }\
-  else if(_l) { *op++ = tb64lutse[(ip[0]>>2)&0x3f];\
-    if(_l == 2) *op++ = tb64lutse[(ip[0] & 0x3) << 4 | (ip[1] & 0xf0) >> 4],\
-                *op++ = tb64lutse[(ip[1] & 0xf) << 2];\
-    else        *op++ = tb64lutse[(ip[0] & 0x3) << 4], *op++ = '=';\
-    *op++ = '=';\
-  }
-
+  unsigned _l = (in+inlen) - ip; \
+       if(_l == 3) { unsigned _u = ip[0]<<24 | ip[1]<<16 | ip[2]<<8; stou32(op, SU32(_u)); op+=4; }\
+  else if(_l == 2) { op[0] = tb64lutse[(ip[0]>>2)&0x3f]; op[1] = tb64lutse[(ip[0] & 0x3) << 4 | (ip[1] & 0xf0) >> 4]; op[2] = tb64lutse[(ip[1] & 0xf) << 2]; op[3] = '='; op+=4; }\
+  else if(_l)      { op[0] = tb64lutse[(ip[0]>>2)&0x3f]; op[1] = tb64lutse[(ip[0] & 0x3) << 4],                       op[2] = '=';                           op[3] = '='; op+=4; }
   
-extern const unsigned short tb64lutxe[];
-#define XU32(_u_) (tb64lutxe[(_u_ >>  8) & 0xfff] << 16 |\
-                   tb64lutxe[ _u_ >> 20])
+extern const unsigned short tb64lute[];
+#define XU32(_u_) (tb64lute[(_u_ >>  8) & 0xfff] << 16 |\
+                   tb64lute[ _u_ >> 20])
 
 #define EXTAIL() for(; op < (out+outlen)-4; op += 4, ip += 3) { unsigned _u = BSWAP32(ctou32(ip)); stou32(op, XU32(_u)); } ETAIL()
-//--------------------- Decoding ----------------------------------------------------------  
-extern const unsigned tb64lutxd0[];
-extern const unsigned tb64lutxd1[];
-extern const unsigned tb64lutxd2[];
-extern const unsigned tb64lutxd3[];
 
-#define DU32(_u_) (tb64lutxd0[(unsigned char)(_u_     )] |\
-                   tb64lutxd1[(unsigned char)(_u_>>  8)] |\
-                   tb64lutxd2[(unsigned char)(_u_>> 16)] |\
-                   tb64lutxd3[                _u_>> 24 ] )
+//------- Decode: scalar helper macros & functions ----------------------------------------------------------
+extern const unsigned tb64lutd0[];
+extern const unsigned tb64lutd1[];
+extern const unsigned tb64lutd2[];
+extern const unsigned tb64lutd3[];
 
-  #if 0
-static ALWAYS_INLINE size_t _tb64xd(const unsigned char *in, size_t inlen, unsigned char *out) {
-  const unsigned char *ip    = in;
-        unsigned char *op    = out;  
-  for(; ip < (in+inlen)-4; ip += 4, op += 3) { unsigned u = ctou32(ip); u = DU32(u); stou32(op, u); }
+#define DU32(_u_) (tb64lutd0[(unsigned char)(_u_     )] |\
+                   tb64lutd1[(unsigned char)(_u_>>  8)] |\
+                   tb64lutd2[(unsigned char)(_u_>> 16)] |\
+                   tb64lutd3[                _u_>> 24 ] )
 
-  unsigned u = 0, l = (in+inlen) - ip; 
-  if(l == 4) 																	// last 4 bytes
-    if(    ip[3]=='=') { l = 3; 
-      if(  ip[2]=='=') { l = 2; 
-        if(ip[1]=='=')   l = 1; 
-	  }
-	}
-  unsigned char *up = (unsigned char *)&u;
-  switch(l) {
-    case 4: u = ctou32(ip); u = DU32(u);                                   *op++ = up[0]; *op++ = up[1]; *op++ = up[2]; break; // 4->3 bytes
-    case 3: u = tb64lutxd0[ip[0]] | tb64lutxd1[ip[1]] | tb64lutxd2[ip[2]]; *op++ = up[0]; *op++ = up[1];                break; // 3->2 bytes
-    case 2: u = tb64lutxd0[ip[0]] | tb64lutxd1[ip[1]];                     *op++ = up[0];                               break; // 2->1 byte
-    case 1: u = tb64lutxd0[ip[0]];                                         *op++ = up[0];                               break; // 1->1 byte
-  }
-  return op-out;
+#define DXTAILC(ip,out,op,_check_) {\
+       if(ip[3] != '=') { unsigned u = ctou32(ip); u = DU32(u);                                op[0] = u; op[1] = u>>8; op[2] = u>>16; op+=3; _check_; } /*4->3*/\
+  else if(ip[2] != '=') { unsigned u = tb64lutd0[ip[0]] | tb64lutd1[ip[1]] | tb64lutd2[ip[2]]; op[0] = u; op[1] = u>>8; op+=2;                _check_; } /*3->2*/\
+  else if(ip[1] != '=') { unsigned u = tb64lutd0[ip[0]] | tb64lutd1[ip[1]];                    *op++ = u;                                     _check_; } /*2->1*/\
+  else                  { unsigned u = tb64lutd0[ip[0]];                                       *op++ = u;                                     _check_; } /*1->1*/\
 }
-  #else
+				   
+#define DXTAIL(ip,out,op) {\
+       if(ip[3] != '=') { unsigned u = ctou32(ip); u = DU32(u);                                op[0] = u; op[1] = u>>8; op[2] = u>>16; op+=3;} /*4->3*/\
+  else if(ip[2] != '=') { uint16_t u = tb64lutd0[ip[0]] | tb64lutd1[ip[1]] | tb64lutd2[ip[2]]; op[0] = u; op[1] = u>>8; op+=2;               } /*3->2*/\
+  else if(ip[1] != '=') {                                                                      *op++ = tb64lutd0[ip[0]] | tb64lutd1[ip[1]];  } /*2->1*/\
+  else                  {                                                                      *op++ = tb64lutd0[ip[0]];                     } /*1->1*/\
+}
+
 static ALWAYS_INLINE size_t _tb64xd(const unsigned char *in, size_t inlen, unsigned char *out) { 
-  const unsigned char *ip    = in;
-        unsigned char *op    = out;  
-        unsigned      cu     = 0;
+  const unsigned char *ip = in;
+        unsigned char *op = out;  
+    #ifdef B64CHECK
+  unsigned       cu = 0;
   for(; ip < (in+inlen)-4; ip += 4, op += 3) { unsigned u = ctou32(ip); u = DU32(u); stou32(op, u); cu |= u; }
-
-  unsigned u = 0, l = (in+inlen) - ip; 
-  if(l == 4) 																	// last 4 bytes
-    if(    ip[3]=='=') { l = 3; 
-      if(  ip[2]=='=') { l = 2; 
-        if(ip[1]=='=')   l = 1; 
-	  }
-	}
-  unsigned char *up = (unsigned char *)&u;
-  switch(l) {
-    case 4: u = ctou32(ip); u = DU32(u);                                   *op++ = up[0]; *op++ = up[1]; *op++ = up[2]; cu |= u; break; // 4->3 bytes
-    case 3: u = tb64lutxd0[ip[0]] | tb64lutxd1[ip[1]] | tb64lutxd2[ip[2]]; *op++ = up[0]; *op++ = up[1];                cu |= u; break; // 3->2 bytes
-    case 2: u = tb64lutxd0[ip[0]] | tb64lutxd1[ip[1]];                     *op++ = up[0];                               cu |= u; break; // 2->1 byte
-    case 1: u = tb64lutxd0[ip[0]];                                         *op++ = up[0];                               cu |= u; break; // 1->1 byte
-  }
+  DXTAILC(ip,out,op, cu |= u);
   return (cu == -1)?0:(op-out);
+    #else
+  for(; ip < (in+inlen)-4; ip += 4, op += 3) { unsigned u = ctou32(ip); u = DU32(u); stou32(op, u); } 
+  DXTAIL(ip,out,op)
+  return op - out;
+    #endif		
 }
-  #endif
-//--------------------------- sse -----------------------------------------------------------------
 
+//------- SSE helper macros & functions ----------------------------------------------------------
 #if defined(__SSSE3__)
 #include <tmmintrin.h>
 #define MM_PACK8TO6(v, cpv) {\
-  const __m128i merge_ab_and_bc = _mm_maddubs_epi16(v,            _mm_set1_epi32(0x01400140));  /*/dec_reshuffle: https://arxiv.org/abs/1704.00605 P.17*/\
+  const __m128i merge_ab_and_bc = _mm_maddubs_epi16(v,            _mm_set1_epi32(0x01400140));  /*dec_reshuffle: https://arxiv.org/abs/1704.00605 P.17*/\
                               v = _mm_madd_epi16(merge_ab_and_bc, _mm_set1_epi32(0x00011000));\
                               v = _mm_shuffle_epi8(v, cpv);\
 }
@@ -127,7 +130,7 @@ static ALWAYS_INLINE size_t _tb64xd(const unsigned char *in, size_t inlen, unsig
 }
 
 static ALWAYS_INLINE __m128i mm_map6to8(const __m128i v) {
-  const __m128i offsets = _mm_set_epi8( 0, 0,-16,-19, -4, -4, -4, -4,   -4, -4, -4, -4, -4, -4, 71, 65);
+  const __m128i offsets = _mm_set_epi8( 0, 0,-16,-19, -4,-4,-4,-4,   -4,-4,-4,-4, -4,-4,71,65);
 
   __m128i vidx = _mm_subs_epu8(v,   _mm_set1_epi8(51));
           vidx = _mm_sub_epi8(vidx, _mm_cmpgt_epi8(v, _mm_set1_epi8(25)));
@@ -140,4 +143,3 @@ static ALWAYS_INLINE __m128i mm_unpack6to8(__m128i v) {
   return       _mm_or_si128(va, vb);                        
 }
 #endif
-

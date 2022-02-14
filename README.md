@@ -87,8 +87,9 @@ Turbo Base64:Fastest Base64 Scalar+SIMD
 |40500000|135.4|314|91|[Linux](https://github.com/lemire/fastbase64)|Linux base64|
 |30000000|100.0|3820|3834|memcpy||
 
-(**bold** = pareto in category)  MB=1.000.000<br />
-(E/D) : Encode/Decode
+- (**bold** = pareto in category)  MB=1.000.000<br />
+- (E/D) : Encode/Decode
+- Timmings are respectively relative to the base64 output/input in encode/decode.
 
 
 <p>

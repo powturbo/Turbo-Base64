@@ -29,7 +29,7 @@ Turbo Base64:Fastest Base64 Scalar+SIMD
 - Unlike other benchmarks, the best of the best scalar+simd libraries are included
 - all libraries with the latest version
 
-#### Benchmark Intel CPU: Skylake i7-9700k 3.6GHz gcc 11.2
+#### Benchmark Intel CPU: i7-9700k 3.6GHz gcc 11.2
 |E Size|ratio%|E MB/s|D MB/s|Name|50,000 bytes 2022.02 |
 |--------:|-----:|--------:|--------:|----------------|----------------|
 |1333336|133.3|**32497**|**34335**|[**tb64v256**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx2**|

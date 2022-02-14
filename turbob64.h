@@ -1,35 +1,27 @@
 /**
-Copyright (c) 2016-2019, Powturbo
-All rights reserved.
+    Copyright (C) powturbo 2016-2022
+    GPL v3 License
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are
-met:
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 3 of the License, or
+    (at your option) any later version.
 
-1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-2. Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in the
-   documentation and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
-IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
-TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
-PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
-TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
     - homepage : https://sites.google.com/site/powturbo/
     - github   : https://github.com/powturbo
     - twitter  : https://twitter.com/powturbo
     - email    : powturbo [_AT_] gmail [_DOT_] com
 **/
+// Turbo-Base64 - C/C++ include header
 #ifndef _TURBOB64_H_
 #define _TURBOB64_H_
 #ifdef __cplusplus
@@ -75,28 +67,28 @@ extern TB64FUNC _tb64d;
 #define TB64ENCLEN(_n_) ((_n_ + 2)/3 * 4)
 
 // Memory efficient (small lookup tables) scalar but (slower) version
-size_t tb64senc(   const unsigned char *in, size_t inlen, unsigned char *out);
-size_t tb64sdec(   const unsigned char *in, size_t inlen, unsigned char *out);
+size_t tb64senc(     const unsigned char *__restrict in, size_t inlen, unsigned char *__restrict out);
+size_t tb64sdec(     const unsigned char *__restrict in, size_t inlen, unsigned char *__restrict out);
 
 // Fast scalar
-size_t tb64xenc(   const unsigned char *in, size_t inlen, unsigned char *out);
-size_t tb64xdec(   const unsigned char *in, size_t inlen, unsigned char *out);
+size_t tb64xenc(     const unsigned char *__restrict in, size_t inlen, unsigned char *__restrict out);
+size_t tb64xdec(     const unsigned char *__restrict in, size_t inlen, unsigned char *__restrict out);
 
 // ssse3  
-size_t tb64sseenc( const unsigned char *in, size_t inlen, unsigned char *out);
-size_t tb64ssedec( const unsigned char *in, size_t inlen, unsigned char *out);
+size_t tb64v128enc(  const unsigned char *__restrict in, size_t inlen, unsigned char *__restrict out);
+size_t tb64v128dec(  const unsigned char *__restrict in, size_t inlen, unsigned char *__restrict out);
 
 // avx 
-size_t tb64avxenc( const unsigned char *in, size_t inlen, unsigned char *out);
-size_t tb64avxdec( const unsigned char *in, size_t inlen, unsigned char *out);
+size_t tb64v128aenc( const unsigned char *__restrict in, size_t inlen, unsigned char *__restrict out);
+size_t tb64v128adec( const unsigned char *__restrict in, size_t inlen, unsigned char *__restrict out);
 
 // avx2
-size_t tb64avx2enc(const unsigned char *in, size_t inlen, unsigned char *out);
-size_t tb64avx2dec(const unsigned char *in, size_t inlen, unsigned char *out);
+size_t tb64v256enc(  const unsigned char *__restrict in, size_t inlen, unsigned char *__restrict out);
+size_t tb64v256dec(  const unsigned char *__restrict in, size_t inlen, unsigned char *__restrict out);
 
 // avx512
-size_t tb64avx512enc(const unsigned char *in, size_t inlen, unsigned char *out);
-size_t tb64avx512dec(const unsigned char *in, size_t inlen, unsigned char *out);
+size_t tb64v512enc(  const unsigned char *__restrict in, size_t inlen, unsigned char *__restrict out);
+size_t tb64v512dec(  const unsigned char *__restrict in, size_t inlen, unsigned char *__restrict out);
 
 // detect cpu && set the default run time functions for tb64enc/tb64dec
 // isshort = 0 : default
@@ -107,8 +99,8 @@ void tb64ini(unsigned id, unsigned isshort);
 // - decoding without checking  
 // - can read beyond the input buffer end, 
 //   therefore input buffer size must be 32 bytes larger than input length
-size_t _tb64avx2enc(const unsigned char *in, size_t inlen, unsigned char *out);
-size_t _tb64avx2dec(const unsigned char *in, size_t inlen, unsigned char *out);
+size_t _tb64v256enc(const unsigned char *in, size_t inlen, unsigned char *out);
+size_t _tb64v256dec(const unsigned char *in, size_t inlen, unsigned char *out);
 
 //------- CPU instruction set ----------------------
 // cpuisa  = 0: return current simd set, 

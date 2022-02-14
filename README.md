@@ -30,7 +30,7 @@ Turbo Base64:Fastest Base64 Scalar+SIMD
 - all libraries with the latest version
 
 #### Benchmark Intel CPU: i7-9700k 3.6GHz gcc 11.2
-|E Size|ratio%|E MB/s|D MB/s|Name|50,000 bytes 2022.02 |
+|E Size|ratio%|E MB/s|D MB/s|Name|50,000 bytes binary 2022.02 |
 |--------:|-----:|--------:|--------:|----------------|----------------|
 |1333336|133.3|**32497**|**34335**|[**tb64v256**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx2**|
 |1333336|133.3|27789|22264|[b64avx2](https://github.com/aklomp/base64)|Base64 avx2|

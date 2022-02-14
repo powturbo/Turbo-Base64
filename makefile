@@ -1,7 +1,13 @@
-# powturbo  (c) Copyright 2016-2019
+# powturbo  (c) Copyright 2016-2022
 # Linux: "export CC=clang" "export CXX=clang". windows mingw: "set CC=gcc" "set CXX=g++" or uncomment the CC,CXX lines
 CC ?= gcc
 CXX ?= g++
+
+# uncomment to disable checking for more faster decoding
+#NCHECK=1
+#uncomment for full base64 checking (default=partial checking, detect allmost all errors)
+#FULLCHECK=1
+#RDTSC=1
 
 #CC=powerpc64le-linux-gnu-gcc
 #DEBUG=-DDEBUG -g
@@ -10,8 +16,8 @@ CXX ?= g++
 #------- OS/ARCH -------------------
 ifneq (,$(filter Windows%,$(OS)))
   OS := Windows
-  CC=gcc
-  CXX=g++
+#  CC=gcc
+#  CXX=g++
   ARCH=x86_64
 else
   OS := $(shell uname -s)
@@ -41,7 +47,7 @@ else ifeq ($(ARCH),$(filter $(ARCH),x86_64 ppc64le))
 endif
 
 ifeq (,$(findstring clang, $(CC)))
-DEFS+=-falign-loops
+DEFS+=-falign-loops -fstrict-aliasing 
 endif
 #$(info ARCH="$(ARCH)")
 
@@ -65,6 +71,10 @@ DEFS+=-DB64CHECK
 endif
 endif
 
+ifeq ($(RDTSC),1)
+DEFS+=-D_RDTSC
+endif
+
 turbob64c.o: turbob64c.c
 	$(CC) -O3 $(MARCH) $(DEFS) $(FPIC) -fstrict-aliasing  $< -c -o $@ 
 
@@ -74,24 +84,24 @@ tb64app.o: tb64app.c
 turbob64d.o: turbob64d.c
 	$(CC) -O3 $(MARCH) $(DEFS) $(FPIC) -fstrict-aliasing $< -c -o $@ 
 
-turbob64sse.o: turbob64sse.c
+turbob64v128.o: turbob64v128.c
 	$(CC) -O3 $(MSSE) $(DEFS) $(FPIC) -fstrict-aliasing $< -c -o $@ 
 
-turbob64avx.o: turbob64sse.c
-	$(CC) -O3 $(DEFS) $(FPIC) -march=corei7-avx -mtune=corei7-avx -mno-aes -fstrict-aliasing $< -c -o turbob64avx.o 
+turbob64v128a.o: turbob64v128.c
+	$(CC) -O3 $(DEFS) $(FPIC) -march=corei7-avx -mtune=corei7-avx -mno-aes -fstrict-aliasing $< -c -o turbob64v128a.o 
 
-turbob64avx2.o: turbob64avx2.c
+turbob64v256.o: turbob64v256.c
 	$(CC) -O3 $(FPIC) $(DEFS) -march=haswell -fstrict-aliasing -falign-loops $< -c -o $@ 
 
-turbob64avx512.o: turbob64avx512.c
+turbob64v512.o: turbob64v512.c
 	$(CC) -O3 $(FPIC) -march=skylake-avx512 -mavx512vl -fstrict-aliasing -falign-loops $< -c -o $@ 
 
 _tb64.o: _tb64.c
 	$(CC) -O3 $(FPIC) -I/usr/include/python2.7 $< -c -o $@ 
 
-LIB=turbob64c.o turbob64d.o turbob64sse.o
+LIB=turbob64c.o turbob64d.o turbob64v128.o
 ifeq ($(ARCH),x86_64)
-LIB+=turbob64avx.o turbob64avx2.o
+LIB+=turbob64v128a.o turbob64v256.o
 endif
 
 ifeq ($(BASE64),1)
@@ -100,7 +110,7 @@ endif
 
 ifeq ($(AVX512),1)
 DEFS+=-DUSE_AVX512
-LIB+=turbob64avx512.o
+LIB+=turbob64v512.o
 endif
 
 #_tb64.so: _tb64.o
@@ -121,7 +131,6 @@ tb64bench: $(LIB) tb64bench.o
 tb64test: $(LIB) tb64test.o 
 	$(CC) -O3 $(LIB) tb64test.o $(LDFLAGS) -o tb64test
 	
-	
 .c.o:
 	$(CC) -O3 $(CFLAGS) $(MARCH) $< -c -o $@
 
@@ -130,4 +139,3 @@ clean:
 
 cleanw:
 	del /S *.o
-

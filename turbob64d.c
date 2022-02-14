@@ -1,48 +1,32 @@
 /**
-Copyright (c) 2016-2019, Powturbo
-All rights reserved.
+    Copyright (C) powturbo 2016-2022
+    GPL v3 License
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are
-met:
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 3 of the License, or
+    (at your option) any later version.
 
-1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-2. Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in the
-   documentation and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
-IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
-TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
-PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
-TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
     - homepage : https://sites.google.com/site/powturbo/
     - github   : https://github.com/powturbo
     - twitter  : https://twitter.com/powturbo
     - email    : powturbo [_AT_] gmail [_DOT_] com
 **/
+// Turbo-Base64: Scalar decode 
 //------------- TurboBase64 : Base64 decoding -------------------
 #define UA_MEMCPY
 #include "conf.h"
 #include "turbob64.h"
 #include "turbob64_.h"
-
-  #if defined(TB64SHORT) && TB64SHORT < 128
-#define NDS 64    
-#define NDX 64 
-  #else
-#define NDS 128    
-#define NDX 128 
-  #endif	
 
 //--------------------- Decoding with small lut (only 64 bytes used)------------------------------------
 
@@ -67,80 +51,57 @@ static const unsigned char lut[] = {
 };
 #undef _
 
-#define LU32(_u_) BSWAP32(lut[(unsigned char)(_u_     )] << 26 |\
+#define DS32(_u_) BSWAP32(lut[(unsigned char)(_u_     )] << 26 |\
                           lut[(unsigned char)(_u_>>  8)] << 20 |\
                           lut[(unsigned char)(_u_>> 16)] << 14 |\
                           lut[                _u_>> 24 ] <<  8)
 
-#define LU32C(_u_)       (lut[(unsigned char)(_u_     )] |\
+#define DS32C(_u_)       (lut[(unsigned char)(_u_     )] |\
                           lut[(unsigned char)(_u_>>  8)] |\
                           lut[(unsigned char)(_u_>> 16)] |\
                           lut[                _u_>> 24 ])
-
-#define LI32C(_i_) {\
-  unsigned _u = ctou32(ip+_i_*8);   CHECK0(cu|= LU32C(_u)); _u = LU32(_u);\
-  unsigned _v = ctou32(ip+_i_*8+4); CHECK1(cu|= LU32C(_v)); _v = LU32(_v);\
-  stou32(op+ _i_*6  , _u);\
-  stou32(op+ _i_*6+3, _v);\
+						  
+#define DS_(_i_,_check0_,_check1_) {\
+  _check0_; uint32_t v = ctou32(ip+4+_i_*8  ); stou32(op+_i_*6,   DS32(u));\
+  _check1_;          u = ctou32(ip+4+_i_*8+4); stou32(op+_i_*6+3, DS32(v));\
 }
-
-  #ifdef B64CHECK
-#define LI32(a) LI32C(a)
+#define DSC(_i_) DS_(_i_,CHECK0(cu |= u),CHECK1(cu |= v))
+#define DS(_i_)  DS_(_i_,;,;)
+				   
+  #ifdef NCHECK     // no checking
+#define DSC(a) DS(a)
   #else
-#define LI32(_i_) { \
-  unsigned _u = ctou32(ip+_i_*8);    _u = LU32(_u);\
-  unsigned _v = ctou32(ip+_i_*8+4);  _v = LU32(_v);\
-  stou32(op+ _i_*6  , _u);\
-  stou32(op+ _i_*6+3, _v);\
-}
+    #ifdef B64CHECK // Full check
+#undef DS
+#define DS(a) DSC(a)
+    #endif
   #endif
-
-#define OVS 4
-size_t tb64sdec(const unsigned char *in, size_t inlen, unsigned char *out) {
+ 
+size_t tb64sdec(const unsigned char *__restrict in, size_t inlen, unsigned char *__restrict out) {
   const unsigned char *ip = in;
         unsigned char *op = out;
-        unsigned cu = 0;
-  if(!inlen || (inlen&3)) return 0;
+        unsigned      cu  = 0;
+  if(!inlen || (inlen&3)) return 0;												  								
   
-    #if NDS >= 64
-  if(inlen >= 8+OVS) {
-    size_t _inlen = inlen - OVS;
-    for(; ip < (in+inlen)-(NDS+OVS); ip += NDS, op += (NDS/4)*3) {		    // decode 128/64->96/48 bytes			
-      LI32C(0); LI32(1); LI32( 2); LI32( 3); LI32( 4); LI32( 5); LI32( 6); LI32( 7);  
-        #if NDS >= 128	  
-      LI32(8);  LI32(9); LI32(10); LI32(11); LI32(12); LI32(13); LI32(14); LI32(15);   	
-	    #endif
-	                                                                                  PREFETCH(ip,384, 0);
-    }
-	#endif
-    for(; ip < (in+inlen)-(16+OVS); ip += 16, op += (16/4)*3) { LI32(0); LI32(1); }
-    if(   ip < (in+inlen)-( 8+OVS))                           { LI32(0); ip += 8; op += (8/4)*3; }
+  if(inlen > 8) { 															
+    uint32_t u = ctou32(ip);
+    for(; ip < in+inlen-64; ip += 64, op += 64*3/4) { DSC(0); DS(1); DS( 2); DS( 3); DS( 4); DS( 5); DS( 6); DS( 7); PREFETCH(ip, 384, 0); }
+    for(; ip < in+inlen- 8; ip +=  8, op +=  8*3/4)   DS(0); 
   }
-  
-  for(; ip < (in+inlen)-4; ip += 4, op += 3) { unsigned u = ctou32(ip); cu |= LU32C(u); u = LU32(u); stou32(op, u); }
+  if(ip < (in+inlen)-4) { unsigned u = ctou32(ip); ip += 4; cu |= DS32C(u); u = DS32(u); stou32(op, u); op += 3; }
 
-  unsigned u = 0, l = inlen - (ip-in);  
-  if(l == 4) 															// last 4 bytes
-    if(    ip[3]=='=') { l = 3; 
-      if(  ip[2]=='=') { l = 2; 
-        if(ip[1]=='=')   l = 1; 
-	  }
-	}                                       
-  unsigned char *up = (unsigned char *)&u;
-  switch(l) {
-    case 4: u = ctou32(ip); cu |= LU32C(u); u = LU32(u);                   *op++ = up[0]; *op++ = up[1]; *op++ = up[2];                                             break; // 4->3 bytes
-    case 3: u = BSWAP32(lut[ip[0]]<<26 | lut[ip[1]]<<20 | lut[ip[2]]<<14); *op++ = up[0]; *op++ = up[1];                cu |= lut[ip[0]] | lut[ip[1]] | lut[ip[2]]; break; // 3->2 bytes
-    case 2: u = BSWAP32(lut[ip[0]]<<26 | lut[ip[1]]<<20);                  *op++ = up[0];                               cu |= lut[ip[0]] | lut[ip[1]];              break; // 2->1 byte
-    case 1: u = BSWAP32(lut[ip[0]]);                                       *op++ = up[0];                               cu |= lut[ip[0]];                           break; // 1->1 byte
-  } 
-  return (cu == 0xff)?0:(op-out);
+       if(ip[3] != '=') { unsigned u = ctou32(ip); cu |= DS32C(u); u = DS32(u);                   op[0] = u; op[1] = u>>8; op[2] = u>>16; op+=3;                                               } // 4->3 bytes
+  else if(ip[2] != '=') { unsigned u = BSWAP32(lut[ip[0]]<<26 | lut[ip[1]]<<20 | lut[ip[2]]<<14); op[0] = u; op[1] = u>>8;                op+=2;    cu |= lut[ip[0]] | lut[ip[1]] | lut[ip[2]];} // 3->2 bytes
+  else if(ip[1] != '=') {                                                                        *op++  = BSWAP32(lut[ip[0]]<<26 | lut[ip[1]]<<20); cu |= lut[ip[0]] | lut[ip[1]];             } // 2->1 byte
+  else                  {                                                                        *op++  = BSWAP32(lut[ip[0]]);                      cu |= lut[ip[0]];                          };// 1->1 byte
+  return (cu == 0xff)?0:(op - out);
 }
 
-//---- Fast decoding with pre shifted lookup table: 4k=4*4*256, (but only 4*4*64 = 1024 bytes used) for fast decoding ----------
+//------ Fast decoding with pre shifted lookup table: 4k=4*4*256, (but only 4*4*64 = 1024 bytes used) for fast decoding --------------------------------------------------------------------
 
-  #if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+  #if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) 
 #define _ -1 // invalid entry
-const unsigned tb64lutxd0[] = {
+const unsigned tb64lutd0[] = {
          _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _, 
          _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _,
          _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _,0xf8000000,         _,         _,         _,0xfc000000,
@@ -159,7 +120,7 @@ const unsigned tb64lutxd0[] = {
          _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _,         _
 };
 
-const unsigned tb64lutxd1[] = {
+const unsigned tb64lutd1[] = {
         _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,
         _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,
         _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,0x3e00000,        _,        _,        _,0x3f00000,
@@ -178,7 +139,7 @@ const unsigned tb64lutxd1[] = {
         _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,        _,         _
 };
 
-const unsigned tb64lutxd2[] = {
+const unsigned tb64lutd2[] = {
       _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,
       _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,
       _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,0xf8000,      _,      _,      _,0xfc000,
@@ -197,7 +158,7 @@ const unsigned tb64lutxd2[] = {
       _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _,      _
 };
 
-const unsigned tb64lutxd3[] = {
+const unsigned tb64lutd3[] = {
      _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,
      _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,
      _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,0x3e00,     _,     _,     _,0x3f00,
@@ -219,7 +180,7 @@ const unsigned tb64lutxd3[] = {
 
   #else
 #define _ -1 // invalid entry
-const unsigned tb64lutxd0[] = { 
+const unsigned tb64lutd0[] = { 
    _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,
    _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,
    _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,0xf8,   _,   _,   _,0xfc,
@@ -238,7 +199,7 @@ const unsigned tb64lutxd0[] = {
    _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _,   _
 };
 
-const unsigned tb64lutxd1[] = {
+const unsigned tb64lutd1[] = {
      _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,
      _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,
      _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,0xe003,     _,     _,     _,0xf003,
@@ -257,7 +218,7 @@ const unsigned tb64lutxd1[] = {
      _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _,     _
 };
 
-const unsigned tb64lutxd2[] = {
+const unsigned tb64lutd2[] = {
        _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,
        _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,
        _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,0x800f00,       _,       _,       _,0xc00f00,
@@ -276,7 +237,7 @@ const unsigned tb64lutxd2[] = {
        _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _
 };
 
-const unsigned tb64lutxd3[] = {
+const unsigned tb64lutd3[] = {
        _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,
        _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,
        _,       _,       _,       _,       _,       _,       _,       _,       _,       _,       _,0x3e0000,       _,       _,       _,0x3f0000,
@@ -297,114 +258,47 @@ const unsigned tb64lutxd3[] = {
 #undef _
   #endif
 
-  #ifdef __ARM_NEON
-#define DI32(_i_)  { unsigned _u = ux; ux = ctou32(ip+8+_i_*8);\
-                     unsigned _v = vx; vx = ctou32(ip+8+_i_*8+4);\
-                     stou64(op+ _i_*6  , DU32(_u));\
-                     stou32(op+ _i_*6+3, DU32(_v));\
-				   }
-#define DI32C(_i_) { unsigned _u = ux; ux = ctou32(ip+8+_i_*8);\
-                     unsigned _v = vx; vx = ctou32(ip+8+_i_*8+4);\
-                     _u = DU32(_u); CHECK0(cu |= _u); stou64(op+ _i_*6  , _u);\
-                     _v = DU32(_v); CHECK1(cu |= _v); stou32(op+ _i_*6+3, _v);\
-                   }
-  #else                   
-#define DI32(_i_)  { unsigned _u = ux; ux = ctou32(ip+8+_i_*8);   stou32(op+ _i_*6  , DU32(_u));\
-                     unsigned _v = vx; vx = ctou32(ip+8+_i_*8+4); stou32(op+ _i_*6+3, DU32(_v));\
-                   }
-#define DI32C(_i_) { unsigned _u = ux; ux = ctou32(ip+8+_i_*8);   _u = DU32(_u); CHECK0(cu |= _u); stou32(op+ _i_*6  , _u);\
-                     unsigned _v = vx; vx = ctou32(ip+8+_i_*8+4); _v = DU32(_v); CHECK1(cu |= _v); stou32(op+ _i_*6+3, _v);\
-                   }
-  #endif				
-
   #ifdef NCHECK
-#define DI32C(a) DI32(a)
+#define DXC(a) DX(a)
   #else
     #ifdef B64CHECK
-#undef DI32
-#define DI32(a) DI32C(a)
+#undef DX
+#define DX(a) DXC(a)
     #endif
 #endif
 
-size_t tb64declen(const unsigned char *in, size_t inlen) {
+size_t tb64declen(const unsigned char *__restrict in, size_t inlen) {
   if(!inlen || (inlen&3)) return 0;
 
   size_t outlen = (inlen/4)*3;
   const unsigned char *ip = in+inlen;
-  if(    ip[-1]=='=') { outlen--; 
-    if(  ip[-2]=='=') { outlen--; 
-      if(ip[-3]=='=')   outlen--; 
-	}
-  }
+       if(ip[-1] != '=');  
+  else if(ip[-2] != '=') outlen -= 1; 
+  else if(ip[-3] != '=') outlen -= 2;
+  else                   outlen -= 3;
   return outlen;
 }
 
-#define OVX 4  
-size_t tb64xdec(const unsigned char *in, size_t inlen, unsigned char *out) { 
-  const unsigned char *ip    = in;
-        unsigned char *op    = out;  
-        unsigned      cu     = 0;
+#define DX_(_i_,_check0_,_check1_) {\
+  unsigned long long v; ltou64(&v, ip+8+_i_*16  ); unsigned _x = u; _check0_; stou32(op+_i_*12,   DU32(_x)); _x = u>>32; stou32(op+_i_*12+3, DU32(_x));\
+              ltou64(&u, ip+8+_i_*16+8);          _x = v; _check1_; stou32(op+_i_*12+6, DU32(_x)); _x = v>>32; stou32(op+_i_*12+9, DU32(_x));\
+}
+
+#define DXC(_i_) DX_(_i_, CHECK0(cu |= _x), CHECK1(cu |= _x))
+#define DX(_i_)  DX_(_i_,;,;)
+
+size_t tb64xdec(const unsigned char *__restrict in, size_t inlen, unsigned char *__restrict out) {
+  const unsigned char *ip = in;
+        unsigned char *op = out;  
+        unsigned      cu  = 0;
   if(!inlen || (inlen&3)) return 0;
   
-    #ifdef B64CHECK
-  #define NDX 64
-    #else
-  #define NDX 128
-	#endif
-  if(inlen >= 8+OVX) { 															// 8/16x loop unrolling: decode 128/64->96/48 bytes
-    unsigned ux = ctou32(ip), 
-	         vx = ctou32(ip+4);
-	  #if NDX >= 64
-    for(; ip < (in+inlen)-(NDX+OVX); ip += NDX, op += (NDX/4)*3) {
-      DI32C(0); DI32(1); DI32( 2); DI32( 3); DI32( 4); DI32( 5); DI32( 6); DI32( 7); 
-	    #if NDX > 64
-	  DI32(8);  DI32(9); DI32(10); DI32(11); DI32(12); DI32(13); DI32(14); DI32(15);
-	    #endif
-																					PREFETCH(ip, 256, 0);  
-    }
-	  #endif
-    for(; ip < (in+inlen)-(16+OVX); ip += 16, op += (16/4)*3) { DI32(0); DI32(1); }
-    if(   ip < (in+inlen)-(8+OVX))                            { DI32(0); ip += 8, op += (8/4)*3; }
+  if(inlen > 16+4) { 															
+    unsigned long long u = ctou64(ip); 
+    for(; ip < in+inlen-4-128; ip += 128, op += 128*3/4) { DXC(0); DX(1); DX( 2); DX( 3); DX( 4); DX( 5); DX( 6); DX( 7); PREFETCH(ip, 384, 0); }
+    for(; ip < in+inlen-4-16;  ip +=  16, op +=  16*3/4)   DX( 0);
   }
   for(; ip < (in+inlen)-4; ip += 4, op += 3) { unsigned u = ctou32(ip); u = DU32(u); stou32(op, u); cu |= u; }
-
-  unsigned u = 0, l = (in+inlen) - ip; 
-  if(l == 4) 																	// last 4 bytes
-    if(    ip[3]=='=') { l = 3; 
-      if(  ip[2]=='=') { l = 2; 
-        if(ip[1]=='=')   l = 1; 
-	  }
-	}
-  unsigned char *up = (unsigned char *)&u;
-  switch(l) {
-    case 4: u = ctou32(ip); u = DU32(u);                 *op++ = up[0]; *op++ = up[1]; *op++ = up[2]; cu |= u; break; // 4->3 bytes
-    case 3: u = tb64lutxd0[ip[0]] | tb64lutxd1[ip[1]] | tb64lutxd2[ip[2]]; *op++ = up[0]; *op++ = up[1];                cu |= u; break; // 3->2 bytes
-    case 2: u = tb64lutxd0[ip[0]] | tb64lutxd1[ip[1]];               *op++ = up[0];                               cu |= u; break; // 2->1 byte
-    case 1: u = tb64lutxd0[ip[0]];                             *op++ = up[0];                               cu |= u; break; // 1->1 byte
-  }
+  DXTAILC(ip,out,op,cu |= u)  
   return (cu == -1)?0:(op-out);
 }
-
-size_t _tb64xdec(const unsigned char *in, size_t inlen, unsigned char *out) { 
-  const unsigned char *ip    = in;
-        unsigned char *op    = out;  
-        unsigned      cu     = 0;
-  for(; ip < (in+inlen)-4; ip += 4, op += 3) { unsigned u = ctou32(ip); u = DU32(u); stou32(op, u); cu |= u; }
-
-  unsigned u = 0, l = (in+inlen) - ip; 
-  if(l == 4) 																	// last 4 bytes
-    if(    ip[3]=='=') { l = 3; 
-      if(  ip[2]=='=') { l = 2; 
-        if(ip[1]=='=')   l = 1; 
-	  }
-	}
-  unsigned char *up = (unsigned char *)&u;
-  switch(l) {
-    case 4: u = ctou32(ip); u = DU32(u);                                   *op++ = up[0]; *op++ = up[1]; *op++ = up[2]; cu |= u; break; // 4->3 bytes
-    case 3: u = tb64lutxd0[ip[0]] | tb64lutxd1[ip[1]] | tb64lutxd2[ip[2]]; *op++ = up[0]; *op++ = up[1];                cu |= u; break; // 3->2 bytes
-    case 2: u = tb64lutxd0[ip[0]] | tb64lutxd1[ip[1]];                     *op++ = up[0];                               cu |= u; break; // 2->1 byte
-    case 1: u = tb64lutxd0[ip[0]];                                         *op++ = up[0];                               cu |= u; break; // 1->1 byte
-  }
-  return (cu == -1)?0:(op-out);
-}
-

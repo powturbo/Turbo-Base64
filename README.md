@@ -7,7 +7,7 @@ Turbo Base64:Fastest Base64 Scalar+SIMD
  * :sparkles: **Scalar** can be faster than other SSE or ARM Neon based base64 libraries
  * **SSE** faster than other SSE/AVX/AVX2! base64 library
  * Fastest **AVX2** implementation 
- * TurboBase64 AVX2 decoding is ~2x faster than other AVX2 libs.
+ * TurboBase64 AVX2 decoding up to ~2x faster than other AVX2 libs.
  * TurboBase64 is 3-4 times faster than other libs for short strings
  * Fastest **ARM Neon** base64
  * :+1: Dynamic CPU detection and **JIT scalar/sse/avx/avx2** switching
@@ -30,19 +30,19 @@ Turbo Base64:Fastest Base64 Scalar+SIMD
 - all libraries with the latest version
 
 #### Benchmark Intel CPU: i7-9700k 3.6GHz gcc 11.2
-|E Size|ratio%|E MB/s|D MB/s|Name|50,000 bytes binary 2022.02 |
+|E Size|ratio%|E MB/s|D MB/s|Name|50,000 bytes - 2022.02 |
 |--------:|-----:|--------:|--------:|----------------|----------------|
-|1333336|133.3|**32497**|**34335**|[**tb64v256**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx2**|
-|1333336|133.3|27789|22264|[b64avx2](https://github.com/aklomp/base64)|Base64 avx2|
-|1333336|133.3|25305|21980|[fb64avx2](https://github.com/lemire/fastbase64)|Fastbase64 avx2|
+|67380|133.3|**32497**|**34335**|[**tb64v256**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx2**|
+|67380|133.3|27789|22264|[b64avx2](https://github.com/aklomp/base64)|Base64 avx2|
+|67380|133.3|25305|21980|[fb64avx2](https://github.com/lemire/fastbase64)|Fastbase64 avx2|
 |||||||
-|1333336|133.3|**17064**|**20504**|[**tb64v128a**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx**|
-|1333336|133.3|**15989**|**18809**|[**tb64v128**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 sse**|
-|1333336|133.3|15820|13078|[b64avx](https://github.com/aklomp/base64)|Base64 avx|
-|1333336|133.3|15322|11302|[b64sse](https://github.com/aklomp/base64)|Base64 sse41|
-|1000000|100.0|47593|47623|memcpy||
+|67380|133.3|**17064**|**20504**|[**tb64v128a**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx**|
+|67380|133.3|**15989**|**18809**|[**tb64v128**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 sse**|
+|67380|133.3|15820|13078|[b64avx](https://github.com/aklomp/base64)|Base64 avx|
+|67380|133.3|15322|11302|[b64sse](https://github.com/aklomp/base64)|Base64 sse41|
+|50000|100.0|47593|47623|memcpy||
 
-|E Size|ratio%|E MB/s|D MB/s|Name| 1MB binary 2022.02|
+|E Size|ratio%|E MB/s|D MB/s|Name| 1 MB - 2022.02|
 |--------:|-----:|--------:|--------:|----------------|----------------|
 |1333336|133.3|**29086**|**29748**|[**tb64v256**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx2**|
 |1333336|133.3|26153|22515|[b64avx2](https://github.com/aklomp/base64)|Base64 avx2|
@@ -62,7 +62,7 @@ Turbo Base64:Fastest Base64 Scalar+SIMD
 |1000000|100.0|28688|28656|memcpy||
 
 <a name="short"></a> TurboBase64 vs. Base64 for short strings (incl. checking)
-|String length|E MB/s|D MB/s|Name|1MB short strings 2020.01 |
+|String length|E MB/s|D MB/s|Name|50,000 bytes - short strings 2022.02 |
 |------------:|--------:|--------:|----------------|----------------|
 | 4 - 16      |**2330**|**2161**|[**TB64avx2**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx2**|
 |             |891|734|[b64avx2](https://github.com/aklomp/base64)|Base64 avx2|

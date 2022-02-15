@@ -2,6 +2,8 @@ Turbo Base64:Fastest Base64 Scalar+SIMD
 =========================================================================================
 
 ###### **Fastest Base64 SIMD** Encoding library
+ * :new: (2022.02) the fastest now more faster
+ * :new: (2022.02) improved speed for short strings
  * 100% C (C++ headers), as simple as memcpy
  * No other base64 library encode or decode faster
  * :sparkles: **Scalar** can be faster than other SSE or ARM Neon based base64 libraries
@@ -16,7 +18,6 @@ Turbo Base64:Fastest Base64 Scalar+SIMD
  * OS:Linux amd64, arm64, Power9, MacOs+Apple M1, s390x. Windows: Mingw, visual c++
  * Big endian + Little endian
  * Ready and simple to use library, no armada of files, no hassles dependencies
- * :new: the fastest now more faster. Improved speed for short strings.
  * **LICENSE GPL 3**
 <p>
 

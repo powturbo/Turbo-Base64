@@ -83,10 +83,10 @@
 
 size_t tb64v256dec(const unsigned char *__restrict in, size_t inlen, unsigned char *__restrict out) {
   if(!inlen || (inlen&3)) return 0; 
-  if(inlen <= 56) return _tb64xd(in, inlen, out); //tb64v128dec(in, inlen, out);
+  if(inlen <= 56) return _tb64xd(in, inlen, out);
   
   const unsigned char *ip = in;
-        unsigned char *op = out; 															    //unsigned rmax=0; unsigned char *iq = ip, *oq=op;
+        unsigned char *op = out;
         __m256i vx           = _mm256_setzero_si256();
   const __m256i delta_asso   = _mm256_setr_epi8(0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,   0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x0f,
                                                 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,   0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x0f);
@@ -104,7 +104,7 @@ size_t tb64v256dec(const unsigned char *__restrict in, size_t inlen, unsigned ch
   if(inlen > 56+128) { 																			
     __m256i iu0 = _mm256_loadu_si256((__m256i *) ip    ),   
 	        iu1 = _mm256_loadu_si256((__m256i *)(ip+32));    
-	#define DN 128  // 256 //
+	#define DN 256 //128  // 
     for(; ip < (in+inlen)-(64+DN); ip += DN, op += DN*3/4) { 
       DS256(0);	
 	    #if DN > 128
@@ -138,7 +138,7 @@ size_t tb64v256dec(const unsigned char *__restrict in, size_t inlen, unsigned ch
 }
 
 //-------------------- Encode ----------------------------------------------------------------------
-static ALWAYS_INLINE __m256i mm256_map6to8(const __m256i v) { /*map 6-bits bin to 8-bits ascii (https://arxiv.org/abs/1704.00605) */
+static ALWAYS_INLINE __m256i mm256_map6to8(const __m256i v) { 					//map 6-bits bin to 8-bits ascii (https://arxiv.org/abs/1704.00605) 
   __m256i vidx = _mm256_subs_epu8(v,   _mm256_set1_epi8(51));
           vidx = _mm256_sub_epi8(vidx, _mm256_cmpgt_epi8(v, _mm256_set1_epi8(25)));
 
@@ -147,7 +147,7 @@ static ALWAYS_INLINE __m256i mm256_map6to8(const __m256i v) { /*map 6-bits bin t
   return _mm256_add_epi8(v, _mm256_shuffle_epi8(offsets, vidx));
 }
 
-static ALWAYS_INLINE __m256i mm256_unpack6to8(__m256i v) { /* https://arxiv.org/abs/1704.00605 p.12*/
+static ALWAYS_INLINE __m256i mm256_unpack6to8(__m256i v) { 						//https://arxiv.org/abs/1704.00605 p.12
   __m256i va = _mm256_mulhi_epu16(_mm256_and_si256(v, _mm256_set1_epi32(0x0fc0fc00)), _mm256_set1_epi32(0x04000040));
   __m256i vb = _mm256_mullo_epi16(_mm256_and_si256(v, _mm256_set1_epi32(0x003f03f0)), _mm256_set1_epi32(0x01000010));
   return _mm256_or_si256(va, vb);
@@ -294,40 +294,3 @@ size_t _tb64v256enc(const unsigned char* in, size_t inlen, unsigned char *out) {
   EXTAIL();
   return outlen;
 }
-
-/*
-      ip = in;
-      __m256i          iu0 = _mm256_loadu_si256((__m256i *)ip);    
-      __m256i          iu1 = _mm256_loadu_si256((__m256i *)(ip+32)); 
-    for(op = out; ip < (in+inlen)-(128+64); ip += 128, op += (128/4)*3) {           
-      __m256i          iv0 = _mm256_loadu_si256((__m256i *)(ip+64+0));    
-      __m256i          iv1 = _mm256_loadu_si256((__m256i *)(ip+64+32)); 
-      {
-      __m256i ou0,shifted0; MM256_MAP8TO6(iu0, shifted0, delta_asso, delta_values, ou0); MM256_PACK8TO6(ou0, cpv);
-      __m256i ou1,shifted1; MM256_MAP8TO6(iu1, shifted1, delta_asso, delta_values, ou1); MM256_PACK8TO6(ou1, cpv);  
-      
-      _mm_storeu_si128((__m128i*) op,       _mm256_castsi256_si128(ou0));
-      _mm_storeu_si128((__m128i*)(op + 12), _mm256_extracti128_si256(ou0, 1));                          
-      _mm_storeu_si128((__m128i*)(op + 24), _mm256_castsi256_si128(ou1));
-      _mm_storeu_si128((__m128i*)(op + 36), _mm256_extracti128_si256(ou1, 1));                         
- 
-      CHECK0(MM256_B64CHK(iu0, shifted0, check_asso, check_values, vx));
-      CHECK1(MM256_B64CHK(iu1, shifted1, delta_asso, delta_values, vx));
-	  }
-	  {
-                       iu0 = _mm256_loadu_si256((__m256i *)(ip+64+64));    
-                       iu1 = _mm256_loadu_si256((__m256i *)(ip+64+96)); 							
-   
-      __m256i ov0,shifted0; MM256_MAP8TO6(iv0, shifted0, delta_asso, delta_values, ov0); MM256_PACK8TO6(ov0, cpv);
-      __m256i ov1,shifted1; MM256_MAP8TO6(iv1, shifted1, delta_asso, delta_values, ov1); MM256_PACK8TO6(ov1, cpv); 
-      
-      _mm_storeu_si128((__m128i*)(op + 48), _mm256_castsi256_si128(ov0));
-      _mm_storeu_si128((__m128i*)(op + 60), _mm256_extracti128_si256(ov0, 1));                          
-      _mm_storeu_si128((__m128i*)(op + 72), _mm256_castsi256_si128(ov1));
-      _mm_storeu_si128((__m128i*)(op + 84), _mm256_extracti128_si256(ov1, 1));                         
- 
-      CHECK0(MM256_B64CHK(iv0, shifted0, check_asso, check_values, vx));
-      CHECK1(MM256_B64CHK(iv1, shifted1, delta_asso, delta_values, vx));            PREFETCH(ip,512,0); 
-      }	  
-
-*/

@@ -34,13 +34,13 @@ Turbo Base64:Fastest Base64 Scalar+SIMD
 |E Size|ratio%|E MB/s|D MB/s|Name|50,000 bytes - 2022.02 |
 |--------:|-----:|--------:|--------:|----------------|----------------|
 |66668|133.3|**32794**|**37837**|[**tb64v256**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx2**|
-|66668|133.3|27789|22264|[b64avx2](https://github.com/aklomp/base64)|Base64 avx2|
-|66668|133.3|25305|21980|[fb64avx2](https://github.com/lemire/fastbase64)|Fastbase64 avx2|
+|66668|133.3|27789|22264|[b64avx2](https://github.com/aklomp/base64)|aklomp Base64 avx2|
+|66668|133.3|25305|21980|[fb64avx2](https://github.com/lemire/fastbase64)|lemire Fastbase64 avx2|
 |||||||
 |66668|133.3|**17348**|**20686**|[**tb64v128a**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx**|
 |66668|133.3|**16035**|**18865**|[**tb64v128**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 sse**|
-|66668|133.3|15820|13078|[b64avx](https://github.com/aklomp/base64)|Base64 avx|
-|66668|133.3|15322|11302|[b64sse](https://github.com/aklomp/base64)|Base64 sse41|
+|66668|133.3|15820|13078|[b64avx](https://github.com/aklomp/base64)|aklomp Base64 avx|
+|66668|133.3|15322|11302|[b64sse](https://github.com/aklomp/base64)|aklomp Base64 sse41|
 |50000|100.0|47593|47623|memcpy||
 
 |E Size|ratio%|E MB/s|D MB/s|Name| 1 MB - 2022.02|

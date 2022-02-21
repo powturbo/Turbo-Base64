@@ -228,7 +228,7 @@ size_t T2(FUNPREF, dec)(const unsigned char *__restrict in, size_t inlen, unsign
   if(inlen > 28+64) { 																			
     __m128i iv0 = _mm_loadu_si128((__m128i *) ip);
     __m128i iv1 = _mm_loadu_si128((__m128i *)(ip+16));	     									
-    for(; ip < in+inlen-(32+DN); ip += DN, op += DN*3/4) { DS128(0); DS128(1);  PREFETCH(ip,512,0);	}
+    for(; ip < in+inlen-(32+DN); ip += DN, op += DN*3/4) { DS128(0); DS128(1);  PREFETCH(ip,384,0);	}
 	for(; ip < in+inlen-(28+64); ip += 64, op += 64*3/4)   DS128(0); 						
   }
   for(; ip < (in+inlen)-16-4; ip += 16, op += 16*3/4) { 											

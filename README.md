@@ -33,14 +33,14 @@ Turbo Base64:Fastest Base64 Scalar+SIMD
 #### Benchmark Intel CPU: i7-9700k 3.6GHz gcc 11.2
 |E Size|ratio%|E MB/s|D MB/s|Name|50,000 bytes - 2022.02 |
 |--------:|-----:|--------:|--------:|----------------|----------------|
-|67380|133.3|**32497**|**34335**|[**tb64v256**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx2**|
-|67380|133.3|27789|22264|[b64avx2](https://github.com/aklomp/base64)|Base64 avx2|
-|67380|133.3|25305|21980|[fb64avx2](https://github.com/lemire/fastbase64)|Fastbase64 avx2|
+|66668|133.3|**32794**|**37837**|[**tb64v256**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx2**|
+|66668|133.3|27789|22264|[b64avx2](https://github.com/aklomp/base64)|Base64 avx2|
+|66668|133.3|25305|21980|[fb64avx2](https://github.com/lemire/fastbase64)|Fastbase64 avx2|
 |||||||
-|67380|133.3|**17064**|**20504**|[**tb64v128a**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx**|
-|67380|133.3|**15989**|**18809**|[**tb64v128**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 sse**|
-|67380|133.3|15820|13078|[b64avx](https://github.com/aklomp/base64)|Base64 avx|
-|67380|133.3|15322|11302|[b64sse](https://github.com/aklomp/base64)|Base64 sse41|
+|66668|133.3|**17348**|**20686**|[**tb64v128a**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx**|
+|66668|133.3|**16035**|**18865**|[**tb64v128**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 sse**|
+|66668|133.3|15820|13078|[b64avx](https://github.com/aklomp/base64)|Base64 avx|
+|66668|133.3|15322|11302|[b64sse](https://github.com/aklomp/base64)|Base64 sse41|
 |50000|100.0|47593|47623|memcpy||
 
 |E Size|ratio%|E MB/s|D MB/s|Name| 1 MB - 2022.02|
@@ -150,5 +150,5 @@ Turbo Base64:Fastest Base64 Scalar+SIMD
   * :green_book:[Faster Base64 Encoding and Decoding Using AVX2 Instructions](https://arxiv.org/abs/1704.00605)
   * :green_book:[RFC 4648:The Base16, Base32, and Base64 Data Encodings](https://tools.ietf.org/html/rfc4648)
 
-Last update: 15 FEB 2022
+Last update: 21 FEB 2022
 

@@ -143,13 +143,13 @@ install(
 # Generate cmake config-files from template.
 include(CMakePackageConfigHelpers)
 configure_package_config_file(
-  "${CMAKE_CURRENT_SOURCE_DIR}/cmake/${PACKAGE_NAME}-config.cmake.in"
-  ${PACKAGE_NAME}-config.cmake
-  INSTALL_DESTINATION "${CONFIG_INSTALL_DIR}"
-  #NO_CHECK_REQUIRED_COMPONENTS_MACRO
-  # PATH_VARS can be referenced in config template file with PACKAGE_<var>.
-  PATH_VARS CMAKE_INSTALL_INCLUDEDIR CMAKE_INSTALL_LIBDIR
-)
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/${PACKAGE_NAME}-config.cmake.in"
+    ${PACKAGE_NAME}-config.cmake
+    INSTALL_DESTINATION "${CONFIG_INSTALL_DIR}"
+    #NO_CHECK_REQUIRED_COMPONENTS_MACRO
+    # PATH_VARS can be referenced in config template file with PACKAGE_<var>.
+    PATH_VARS CMAKE_INSTALL_INCLUDEDIR CMAKE_INSTALL_LIBDIR
+    )
 install(
     FILES
     "${CMAKE_CURRENT_BINARY_DIR}/${PACKAGE_NAME}-config.cmake"

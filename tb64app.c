@@ -1,6 +1,6 @@
 /**
-    Copyright (C) powturbo 2016-2022
-    GPL v3 License
+    Copyright (C) powturbo 2016-2023
+    SPDX-License-Identifier: GPL v3 License
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -134,7 +134,7 @@ unsigned bench(unsigned char *in, unsigned n, unsigned char *out, unsigned char 
     case 4:if(cpuini(0)>=0x50) { TMBENCH("",l=tb64v128aenc(in, n, out),m); pr(l,n); TMBENCH2(" 4:tb64v128a avx  ", tb64v128adec(out, l, cpy), l); } break;
     case 5:if(cpuini(0)>=0x60) { TMBENCH("",l=tb64v256enc( in, n, out),m); pr(l,n); TMBENCH2(" 5:tb64v256  avx2 ", tb64v256dec( out, l, cpy), l); } break;
     case 7:if(cpuini(0)>=0x60) { TMBENCH("",l=_tb64v256enc(in, n, out),m); pr(l,n); TMBENCH2(" 7:_tb64v256  avx2", _tb64v256dec(out, l, cpy), l); } break;
-        #ifdef USE_AVX512
+        #ifndef NAVX512
     case 8:if(cpuini(0)>=0x800){ TMBENCH("",l=tb64v512enc( in, n, out),m); pr(l,n); TMBENCH2(" 8:tb64v512       ", tb64v512dec( out, l, cpy), l); } break;
         #endif 
 	  #endif
@@ -191,6 +191,7 @@ void fuzztest(unsigned id, unsigned char *_in, unsigned insize, unsigned char *_
       case  4: if(cpuini(0)>=0x50) { l = tb64v128aenc(in, n, out); if(l != m) die("Fatal error n=%u\n", n); tb64v128adec(out, l, cpy); } break;
       case  5: if(cpuini(0)>=0x60) { l = tb64v256enc( in, n, out); if(l != m) die("Fatal error n=%u\n", n); tb64v256dec( out, l, cpy); } break;
       case  7: if(cpuini(0)>=0x60) { l = _tb64v256enc(in, n, out); if(l != m) die("Fatal error n=%u\n", n); _tb64v256dec(out, l, cpy); } break;
+      case  8: if(cpuini(0)>=0x800){ l = tb64v512enc( in, n, out); if(l != m) die("Fatal error n=%u\n", n); tb64v512dec( out, l, cpy); } break;
         #ifdef BASE64
       case 28: l = crzy64_encode(out, in, n);/*if(l != m) die("Fatal error n=%u\n",n);*/ crzy64_decode(cpy, out, l); break;
 	  case 19: if(cpuini(0)>=0x60) { size_t outlen; base64_encode((const char*)in, n, (char*)out, &outlen, BASE64_FORCE_AVX2); base64_decode((const char*)out, l, (char*)cpy, &outlen, BASE64_FORCE_AVX2);} break;

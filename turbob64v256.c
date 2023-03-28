@@ -1,6 +1,6 @@
 /**
-    Copyright (C) powturbo 2016-2022
-    GPL v3 License
+    Copyright (C) powturbo 2016-2023
+    SPDX-License-Identifier: GPL v3 License
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -132,9 +132,10 @@ size_t tb64v256dec(const unsigned char *__restrict in, size_t inlen, unsigned ch
     CHECK0(MM_B64CHK(iv0, shifted0, _mm256_castsi256_si128(check_asso), _mm256_castsi256_si128(check_values), _vx));
   }
   unsigned cx = _mm_movemask_epi8(_vx);
-  size_t rc = tb64xdec(ip, inlen-(ip-in), op);
-  if(!rc || cx) return 0;
-  return (op-out)+rc;
+  size_t rc = 0, r = inlen-(ip-in); 
+  if(r && !(rc = tb64xdec(ip, r, op)) || cx) 
+	return 0;
+  return (op - out)+rc;
 }
 
 //-------------------- Encode ----------------------------------------------------------------------

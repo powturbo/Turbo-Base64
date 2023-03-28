@@ -1,5 +1,5 @@
 /**
-    Copyright (C) powturbo 2016-2022
+    Copyright (C) powturbo 2016-2023
     GPL v3 License
 
     This program is free software; you can redistribute it and/or modify
@@ -23,8 +23,20 @@
 **/
 
 // conf.h - config & common
-#ifndef CONF_H
-#define CONF_H
+#ifndef CONF_H_
+#define CONF_H_
+#if defined(_MSC_VER) && (_MSC_VER < 1600)
+  #if !defined(_STDINT) && !defined(_MSC_STDINT_H_)
+typedef unsigned char      uint8_t;
+typedef unsigned short     uint16_t;
+typedef unsigned int       uint32_t;
+typedef unsigned long long uint64_t;
+  #endif
+#else
+#include <stdint.h>
+#endif
+#include <stddef.h>
+
 //------------------------- Compiler ------------------------------------------
   #if defined(__GNUC__)
 #include <stdint.h>
@@ -35,12 +47,21 @@
 #define likely(x)       __builtin_expect((x),1)
 #define unlikely(x)     __builtin_expect((x),0)
 
+//#define bswap8(x)    (x)
+    #if __GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ >= 8
+#define bswap16(x) __builtin_bswap16(x)
+    #else
+static ALWAYS_INLINE unsigned short bswap16(unsigned short x) { return __builtin_bswap32(x << 16); }
+    #endif
+#define bswap32(x) __builtin_bswap32(x)
+#define bswap64(x) __builtin_bswap64(x)
+
 #define popcnt32(_x_)   __builtin_popcount(_x_)
 #define popcnt64(_x_)   __builtin_popcountll(_x_)
 
     #if defined(__i386__) || defined(__x86_64__)
-//x,__bsr32:     1:0,2:1,3:1,4:2,5:2,6:2,7:2,8:3,9:3,10:3,11:3,12:3,13:3,14:3,15:3,16:4,17:4,18:4,19:4,20:4,21:4,22:4,23:4,24:4,25:4,26:4,27:4,28:4,29:4,30:4,31:4,32:5
-//  x,bsr32: 0:0,1:1,2:2,3:2,4:3,5:3,6:3,7:3,8:4,9:4,10:4,11:4,12:4,13:4,14:4,15:4,16:5,17:5,18:5,19:5,20:5,21:5,22:5,23:5,24:5,25:5,26:5,27:5,28:5,29:5,30:5,31:5,32:6,
+//x,__bsr32:     1:0,2:1,3:1,4:2,5:2,6:2,7:2,8:3,9:3,10:3,11:3,12:3,13:3,14:3,15:3,16:4,17:4,18:4,19:4,20:4,21:4,22:4,23:4,24:4,25:4,26:4,27:4,28:4,29:4,30:4,31:4,32:5,...
+//x,  bsr32: 0:0,1:1,2:2,3:2,4:3,5:3,6:3,7:3,8:4,9:4,10:4,11:4,12:4,13:4,14:4,15:4,16:5,17:5,18:5,19:5,20:5,21:5,22:5,23:5,24:5,25:5,26:5,27:5,28:5,29:5,30:5,31:5,32:6,...
 static ALWAYS_INLINE int    __bsr32(               int x) {             asm("bsr  %1,%0" : "=r" (x) : "rm" (x) ); return x; }
 static ALWAYS_INLINE int      bsr32(               int x) { int b = -1; asm("bsrl %1,%0" : "+r" (b) : "rm" (x) ); return b + 1; }
 static ALWAYS_INLINE int      bsr64(uint64_t x          ) { return x?64 - __builtin_clzll(x):0; }
@@ -66,15 +87,6 @@ static ALWAYS_INLINE unsigned ror64(unsigned x, int s) { return x >> s | x << (6
 #define ctz32(_x_) __builtin_ctz(_x_)    // 0:32  ctz32(1<<a) = a (a=1..31)
 #define clz64(_x_) __builtin_clzll(_x_)
 #define clz32(_x_) __builtin_clz(_x_)    // 00000000 00000000 00000000 01000000 = 25
-
-//#define bswap8(x)    (x)
-    #if __GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ >= 8
-#define bswap16(x) __builtin_bswap16(x)
-    #else
-static ALWAYS_INLINE unsigned short bswap16(unsigned short x) { return __builtin_bswap32(x << 16); }
-    #endif
-#define bswap32(x) __builtin_bswap32(x)
-#define bswap64(x) __builtin_bswap64(x)
 
   #elif _MSC_VER //----------------------------------------------------
 #include <windows.h>
@@ -109,6 +121,7 @@ static unsigned char _BitScanReverse64(unsigned long* ret, uint64_t x) {
   *ret = x1 ? top + 32 : bottom;  return x != 0;
 }
   #endif
+static ALWAYS_INLINE int __bsr64(uint64_t x) { unsigned long z = 0; _BitScanReverse64(&z, x); return z; }
 static ALWAYS_INLINE int bsr64(uint64_t x) { unsigned long z=0; _BitScanReverse64(&z, x); return x?z+1:0; }
 static ALWAYS_INLINE int ctz64(uint64_t x) { unsigned long z;   _BitScanForward64(&z, x); return x?z:64; }
 static ALWAYS_INLINE int clz64(uint64_t x) { unsigned long z;   _BitScanReverse64(&z, x); return x?63-z:64; }
@@ -239,12 +252,16 @@ struct _PACKED doubleu   { double             d; };
 #endif
 
 //---------------------misc ---------------------------------------------------
-//#define bzhi63(_u_, _b_) 				((_u_) & ((1ull<<(_b_))-1))  // _b_ < 64
-//#define bzhi63(_u_, _b_)                ((_u_) & ((1u  <<(_b_))-1))  // _b_ < 32
-#define BZHI64(_u_, _b_)                 (_b_ == 64?0xffffffffffffffffull:((_u_) & ((1ull<<(_b_))-1)))  // b Constant
-#define BZHI32(_u_, _b_)                 (_b_ == 32?        0xffffffffu  :((_u_) & ((1u  <<(_b_))-1)))  
+#define BZMASK64(_b_)                    (~(~0ull << (_b_)))
+#define BZMASK32(_b_)                    (~(~0u   << (_b_)))
+#define BZMASK16(_b_)                    BZMASK32(_b_)
+#define BZMASK8( _b_)                    BZMASK32(_b_)
+
+#define BZHI64(_u_, _b_)                 ((_u_) & BZMASK64(_b_))  // b Constant
+#define BZHI32(_u_, _b_)                 ((_u_) & BZMASK32(_b_)) 
 #define BZHI16(_u_, _b_)                 BZHI32(_u_, _b_)
 #define BZHI8( _u_, _b_)                 BZHI32(_u_, _b_)
+#define BEXTR32(x,start,len)             (((x) >> (start)) & ((1u << (len)) - 1)) //Bit field extract (with register)
 
     #ifdef __AVX2__
       #if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
@@ -253,25 +270,21 @@ struct _PACKED doubleu   { double             d; };
 #include <x86intrin.h>
       #endif
 #define bzhi32(_u_, _b_)                 _bzhi_u32(_u_, _b_)  // b variable
-#define bzhi31(_u_, _b_)                 _bzhi_u32(_u_, _b_)
+#define bextr32(x,start,len)             _bextr_u32(x,start,len)  
 
       #if !(defined(_M_X64) || defined(__amd64__)) && (defined(__i386__) || defined(_M_IX86))
 #define bzhi64(_u_, _b_)                 BZHI64(_u_, _b_)
-#define bzhi63(_u_, _b_)                 ((_u_) & ((1ull<<(_b_))-1))
       #else
 #define bzhi64(_u_, _b_)                 _bzhi_u64(_u_, _b_)
-#define bzhi63(_u_, _b_)                 _bzhi_u64(_u_, _b_)
       #endif
     #else
 #define bzhi64(_u_, _b_)                 BZHI64(_u_, _b_) 
-#define bzhi63(_u_, _b_)                 ((_u_) & ((1ull <<(_b_))-1)) 
-#define bzhi32(_u_, _b_)                 ((_u_) & ((1ull <<(_b_))-1))
-#define bzhi31(_u_, _b_)                 ((_u_) & ((1    <<(_b_))-1))
+#define bzhi32(_u_, _b_)                 BZHI32(_u_, _b_)
+#define bextr32(x,start,len)             (((x) >> (start)) & ((1u << (len)) - 1)) //Bit field extract (with register)
     #endif
 
-#define bzhi16(_u_, _b_)                 bzhi31(_u_, _b_)
-#define bzhi8( _u_, _b_)                 bzhi31(_u_, _b_)
-
+#define bzhi16(_u_, _b_)                 bzhi32(_u_, _b_)
+#define bzhi8( _u_, _b_)                 bzhi32(_u_, _b_)
 
 #define SIZE_ROUNDUP(_n_, _a_) (((size_t)(_n_) + (size_t)((_a_) - 1)) & ~(size_t)((_a_) - 1))
 #define ALIGN_DOWN(__ptr, __a) ((void *)((uintptr_t)(__ptr) & ~(uintptr_t)((__a) - 1)))

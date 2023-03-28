@@ -7,7 +7,7 @@ Turbo Base64:Fastest Base64 Scalar+SIMD
  * 100% C (C++ headers), as simple as memcpy
  * No other base64 library encode or decode faster
  * :sparkles: **Scalar** can be faster than other SSE or ARM Neon based base64 libraries
- * **SSE** faster than other SSE/AVX/AVX2! base64 library
+ * **SSE** faster than other SSE/AVX/AVX2/AVX512! base64 library
  * Fastest **AVX2** implementation 
  * TurboBase64 AVX2 decoding up to ~2x faster than other AVX2 libs.
  * TurboBase64 is 3-4 times faster than other libs for short strings
@@ -18,7 +18,7 @@ Turbo Base64:Fastest Base64 Scalar+SIMD
  * OS:Linux amd64, arm64, Power9, MacOs+Apple M1, s390x. Windows: Mingw, visual c++
  * Big endian + Little endian
  * Ready and simple to use library, no armada of files, no hassles dependencies
- * **LICENSE GPL 3**
+ * **LICENSE GPL 3** . Commercial license available. Contact us at powturbo [AT] gmail.com
 <p>
 
 ------------------------------------------------------------------------
@@ -150,5 +150,5 @@ Turbo Base64:Fastest Base64 Scalar+SIMD
   * :green_book:[Faster Base64 Encoding and Decoding Using AVX2 Instructions](https://arxiv.org/abs/1704.00605)
   * :green_book:[RFC 4648:The Base16, Base32, and Base64 Data Encodings](https://tools.ietf.org/html/rfc4648)
 
-Last update: 21 FEB 2022
+Last update: 1 APR 2023
 

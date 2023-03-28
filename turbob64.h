@@ -1,6 +1,6 @@
 /**
-    Copyright (C) powturbo 2016-2022
-    GPL v3 License
+    Copyright (C) powturbo 2016-2023
+    SPDX-License-Identifier: GPL v3 License
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

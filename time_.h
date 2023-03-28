@@ -1,10 +1,10 @@
 /**
-    Copyright (C) powturbo 2016-2022
-    GPL v3 License
+    Copyright (C) powturbo 2013-2022
+    GPL v2 License
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 3 of the License, or
+    the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
 
     This program is distributed in the hope that it will be useful,
@@ -29,7 +29,7 @@
     #ifndef sleep
 #define sleep(n) Sleep((n) * 1000)
     #endif
-typedef unsigned __int64 uint64_t;
+#define uint64_t unsigned __int64
 
   #else
 #include <stdint.h>
@@ -46,7 +46,7 @@ typedef unsigned __int64 uint64_t;
 
   #ifdef __corei7__
 #define RDTSC_INI(_c_) do { unsigned _cl, _ch;              \
-  __asm volatile ("couid\n\t"                               \
+  __asm volatile ("cpuid\n\t"                               \
                 "rdtsc\n\t"                                 \
                 "mov %%edx, %0\n"                           \
                 "mov %%eax, %1\n": "=r" (_ch), "=r" (_cl):: \
@@ -143,11 +143,11 @@ static int    tmiszero(tm_t t)              { return !(t.tv_sec|t.tv_nsec); }
 #endif 
 
 //---------------------------------------- bench ----------------------------------------------------------------------
-// for each a function call is repeated until exceding tm_tx seconds.
+// for each a function call is repeated until exceeding tm_tx seconds.
 // A run duration is always tm_tx seconds
 // The number of runs can be set with the program options  -I and -J (specify -I15 -J15 for more precision)
 
-// sleep after each 8 runs to avoid cpu trottling.
+// sleep after each 8 runs to avoid cpu throttling.
 #define TMSLEEP do { tm_T = tmtime(); if(tmiszero(tm_0)) tm_0 = tm_T; else if(tmdiff(tm_0, tm_T) > tm_TX) { if(tm_verbose) { printf("S \b\b");fflush(stdout); } sleep(tm_slp); tm_0=tmtime();} } while(0)
 
 // benchmark loop
@@ -161,18 +161,12 @@ static int    tmiszero(tm_t t)              { return !(t.tv_sec|t.tv_nsec); }
     /*1st run: break the loop after tm_tx=1 sec, calculate a new repeats 'tm_rm' to avoid calling time() after each function call*/\
     /*other runs: break the loop only after 'tm_rm' repeats */ \
     _tm_t = tmdiff(_tm_t0, tmtime());\
-    /*set min time, recalculte repeats tm_rm based on tm_tx, recalculte number of runs based on tm_TX*/\
-    if(_tm_t < tm_tm) { \
-	  if(tm_tm == DBL_MAX) { tm_rm = _tm_t< 0.0001?(1<<30):_tm_r; _tm_Rn = tm_TX/_tm_t; _tm_Rn = _tm_Rn<_tm_Rx?_tm_Rn:_tm_Rx;\
- 	    /*printf("repeats=%u,%u,%.4f ", _tm_Rn, _tm_Rx, _tm_t);*/\
-	  } \
+    /*set min time, recalculate repeats tm_rm based on tm_tx, recalculate number of runs based on tm_TX*/\
+    if(_tm_t < tm_tm) { if(tm_tm == DBL_MAX) { tm_rm = _tm_r; _tm_Rn = tm_TX/_tm_t; _tm_Rn = _tm_Rn<_tm_Rx?_tm_Rn:_tm_Rx; /*printf("repeats=%u,%u,%.4f ", _tm_Rn, _tm_Rx, _tm_t);*/ } \
 	  tm_tm = _tm_t; _tm_c++;\
     } else if(_tm_t > tm_tm*1.15) TMSLEEP;/*force sleep at 15% divergence*/\
-    if(tm_verbose) { \
-	  if(TM_PRE == 2) printf("%8.*f %2d_%.2d\b\b\b\b\b\b\b\b\b\b\b\b\b\b",TM_PRE, TMBS(_len_, tm_tm/tm_rm),_tm_R+1,_tm_c);\
-	  else            printf("%8.*f %2d_%.2d\b\b\b\b\b\b\b\b\b\b\b\b\b\b",TM_PRE, TMBS(_len_, tm_tm/tm_rm),_tm_R+1,_tm_c); fflush(stdout);\
-    }\
-    if((_tm_R & 7)==7) sleep(tm_slp); /*pause 20 secs after each 8 runs to avoid cpu trottling*/\
+    if(tm_verbose) { printf("%8.*f %2d_%.2d\b\b\b\b\b\b\b\b\b\b\b\b\b\b",TM_PRE, TMBS(_len_, tm_tm/tm_rm),_tm_R+1,_tm_c),fflush(stdout); }\
+    if((_tm_R & 7)==7) sleep(tm_slp); /*pause 20 secs after each 8 runs to avoid cpu throttling*/\
   }\
 }
 
@@ -184,18 +178,13 @@ static void tm_init(int _tm_Rep, int _tm_verbose) { tm_verbose = _tm_verbose; if
 
 #define TMBENCH(_name_, _func_, _len_)  do { if(tm_verbose>1) printf("%s ", _name_?_name_:#_func_);\
   TMBEG(tm_Rep) _func_; TMEND(_len_); \
-  double dm = tm_tm, dr = tm_rm; \
-  if(tm_verbose) { if(TM_PRE == 2) printf("%8.*f      \b\b\b\b\b", TM_PRE, TMBS(_len_, dm/dr) ); \
-                   else            printf("%8.*f      \b\b\b\b\b", TM_PRE, TMBS(_len_, dm/dr) ); }\
+  double dm = tm_tm, dr = tm_rm; if(tm_verbose) printf("%8.*f      \b\b\b\b\b", TM_PRE, TMBS(_len_, dm/dr) );\
 } while(0)
 
 // second TMBENCH. Example: use TMBENCH for encoding and TMBENCH2 for decoding
 #define TMBENCH2(_name_, _func_, _len_)  do { \
   TMBEG(tm_Rep2) _func_; TMEND(_len_);\
-  double dm = tm_tm, dr = tm_rm;\
-  if(tm_verbose) { if(TM_PRE == 2) printf("%8.*f      \b\b\b\b\b", TM_PRE, TMBS(_len_, dm/dr) ); \
-                   else            printf("%8.*f      \b\b\b\b\b", TM_PRE, TMBS(_len_, dm/dr) ); fflush(stdout);\
-				 }\
+  double dm = tm_tm, dr = tm_rm; if(tm_verbose) printf("%8.*f      \b\b\b\b\b", TM_PRE,TMBS(_len_, dm/dr) );\
   if(tm_verbose>1) printf("%s ", _name_?_name_:#_func_);\
 } while(0)
 

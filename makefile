@@ -8,6 +8,7 @@ CXX ?= g++
 #uncomment for full base64 checking (default=partial checking, detect allmost all errors)
 #FULLCHECK=1
 #RDTSC=1
+#NAVX512=1
 
 #CC=powerpc64le-linux-gnu-gcc
 #DEBUG=-DDEBUG -g
@@ -108,9 +109,10 @@ ifeq ($(BASE64),1)
 include xtb64make
 endif
 
-ifeq ($(AVX512),1)
-DEFS+=-DUSE_AVX512
+ifneq ($(NAVX512),1)
 LIB+=turbob64v512.o
+else
+DEFS+=-DNAVX512
 endif
 
 #_tb64.so: _tb64.o
@@ -134,8 +136,10 @@ tb64test: $(LIB) tb64test.o
 .c.o:
 	$(CC) -O3 $(CFLAGS) $(MARCH) $< -c -o $@
 
+ifeq ($(OS),Windows)
+clean:
+	rm *.o
+else
 clean:
 	@find . -type f -name "*\.o" -delete -or -name "*\~" -delete -or -name "core" -delete -or -name "tb64app" -delete -or -name "_tb64.so" -delete -or -name "_tb64.c" -delete -or -name "xlibtb64.so"  -delete -or -name "libtb64.a"
-
-cleanw:
-	del /S *.o
+endif

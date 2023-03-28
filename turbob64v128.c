@@ -1,6 +1,6 @@
 /**
-    Copyright (C) powturbo 2016-2022
-    GPL v3 License
+    Copyright (C) powturbo 2016-2023
+    SPDX-License-Identifier: GPL v3 License
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -132,9 +132,9 @@ size_t tb64v128dec(const unsigned char *in, size_t inlen, unsigned char *out) {
 	vst3q_u8(op, ov);                                                                                                                          
 	CHECK0(xv = vorrq_u8(xv, vorrq_u8(vorrq_u8(iv.val[0], iv.val[1]), vorrq_u8(iv.val[2], iv.val[3]))));
   }
-  size_t rc;
-  if(!(rc=tb64xdec(ip, inlen&(64-1), op)) || vaddvq_u8(vshrq_n_u8(xv,7))) return 0; //decode all
-  return (op-out)+rc; 
+  size_t rc = 0, r = inlen&(64-1); 
+  if(r && !(rc=tb64xdec(ip, r, op)) || vaddvq_u8(vshrq_n_u8(xv,7))) return 0; }//decode all
+  return (op - out) + rc; 
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -211,8 +211,10 @@ size_t tb64v128enc(const unsigned char* in, size_t inlen, unsigned char *out) {
 }	
 
 size_t T2(FUNPREF, dec)(const unsigned char *__restrict in, size_t inlen, unsigned char *__restrict out) {
-  if(!inlen || (inlen&3)) return 0; 
-  if(inlen <= 28) return _tb64xd(in, inlen, out);
+  if(!inlen || (inlen&3)) 
+	return 0; 
+  if(inlen <= 28) 
+	return _tb64xd(in, inlen, out);
 
   const unsigned char *ip = in;									
         unsigned char *op = out;		
@@ -239,9 +241,10 @@ size_t T2(FUNPREF, dec)(const unsigned char *__restrict in, size_t inlen, unsign
     CHECK1(MM_B64CHK(iv, shifted0, check_asso, check_values, vx));
   } 
 
-  size_t rc;
-  if(!(rc = _tb64xd(ip, inlen-(ip-in), op)) || _mm_movemask_epi8(vx)) return 0; 
-  return (op-out)+rc;
+  size_t rc=0, r = inlen-(ip-in); 
+  if(r && !(rc = _tb64xd(ip, r, op)) || _mm_movemask_epi8(vx)) 
+	return 0; 
+  return (op - out) + rc;
 }
 
                          //---------------------- encode ------------------
@@ -466,19 +469,19 @@ void tb64ini(unsigned id, unsigned isshort) {
   tb64set++;   
   i = id?id:cpuisa();
     #if defined(__i386__) || defined(__x86_64__)
-      #ifdef USE_AVX512
+      #ifndef NAVX512
   if(i >= IS_AVX512) {  
     _tb64e = i >= (IS_AVX512|AVX512VL)?tb64v256enc:tb64v256enc; 
     _tb64d = tb64v512dec;
   } else 
       #endif
-      #ifndef NO_AVX2
+      #ifndef NAVX2
   if(i >= IS_AVX2) {  
     _tb64e = isshort?_tb64v256enc:tb64v256enc; 
     _tb64d = isshort?_tb64v256dec:tb64v256dec;
   } else 
       #endif
-      #ifndef NO_AVX
+      #ifndef NAVX
     if(i >= IS_AVX) {  
     _tb64e = tb64v128aenc; 
     _tb64d = tb64v128adec;
@@ -486,7 +489,7 @@ void tb64ini(unsigned id, unsigned isshort) {
       #endif
     #endif
     #if defined(__i386__) || defined(__x86_64__) || defined(__ARM_NEON) || defined(__powerpc64__)
-      #ifndef NO_SSE
+      #ifndef NSSE
   if(i >= IS_SSSE3) {  
     _tb64e = tb64v128enc; 
     _tb64d = tb64v128dec;

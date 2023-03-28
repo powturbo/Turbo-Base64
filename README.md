@@ -2,16 +2,15 @@ Turbo Base64:Fastest Base64 Scalar+SIMD
 =========================================================================================
 
 ###### **Fastest Base64 SIMD** Encoding library
- * :new: (2022.02) the fastest now more faster
- * :new: (2022.02) improved speed for short strings
  * 100% C (C++ headers), as simple as memcpy
  * No other base64 library encode or decode faster
  * :sparkles: **Scalar** can be faster than other SSE or ARM Neon based base64 libraries
- * **SSE** faster than other SSE/AVX/AVX2/AVX512! base64 library
+ * **SSE** faster than other SSE/AVX/AVX2! base64 library
  * Fastest **AVX2** implementation 
  * TurboBase64 AVX2 decoding up to ~2x faster than other AVX2 libs.
  * TurboBase64 is 3-4 times faster than other libs for short strings
  * Fastest **ARM Neon** base64
+ * Scalar/sse/avx/avx2 and :new:(2023.04) avx512
  * :+1: Dynamic CPU detection and **JIT scalar/sse/avx/avx2** switching
  * Base64 robust **error checking**, optimized for **long+short** strings
  * Portable library, 32/64 bits, **SSE/AVX/AVX2**, **ARM Neon**, **Power9 Altivec**

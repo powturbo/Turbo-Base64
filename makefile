@@ -120,9 +120,12 @@ endif
 
 libtb64.so: $(LIB)
 	gcc -shared $^ -o $@
+	
+install:
 	cp libtb64.so ~/.local/lib/
-	./python/tb64/build.py
-	cp _tb64.so ~/.local/lib/
+	# FIXME: how does one build _tb64.so?
+	# ./python/tb64/build.py
+	# cp _tb64.so ~/.local/lib/
 
 tb64app: $(LIB) tb64app.o 
 	$(CC) -O3 $(LIB) tb64app.o $(LDFLAGS) -o tb64app

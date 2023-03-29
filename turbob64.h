@@ -24,6 +24,9 @@
 // Turbo-Base64 - C/C++ include header
 #ifndef _TURBOB64_H_
 #define _TURBOB64_H_
+
+#include <stddef.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

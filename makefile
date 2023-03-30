@@ -95,7 +95,7 @@ turbob64v256.o: turbob64v256.c
 	$(CC) -O3 $(FPIC) $(DEFS) -march=haswell -fstrict-aliasing -falign-loops $< -c -o $@ 
 
 turbob64v512.o: turbob64v512.c
-	$(CC) -O3 $(FPIC) -march=skylake-avx512 -mavx512vl -fstrict-aliasing -falign-loops $< -c -o $@ 
+	$(CC) -O3 $(FPIC) -march=skylake-avx512 -mavx512vbmi -fstrict-aliasing -falign-loops $< -c -o $@ 
 
 _tb64.o: _tb64.c
 	$(CC) -O3 $(FPIC) -I/usr/include/python2.7 $< -c -o $@ 

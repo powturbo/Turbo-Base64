@@ -1,6 +1,6 @@
 @PACKAGE_INIT@
 
-# Usage: 
+# Usage:
 #
 #     find_pacakge(@PACKAGE_NAME@)
 #

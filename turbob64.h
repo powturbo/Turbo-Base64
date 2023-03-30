@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 #define TB64_VERSION 100
-//---------------------- base64 API functions ----------------------------------
+//---------------------- Turbo-Base64 API functions ----------------------------------
 // return the base64 buffer length after encoding
 size_t tb64enclen(size_t inlen);
 

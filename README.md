@@ -10,10 +10,10 @@ Turbo Base64:Fastest Base64 Scalar+SIMD
  * TurboBase64 AVX2 decoding up to ~2x faster than other AVX2 libs.
  * TurboBase64 is 3-4 times faster than other libs for short strings
  * Fastest **ARM Neon** base64
- * Scalar/sse/avx/avx2 and :new:(2023.04) avx512
- * :+1: Dynamic CPU detection and **JIT scalar/sse/avx/avx2** switching
+ * :new:(2023.04) avx512
+ * :+1: Dynamic CPU detection and **JIT scalar/sse/avx/avx2/avx512** switching
  * Base64 robust **error checking**, optimized for **long+short** strings
- * Portable library, 32/64 bits, **SSE/AVX/AVX2**, **ARM Neon**, **Power9 Altivec**
+ * Portable library, 32/64 bits, **SSE/AVX/AVX2/AVX512**, **ARM Neon**, **Power9 Altivec**
  * OS:Linux amd64, arm64, Power9, MacOs+Apple M1, s390x. Windows: Mingw, visual c++
  * Big endian + Little endian
  * Ready and simple to use library, no armada of files, no hassles dependencies

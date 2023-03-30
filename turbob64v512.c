@@ -115,8 +115,8 @@ size_t tb64v512dec(const unsigned char *in, size_t inlen, unsigned char *out) {
       CHECK1(B64CHK(iv1, shifted1, vx));
     }
   }
-  unsigned rc;
-  if(!(rc = tb64xdec(ip, inlen-(ip-in), op)) || _mm512_movepi8_mask(vx)) return 0;
+  unsigned rc, r = inlen-(ip-in); 
+  if(r && !(rc=tb64xdec(ip, r, op)) || _mm512_movepi8_mask(vx)) return 0;
   return (op-out)+rc; 
 }
 
@@ -137,7 +137,7 @@ size_t tb64v512enc(const unsigned char* in, size_t inlen, unsigned char *out) {
   const __m512i   shifts = _mm512_set1_epi64(0x3036242a1016040alu); // 48, 54, 36, 42, 16, 22, 4, 10
 		
   if(outlen >= 128+4)
-    for(; op < out+(outlen-(128+4)); op += 128, ip += (128/4)*3) {     PREFETCH(ip,1024,0);                  
+    for(; op < out+(outlen-(128+4)); op += 128, ip += (128/4)*3) {     PREFETCH(ip,384,0);                  
       __m512i v0 = _mm512_loadu_si512((__m512i *) ip );
       __m512i v1 = _mm512_loadu_si512((__m512i *)(ip+48));
 	  

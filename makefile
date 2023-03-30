@@ -1,4 +1,4 @@
-# powturbo  (c) Copyright 2016-2022
+# powturbo  (c) Copyright 2016-2023
 # Linux: "export CC=clang" "export CXX=clang". windows mingw: "set CC=gcc" "set CXX=g++" or uncomment the CC,CXX lines
 CC ?= gcc
 CXX ?= g++

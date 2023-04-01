@@ -59,10 +59,9 @@ ifeq ($(STATIC),1)
 LDFLAGS+=-static
 endif
 
-#FPIC=-fPIC
+FPIC=-fPIC
 
-all: tb64app 
-#libtb64.so
+all: tb64app libtb64.so libtb64.a
 
 ifeq ($(NCHECK),1)
 DEFS+=-DNB64CHECK
@@ -118,11 +117,15 @@ endif
 #_tb64.so: _tb64.o
 #	gcc -shared $^ -o $@
 
+libtb64.a: $(LIB)
+	ar cr $@ $+
+
 libtb64.so: $(LIB)
 	gcc -shared $^ -o $@
 	
 install:
 	cp libtb64.so ~/.local/lib/
+	cp libtb64.a ~/.local/lib/
 	# FIXME: how does one build _tb64.so?
 	# ./python/tb64/build.py
 	# cp _tb64.so ~/.local/lib/

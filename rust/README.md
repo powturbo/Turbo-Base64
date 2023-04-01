@@ -1,9 +1,9 @@
 # Rust bindings for Turbo-Base64
 
-This is a wrapper for [Turbo-Base64](https://github.com/powturbo/TurboPFor-Base64).
+This is a wrapper for [Turbo-Base64](https://github.com/powturbo/Turbo-Base64).
 
 ## Installation
-1- Prerequistes: build and install the TuroPFor library libic.a into /usr/local/lib  
+1- Prerequistes: build and install the Turbo-Base64 library libtb64.a into /usr/local/lib  
 
 2 - Use the provided src/bindings.rs file or generate a new rust bindings.rs file.
 ```shell

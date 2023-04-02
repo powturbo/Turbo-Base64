@@ -81,7 +81,7 @@ size_t tb64v512dec(const unsigned char *in, size_t inlen, unsigned char *out) {
 												  -1, -1, -1, -1, 12, 13, 14,  8,    9, 10,  4,  5,  6,  0,  1,  2,
                                                   -1, -1, -1, -1, 12, 13, 14,  8,    9, 10,  4,  5,  6,  0,  1,  2);
 
-    for(        ; ip < in+(inlen-(128+4)); ip += 128, op += (128/4)*3) {           PREFETCH(ip,1024,0);
+    for(        ; ip < in+(inlen-(128+4)); ip += 128, op += (128/4)*3) {           PREFETCH(ip,384,0);
       __m512i          iv0 = _mm512_loadu_si512((__m512i *) ip);    
       __m512i          iv1 = _mm512_loadu_si512((__m512i *)(ip+64)); 
    

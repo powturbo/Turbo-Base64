@@ -467,11 +467,11 @@ void tb64ini(unsigned id, unsigned isshort) {
   int i; 
   if(tb64set) return; 
   tb64set++;   
-  i = id?id:cpuisa();  printf("isa=%d '%s'\n", i, cpustr(i) );
+  i = id?id:cpuisa();
     #if defined(__i386__) || defined(__x86_64__)
       #ifndef NAVX512
   if(i >= IS_AVX512) {  
-    _tb64e = i >= (IS_AVX512|AVX512VBMI)?tb64v256enc:tb64v256enc; 
+    _tb64e = i >= (IS_AVX512|AVX512VBMI)?tb64v512enc:tb64v256enc; 
     _tb64d = tb64v512dec;
   } else 
       #endif

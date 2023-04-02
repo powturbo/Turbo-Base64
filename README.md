@@ -1,7 +1,7 @@
-Turbo Base64:Fastest Base64 Scalar+SIMD
-=========================================================================================
+## Turbo Base64:Fastest Base64 SSE/AVX2/AVX512/Neon/Altivec
+[![Build ubuntu](https://github.com/powturbo/Turbo-Base64/actions/workflows/build.yaml/badge.svg)](https://github.com/powturbo/Turbo-Base64/actions/workflows/build.yaml)
 
-###### **Fastest Base64 SIMD** Encoding library
+##### **Fastest Base64 SIMD** Encoding library
  * 100% C (C++ headers), as simple as memcpy
  * No other base64 library encode or decode faster
  * :sparkles: **Scalar** can be faster than other SSE or ARM Neon based base64 libraries

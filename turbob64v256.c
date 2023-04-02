@@ -139,20 +139,6 @@ size_t tb64v256dec(const unsigned char *__restrict in, size_t inlen, unsigned ch
 }
 
 //-------------------- Encode ----------------------------------------------------------------------
-static ALWAYS_INLINE __m256i mm256_map6to8(const __m256i v) { 					//map 6-bits bin to 8-bits ascii (https://arxiv.org/abs/1704.00605) 
-  __m256i vidx = _mm256_subs_epu8(v,   _mm256_set1_epi8(51));
-          vidx = _mm256_sub_epi8(vidx, _mm256_cmpgt_epi8(v, _mm256_set1_epi8(25)));
-
-  const __m256i offsets = _mm256_set_epi8(0, 0, -16, -19, -4, -4, -4, -4,   -4, -4, -4, -4, -4, -4, 71, 65,
-                                          0, 0, -16, -19, -4, -4, -4, -4,   -4, -4, -4, -4, -4, -4, 71, 65);
-  return _mm256_add_epi8(v, _mm256_shuffle_epi8(offsets, vidx));
-}
-
-static ALWAYS_INLINE __m256i mm256_unpack6to8(__m256i v) { 						//https://arxiv.org/abs/1704.00605 p.12
-  __m256i va = _mm256_mulhi_epu16(_mm256_and_si256(v, _mm256_set1_epi32(0x0fc0fc00)), _mm256_set1_epi32(0x04000040));
-  __m256i vb = _mm256_mullo_epi16(_mm256_and_si256(v, _mm256_set1_epi32(0x003f03f0)), _mm256_set1_epi32(0x01000010));
-  return _mm256_or_si256(va, vb);
-}
 
 #define ES256(_i_) {\
   __m256i v0 = _mm256_castsi128_si256(    _mm_loadu_si128((__m128i *)(ip+48+_i_*96+ 0))  );\

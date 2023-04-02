@@ -467,7 +467,7 @@ void tb64ini(unsigned id, unsigned isshort) {
   int i; 
   if(tb64set) return; 
   tb64set++;   
-  i = id?id:cpuisa();
+  i = id?id:cpuisa();  printf("isa=%d '%s'\n", i, cpustr(i) );
     #if defined(__i386__) || defined(__x86_64__)
       #ifndef NAVX512
   if(i >= IS_AVX512) {  

@@ -15,7 +15,7 @@ jobs:
         os: [ubuntu-latest]
         compiler: ["gcc", "clang"]
         include:
-          - runner: "macos-latest"
+          - runner: "macos-11"
             compiler: "clang"
     env:      
       CC: ${{ matrix.compiler }}

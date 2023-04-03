@@ -22,10 +22,8 @@
     - email    : powturbo [_AT_] gmail [_DOT_] com
 **/
 // Turbo-Base64: Scalar encode
-#define UA_MEMCPY
-#include "conf.h"
-#include "turbob64.h"
 #include "turbob64_.h"
+#include "turbob64.h"
 
 size_t tb64enclen(size_t n) { return TB64ENCLEN(n); }
  

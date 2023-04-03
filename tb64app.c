@@ -136,8 +136,8 @@ unsigned bench(unsigned char *in, unsigned n, unsigned char *out, unsigned char 
     case 7:if(cpuini(0)>=0x60) { TMBENCH("",l=_tb64v256enc(in, n, out),m); pr(l,n); TMBENCH2(" 7:_tb64v256  avx2", _tb64v256dec(out, l, cpy), l); } break;
         #ifndef NAVX512                                                            // +VBMI
     case 8:{ unsigned c=cpuini(0); 
-      if(c>=0x800|0x200) { printf("avx512vbmi %x ", c);fflush(stdout);TMBENCH("",  tb64v512enc(in, n, out),m); pr(l,n); TMBENCH2(" 8:tb64v512  vbmi ", tb64v512dec( out,l,cpy),l); } 
-      else if(c>=0x800)  { printf("avx512 %x ", c);fflush(stdout);    TMBENCH("",  tb64v256enc(in, n, out),m); pr(l,n); TMBENCH2(" 8:tb64v512       ", tb64v512dec0(out, l, cpy),l); } 
+      if(c>=(0x800|0x200)) { printf("avx512vbmi %x ", c);fflush(stdout);TMBENCH("",  tb64v512enc(in, n, out),m); pr(l,n); TMBENCH2(" 8:tb64v512  vbmi ", tb64v512dec( out,l,cpy),l); } 
+      else if(c>=0x800)    { printf("avx512 %x ", c);fflush(stdout);    TMBENCH("",  tb64v256enc(in, n, out),m); pr(l,n); TMBENCH2(" 8:tb64v512       ", tb64v512dec0(out, l, cpy),l); } 
     } break;
         #endif 
 	  #endif
@@ -194,7 +194,7 @@ void fuzztest(unsigned id, unsigned char *_in, unsigned insize, unsigned char *_
       case  4: if(cpuini(0)>=0x50) { l = tb64v128aenc(in, n, out); if(l != m) die("Fatal error n=%u\n", n); tb64v128adec(out, l, cpy); } break;
       case  5: if(cpuini(0)>=0x60) { l = tb64v256enc( in, n, out); if(l != m) die("Fatal error n=%u\n", n); tb64v256dec( out, l, cpy); } break;
       case  7: if(cpuini(0)>=0x60) { l = _tb64v256enc(in, n, out); if(l != m) die("Fatal error n=%u\n", n); _tb64v256dec(out, l, cpy); } break;
-      case  8: if(cpuini(0)>=0x800|0x200) { l = tb64v512enc( in, n, out); if(l != m) die("Fatal error n=%u\n", n); tb64v512dec( out, l, cpy); } break;
+      case  8: if(cpuini(0)>=(0x800|0x200)) { l = tb64v512enc( in, n, out); if(l != m) die("Fatal error n=%u\n", n); tb64v512dec( out, l, cpy); } break;
         #ifdef BASE64
       case 28: l = crzy64_encode(out, in, n);/*if(l != m) die("Fatal error n=%u\n",n);*/ crzy64_decode(cpy, out, l); break;
 	  case 19: if(cpuini(0)>=0x60) { size_t outlen; base64_encode((const char*)in, n, (char*)out, &outlen, BASE64_FORCE_AVX2); base64_decode((const char*)out, l, (char*)cpy, &outlen, BASE64_FORCE_AVX2);} break;

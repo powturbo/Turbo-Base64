@@ -95,7 +95,7 @@
 <p>
 
 ## Compile: (Download or clone Turbo Base64 SIMD)
-        git clone https://github.com/powturbo/TurboBase64.git
+        git clone https://github.com/powturbo/Turbo-Base64.git
         make
 
 ## Usage: (Benchmark App)

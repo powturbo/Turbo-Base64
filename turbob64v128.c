@@ -46,10 +46,8 @@
 #include <arm_neon.h>
   #endif
   
-#define UA_MEMCPY
-#include "conf.h"
-#include "turbob64.h"
 #include "turbob64_.h"
+#include "turbob64.h"
 
 #ifdef __ARM_NEON  //----------------------------------- arm neon --------------------------------
 
@@ -91,7 +89,7 @@ static inline uint8x16x4_t vld1q_u8_x4(const uint8_t *lut) {
 	ov.val[2] = vorrq_u8(vshlq_n_u8(iv.val[2], 6),            iv.val[3]    );\
 }
 
-#define _MM_B64CHK(iv, xv) xv = vorrq_u8(xv, vorrq_u8(vorrq_u8(iv.val[0], iv.val[1]), vorrq_u8(iv.val[2], iv.val[3])))
+#define _B64CHK128(iv, xv) xv = vorrq_u8(xv, vorrq_u8(vorrq_u8(iv.val[0], iv.val[1]), vorrq_u8(iv.val[2], iv.val[3])))
 
 size_t tb64v128dec(const unsigned char *in, size_t inlen, unsigned char *out) {
   const unsigned char *ip;
@@ -107,11 +105,11 @@ size_t tb64v128dec(const unsigned char *in, size_t inlen, unsigned char *out) {
 	uint8x16x3_t ov0,ov1; 
     B64D(iv0, ov0);
       #if DN > 128
-	CHECK1(_MM_B64CHK(iv0,xv));
+	CHECK1(_B64CHK128(iv0,xv));
       #else
-	CHECK0(_MM_B64CHK(iv0,xv));
+	CHECK0(_B64CHK128(iv0,xv));
       #endif
-	B64D(iv1, ov1); CHECK1(_MM_B64CHK(iv1,xv));
+	B64D(iv1, ov1); CHECK1(_B64CHK128(iv1,xv));
       #if DN > 128
     iv0 = vld4q_u8(ip+128);
     iv1 = vld4q_u8(ip+192);              
@@ -119,11 +117,11 @@ size_t tb64v128dec(const unsigned char *in, size_t inlen, unsigned char *out) {
 	vst3q_u8(op,    ov0);       
 	vst3q_u8(op+48, ov1);                                                                                                                                                                       
       #if DN > 128
-	B64D(iv0,ov0);	CHECK1(_MM_B64CHK(iv0,xv));
+	B64D(iv0,ov0);	CHECK1(_B64CHK128(iv0,xv));
 	B64D(iv1,ov1); 
 	vst3q_u8(op+ 96, ov0);       
 	vst3q_u8(op+144, ov1);                                                                                                                                                                       
-	CHECK0(_MM_B64CHK(iv1,xv));
+	CHECK0(_B64CHK128(iv1,xv));
       #endif
   }
   for(                 ; ip != in+(inlen&~(64-1)); ip += 64, op += (64/4)*3) { 	
@@ -192,22 +190,22 @@ size_t tb64v128enc(const unsigned char* in, size_t inlen, unsigned char *out) {
   __m128i iv2 = _mm_loadu_si128((__m128i *)(ip+32+_i_*64   )),\
           iv3 = _mm_loadu_si128((__m128i *)(ip+32+_i_*64+16));\
 \
-  __m128i ov0,shifted0; MM_MAP8TO6(iv0, shifted0,delta_asso, delta_values, ov0); MM_PACK8TO6(ov0, cpv);\
-  __m128i ov1,shifted1; MM_MAP8TO6(iv1, shifted1,delta_asso, delta_values, ov1); MM_PACK8TO6(ov1, cpv);\
+  __m128i ov0,shifted0; BITMAP128V8_6(iv0, shifted0,delta_asso, delta_values, ov0); BITPACK128V8_6(ov0, cpv);\
+  __m128i ov1,shifted1; BITMAP128V8_6(iv1, shifted1,delta_asso, delta_values, ov1); BITPACK128V8_6(ov1, cpv);\
   _mm_storeu_si128((__m128i*)(op+_i_*48)   , ov0);\
   _mm_storeu_si128((__m128i*)(op+_i_*48+12), ov1);\
-  CHECK0(MM_B64CHK(iv0, shifted0, check_asso, check_values, vx));\
-  CHECK1(MM_B64CHK(iv1, shifted1, check_asso, check_values, vx));\
+  CHECK0(B64CHK128(iv0, shifted0, check_asso, check_values, vx));\
+  CHECK1(B64CHK128(iv1, shifted1, check_asso, check_values, vx));\
 \
           iv0 = _mm_loadu_si128((__m128i *)(ip+32+_i_*64+32));\
           iv1 = _mm_loadu_si128((__m128i *)(ip+32+_i_*64+48));\
 \
-  __m128i ov2,shifted2; MM_MAP8TO6(iv2, shifted2,delta_asso, delta_values, ov2); MM_PACK8TO6(ov2, cpv);\
-  __m128i ov3,shifted3; MM_MAP8TO6(iv3, shifted3,delta_asso, delta_values, ov3); MM_PACK8TO6(ov3, cpv);\
+  __m128i ov2,shifted2; BITMAP128V8_6(iv2, shifted2,delta_asso, delta_values, ov2); BITPACK128V8_6(ov2, cpv);\
+  __m128i ov3,shifted3; BITMAP128V8_6(iv3, shifted3,delta_asso, delta_values, ov3); BITPACK128V8_6(ov3, cpv);\
   _mm_storeu_si128((__m128i*)(op+_i_*48+24), ov2);\
   _mm_storeu_si128((__m128i*)(op+_i_*48+36), ov3);\
-  CHECK1(MM_B64CHK(iv2, shifted2, check_asso, check_values, vx));\
-  CHECK1(MM_B64CHK(iv3, shifted3, check_asso, check_values, vx));\
+  CHECK1(B64CHK128(iv2, shifted2, check_asso, check_values, vx));\
+  CHECK1(B64CHK128(iv3, shifted3, check_asso, check_values, vx));\
 }	
 
 size_t T2(FUNPREF, dec)(const unsigned char *__restrict in, size_t inlen, unsigned char *__restrict out) {
@@ -235,10 +233,10 @@ size_t T2(FUNPREF, dec)(const unsigned char *__restrict in, size_t inlen, unsign
   }
   for(; ip < (in+inlen)-16-4; ip += 16, op += 16*3/4) { 											
     __m128i iv = _mm_loadu_si128((__m128i *)ip), ov, shifted0;     								
-	MM_MAP8TO6(iv, shifted0,delta_asso, delta_values, ov);
-	MM_PACK8TO6(ov, cpv);
+	BITMAP128V8_6(iv, shifted0,delta_asso, delta_values, ov);
+	BITPACK128V8_6(ov, cpv);
     _mm_storeu_si128((__m128i*) op, ov); 														                                              
-    CHECK1(MM_B64CHK(iv, shifted0, check_asso, check_values, vx));
+    CHECK1(B64CHK128(iv, shifted0, check_asso, check_values, vx));
   } 
 
   size_t rc=0, r = inlen-(ip-in); 
@@ -254,10 +252,10 @@ size_t T2(FUNPREF, dec)(const unsigned char *__restrict in, size_t inlen, unsign
 \
               u0 = _mm_shuffle_epi8(u0, shuf);\
               u1 = _mm_shuffle_epi8(u1, shuf);\
-              u0 = mm_unpack6to8(u0);\
-              u1 = mm_unpack6to8(u1);\
-              u0 = mm_map6to8(u0);\
-              u1 = mm_map6to8(u1);\
+              u0 = bitunpack128v8_6(u0);\
+              u1 = bitunpack128v8_6(u1);\
+              u0 = bitmap128v8_6(u0);\
+              u1 = bitmap128v8_6(u1);\
       _mm_storeu_si128((__m128i*)(op+_i_*64+ 0), u0);\
       _mm_storeu_si128((__m128i*)(op+_i_*64+16), u1);\
 \
@@ -266,10 +264,10 @@ size_t T2(FUNPREF, dec)(const unsigned char *__restrict in, size_t inlen, unsign
 \
               v0 = _mm_shuffle_epi8(v0, shuf);\
               v1 = _mm_shuffle_epi8(v1, shuf);\
-              v0 = mm_unpack6to8(v0);\
-              v1 = mm_unpack6to8(v1); \
-              v0 = mm_map6to8(v0);\
-              v1 = mm_map6to8(v1);\
+              v0 = bitunpack128v8_6(v0);\
+              v1 = bitunpack128v8_6(v1); \
+              v0 = bitmap128v8_6(v0);\
+              v1 = bitmap128v8_6(v1);\
       _mm_storeu_si128((__m128i*)(op+_i_*64+32), v0);\
       _mm_storeu_si128((__m128i*)(op+_i_*64+48), v1);\
 }
@@ -290,8 +288,8 @@ size_t T2(FUNPREF, enc)(const unsigned char *__restrict in, size_t inlen, unsign
   for(; op < out+(outlen-16); op += 16, ip += 16*3/4) {
 	__m128i v = _mm_loadu_si128((__m128i*)ip);
             v = _mm_shuffle_epi8(v, shuf);
-            v =  mm_unpack6to8(v);
-            v =  mm_map6to8(v);
+            v =  bitunpack128v8_6(v);
+            v =  bitmap128v8_6(v);
     _mm_storeu_si128((__m128i*)op, v);
   }
   EXTAIL();
@@ -300,7 +298,7 @@ size_t T2(FUNPREF, enc)(const unsigned char *__restrict in, size_t inlen, unsign
 #endif
 
 //-------------------------------------------------------------------------------------------------------------------
-#if !defined(__AVX__) //include only 1 time
+#ifndef __AVX__ //include only 1 time
 size_t tb64memcpy(const unsigned char* in, size_t inlen, unsigned char *out) {
   memcpy(out, in, inlen);
   return inlen;

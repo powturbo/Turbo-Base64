@@ -14,6 +14,8 @@ CXX ?= g++
 #DEBUG=-DDEBUG -g
 #DEFS=$(DEBUG)
 #CFLAGS=$(DEBUG)
+#UAMEMCPY=1
+
 #------- OS/ARCH -------------------
 ifneq (,$(filter Windows%,$(OS)))
   OS := Windows
@@ -73,6 +75,10 @@ endif
 
 ifeq ($(RDTSC),1)
 DEFS+=-D_RDTSC
+endif
+
+ifeq ($(UAMEMCPY),1)
+DEFS+=-DUA_MEMCPY
 endif
 
 turbob64c.o: turbob64c.c
@@ -144,7 +150,9 @@ tb64test: $(LIB) tb64test.o
 
 ifeq ($(OS),Windows)
 clean:
-	rm *.o
+	del /S *.o
+	del *.a
+	del *.so
 else
 clean:
 	@find . -type f -name "*\.o" -delete -or -name "*\~" -delete -or -name "core" -delete -or -name "tb64app" -delete -or -name "_tb64.so" -delete -or -name "_tb64.c" -delete -or -name "xlibtb64.so"  -delete -or -name "libtb64.a"

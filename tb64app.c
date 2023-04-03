@@ -205,6 +205,8 @@ void fuzztest(unsigned id, unsigned char *_in, unsigned insize, unsigned char *_
   }                                                                             printf("id=%u OK ", id);fflush(stdout);
 }
 
+int verbose=3;
+
 int main(int argc, char* argv[]) {                              
   unsigned      cmp = 1, bsize = (120*Mb), esize = 4, fno, id=0, fuzz = 0, bid = 0, tst = 0,
                 n = bsize, outsize = tb64enclen(n), insize = outsize;
@@ -214,7 +216,7 @@ int main(int argc, char* argv[]) {
   int           c, digit_optind = 0, this_option_optind = optind ? optind : 1, option_index = 0;
   static struct option long_options[] = { {"blocsize",  0, 0, 'b'}, {0, 0, 0}  };
   for(;;) {
-    if((c = getopt_long(argc, argv, "B:e:f:I:J:k:m:M:q:T", long_options, &option_index)) == -1) break;
+    if((c = getopt_long(argc, argv, "B:e:f:I:J:k:m:M:q:Tv:", long_options, &option_index)) == -1) break;
     switch(c) {
       case  0 : printf("Option %s", long_options[option_index].name); if(optarg) printf (" with arg %s", optarg);  printf ("\n"); break;                                
       case 'B': bsize = argtoi(optarg,1);                             break;
@@ -232,12 +234,14 @@ int main(int argc, char* argv[]) {
                 else if(!strcasecmp(optarg,"avx2"))   cpuini(0x60); 
                 else if(!strcasecmp(optarg,"avx512")) cpuini(0x78);   break;
       case 'T': tst++;                                                break;
+	  case 'v': verbose = atoi(optarg); break;
       default: 
         usage(argv[0]);
         exit(0); 
     }
   }
   
+  tm_init(tm_Rep, verbose);  
   sprintf(_scmd, "1-%d", ID_MEMCPY);
   tb64ini(0,0); 																printf("detected simd (id=%x->'%s')\n\n", cpuini(0), cpustr(cpuini(0))); 
 
@@ -298,7 +302,6 @@ int main(int argc, char* argv[]) {
       fclose(fi);
 	  m = tb64enclen(n);
       if(!n) exit(0);
-      tm_init(tm_Rep, tm_Rep2);  
 																				printf("  E MB/s    size     ratio    D MB/s   function\n");  
       char *p = scmd?scmd:_scmd;
       do { 

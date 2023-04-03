@@ -12,11 +12,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-latest", "macos-latest"]
+        os: [ubuntu-latest]
         compiler: ["gcc", "clang"]
-        exclude:
+        include:
           - runner: "macos-latest"
-            compiler: "gcc"
+            compiler: "clang"
     env:      
       CC: ${{ matrix.compiler }}
       OBJCOPY: ${{ (startsWith(matrix.runner, 'macos') && 'echo') || 'objcopy' }}

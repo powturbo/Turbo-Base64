@@ -17,4 +17,4 @@ jobs:
       - uses: actions/checkout@v2
       - run: make
       - run: lscpu
-      - run: ./tb64app
+      - run: ./tb64app -T

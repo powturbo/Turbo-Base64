@@ -17,7 +17,7 @@
  * OS:Linux amd64, arm64, Power9, MacOs+Apple M1, s390x. Windows: Mingw, visual c++
  * Big endian + Little endian
  * Ready and simple to use library, no armada of files, no hassles dependencies
- * **LICENSE GPL 3** . Commercial license available. Contact us at powturbo[_AT_]gmail[_DOT_]com
+ * **LICENSE GPL 3** . Commercial license available. Contact us at powturbo [_AT_] gmail [_DOT_] com
 <p>
 
 ------------------------------------------------------------------------

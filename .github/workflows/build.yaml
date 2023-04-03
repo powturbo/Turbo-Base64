@@ -14,9 +14,8 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         compiler: ["gcc", "clang"]
-        include:
-          - runner: "macos-11"
-            compiler: "clang"
+        os: [macos-latest]
+        compiler: "clang"
     env:      
       CC: ${{ matrix.compiler }}
       OBJCOPY: ${{ (startsWith(matrix.runner, 'macos') && 'echo') || 'objcopy' }}

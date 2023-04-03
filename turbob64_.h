@@ -22,6 +22,8 @@
     - email    : powturbo [_AT_] gmail [_DOT_] com
 **/
 // Turbo-Base64: internal include
+//#define UA_MEMCPY // Force replace unaligned stores with memcpy (see "conf.h")
+#include "conf.h"
 
 size_t _tb64xdec( const unsigned char *in, size_t inlen, unsigned char *out);
 size_t tb64memcpy(const unsigned char *in, size_t inlen, unsigned char *out);  // testing only
@@ -57,7 +59,7 @@ extern unsigned char tb64lutse[];
                    tb64lutse[(_u_>>26) & 0x3f])
 
 #define ETAIL()\
-  unsigned _l = (in+inlen) - ip; \
+  unsigned _l = (in+inlen) - ip;\
        if(_l == 3) { unsigned _u = ip[0]<<24 | ip[1]<<16 | ip[2]<<8; stou32(op, SU32(_u)); op+=4; }\
   else if(_l == 2) { op[0] = tb64lutse[(ip[0]>>2)&0x3f]; op[1] = tb64lutse[(ip[0] & 0x3) << 4 | (ip[1] & 0xf0) >> 4]; op[2] = tb64lutse[(ip[1] & 0xf) << 2]; op[3] = '='; op+=4; }\
   else if(_l)      { op[0] = tb64lutse[(ip[0]>>2)&0x3f]; op[1] = tb64lutse[(ip[0] & 0x3) << 4],                       op[2] = '=';                           op[3] = '='; op+=4; }
@@ -111,25 +113,25 @@ static ALWAYS_INLINE size_t _tb64xd(const unsigned char *in, size_t inlen, unsig
 //------- SSE helper macros & functions ----------------------------------------------------------
 #if defined(__SSSE3__)
 #include <tmmintrin.h>
-#define MM_PACK8TO6(v, cpv) {\
+#define BITPACK128V8_6(v, cpv) {\
   const __m128i merge_ab_and_bc = _mm_maddubs_epi16(v,            _mm_set1_epi32(0x01400140));  /*dec_reshuffle: https://arxiv.org/abs/1704.00605 P.17*/\
                               v = _mm_madd_epi16(merge_ab_and_bc, _mm_set1_epi32(0x00011000));\
                               v = _mm_shuffle_epi8(v, cpv);\
 }
 
-#define MM_MAP8TO6(iv, shifted, delta_asso, delta_values, ov) { /*map 8-bits ascii to 6-bits bin*/\
+#define BITMAP128V8_6(iv, shifted, delta_asso, delta_values, ov) { /*map 8-bits ascii to 6-bits binary*/\
                 shifted    = _mm_srli_epi32(iv, 3);\
   const __m128i delta_hash = _mm_avg_epu8(_mm_shuffle_epi8(delta_asso, iv), shifted);\
                         ov = _mm_add_epi8(_mm_shuffle_epi8(delta_values, delta_hash), iv);\
 }
 
-#define MM_B64CHK(iv, shifted, check_asso, check_values, vx) {\
+#define B64CHK128(iv, shifted, check_asso, check_values, vx) {\
   const __m128i check_hash = _mm_avg_epu8( _mm_shuffle_epi8(check_asso, iv), shifted);\
   const __m128i        chk = _mm_adds_epi8(_mm_shuffle_epi8(check_values, check_hash), iv);\
                         vx = _mm_or_si128(vx, chk);\
 }
 
-static ALWAYS_INLINE __m128i mm_map6to8(const __m128i v) {
+static ALWAYS_INLINE __m128i bitmap128v8_6(const __m128i v) { /*map 8-bits ascii to 6-bits binary*/
   const __m128i offsets = _mm_set_epi8( 0, 0,-16,-19, -4,-4,-4,-4,   -4,-4,-4,-4, -4,-4,71,65);
 
   __m128i vidx = _mm_subs_epu8(v,   _mm_set1_epi8(51));
@@ -137,7 +139,7 @@ static ALWAYS_INLINE __m128i mm_map6to8(const __m128i v) {
   return _mm_add_epi8(v, _mm_shuffle_epi8(offsets, vidx));
 }
 
-static ALWAYS_INLINE __m128i mm_unpack6to8(__m128i v) {
+static ALWAYS_INLINE __m128i bitunpack128v8_6(__m128i v) { /* unpack 6 -> 8 */
   __m128i va = _mm_mulhi_epu16(_mm_and_si128(v, _mm_set1_epi32(0x0fc0fc00)), _mm_set1_epi32(0x04000040));
   __m128i vb = _mm_mullo_epi16(_mm_and_si128(v, _mm_set1_epi32(0x003f03f0)), _mm_set1_epi32(0x01000010));
   return       _mm_or_si128(va, vb);                        
@@ -145,7 +147,7 @@ static ALWAYS_INLINE __m128i mm_unpack6to8(__m128i v) {
 #endif
 //------- avx2 helper macros & functions ----------------------------------------------------------
 #ifdef __AVX2__
-static ALWAYS_INLINE __m256i mm256_map6to8(const __m256i v) { 					//map 6-bits bin to 8-bits ascii (https://arxiv.org/abs/1704.00605) 
+static ALWAYS_INLINE __m256i bitmap256v8_6(const __m256i v) { 					//map 8-bits ascii to 6-bits binary (https://arxiv.org/abs/1704.00605) 
   __m256i vidx = _mm256_subs_epu8(v,   _mm256_set1_epi8(51));
           vidx = _mm256_sub_epi8(vidx, _mm256_cmpgt_epi8(v, _mm256_set1_epi8(25)));
 
@@ -154,7 +156,7 @@ static ALWAYS_INLINE __m256i mm256_map6to8(const __m256i v) { 					//map 6-bits 
   return _mm256_add_epi8(v, _mm256_shuffle_epi8(offsets, vidx));
 }
 
-static ALWAYS_INLINE __m256i mm256_unpack6to8(__m256i v) { 						//https://arxiv.org/abs/1704.00605 p.12
+static ALWAYS_INLINE __m256i bitunpack256v8_6(__m256i v) { 						//https://arxiv.org/abs/1704.00605 p.12
   __m256i va = _mm256_mulhi_epu16(_mm256_and_si256(v, _mm256_set1_epi32(0x0fc0fc00)), _mm256_set1_epi32(0x04000040));
   __m256i vb = _mm256_mullo_epi16(_mm256_and_si256(v, _mm256_set1_epi32(0x003f03f0)), _mm256_set1_epi32(0x01000010));
   return _mm256_or_si256(va, vb);

@@ -17,7 +17,7 @@
  * OS:Linux amd64, arm64, Power9, MacOs+Apple M1, s390x. Windows: Mingw, visual c++
  * Big endian + Little endian
  * Ready and simple to use library, no armada of files, no hassles dependencies
- * **LICENSE GPL 3** . Commercial license available. Contact us at powturbo [AT] gmail.com
+ * **LICENSE GPL 3** . Commercial license available. Contact us at powturbo[_AT_]gmail[_DOT_]com
 <p>
 
 ------------------------------------------------------------------------
@@ -149,5 +149,5 @@
   * :green_book:[Faster Base64 Encoding and Decoding Using AVX2 Instructions](https://arxiv.org/abs/1704.00605)
   * :green_book:[RFC 4648:The Base16, Base32, and Base64 Data Encodings](https://tools.ietf.org/html/rfc4648)
 
-Last update: 1 APR 2023
+Last update: 3 APR 2023
 

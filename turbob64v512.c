@@ -120,40 +120,6 @@ size_t tb64v512dec0(const unsigned char *in, size_t inlen, unsigned char *out) {
 
 #define B64CHK(iv, ov, vx) vx = _mm512_ternarylogic_epi32(vx, ov, iv, 0xfe)
 
-size_t tb64v512dec1(const unsigned char *in, size_t inlen, unsigned char *out) {
-  const unsigned char *ip = in;
-        unsigned char *op = out; 
-  #define DN0 128      
-  __m512i vx = _mm512_setzero_si512();
-  if(inlen >= DN0+4) {												  
-    const __m512i vlut0 = _mm512_setr_epi32(0x80808080, 0x80808080, 0x80808080, 0x80808080,
-                                            0x80808080, 0x80808080, 0x80808080, 0x80808080,
-                                            0x80808080, 0x80808080, 0x3e808080, 0x3f808080,
-                                            0x37363534, 0x3b3a3938, 0x80803d3c, 0x80808080),
-                  vlut1 = _mm512_setr_epi32(0x02010080, 0x06050403, 0x0a090807, 0x0e0d0c0b,
-                                            0x1211100f, 0x16151413, 0x80191817, 0x80808080,
-                                            0x1c1b1a80, 0x201f1e1d, 0x24232221, 0x28272625,
-                                            0x2c2b2a29, 0x302f2e2d, 0x80333231, 0x80808080),
-                     vp = _mm512_setr_epi32(0x06000102, 0x090a0405, 0x0c0d0e08, 0x16101112,
-                                            0x191a1415, 0x1c1d1e18, 0x26202122, 0x292a2425,
-                                            0x2c2d2e28, 0x36303132, 0x393a3435, 0x3c3d3e38,
-                                            0x00000000, 0x00000000, 0x00000000, 0x00000000);												  
-
-    for(        ; ip < in+(inlen-(DN0+4)); ip += DN0, op += (DN0/4)*3) {           PREFETCH(ip,384,0);
-      __m512i          iv0 = _mm512_loadu_si512((__m512i *) ip),    
-                       iv1 = _mm512_loadu_si512((__m512i *)(ip+64)); 
-   
-      __m512i ov0; BITMAP256V8_6(iv0, ov0); CHECK0(B64CHK(iv0, ov0, vx)); BITPACK512V8_6(ov0);
-      __m512i ov1; BITMAP256V8_6(iv1, ov1); CHECK1(B64CHK(iv1, ov1, vx)); BITPACK512V8_6(ov1);
-      
-      _mm512_storeu_si512((__m128i*) op, ov0);
-      _mm512_storeu_si512((__m128i*)(op+48), ov1);
-    }
-  }
-  unsigned rc, r = inlen-(ip-in); 
-  if(r && !(rc=tb64xdec(ip, r, op)) || _mm512_movepi8_mask(vx)) return 0;
-  return (op-out)+rc; 
-}
 //-----------------------------------------------
 size_t tb64v512dec(const unsigned char *in, size_t inlen, unsigned char *out) {
   const unsigned char *ip = in;
@@ -202,45 +168,6 @@ size_t tb64v512dec(const unsigned char *in, size_t inlen, unsigned char *out) {
 }
 
 //-------------------- Encode ----------------------------------------------------------------------
-#if 0
-//Based on https://github.com/WojciechMula/base64-avx512/blob/master/src/base64/encode_base64_avx512vl.c
-size_t tb64v512enc(const unsigned char* in, size_t inlen, unsigned char *out) {
-    #ifdef __AVX512VBMI__ 
-  const unsigned char *ip = in; 
-        unsigned char *op = out;
-        unsigned   outlen = TB64ENCLEN(inlen);
-
-  static const char *lut = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-  const __m512i     vlut = _mm512_loadu_si512((const __m512i*)(lut));
-  const __m512i       vf = _mm512_setr_epi32(0x01020001, 0x04050304, 0x07080607, 0x0a0b090a,
-                                             0x0d0e0c0d, 0x10110f10, 0x13141213, 0x16171516,
-                                             0x191a1819, 0x1c1d1b1c, 0x1f201e1f, 0x22232122,
-                                             0x25262425, 0x28292728, 0x2b2c2a2b, 0x2e2f2d2e);
-  const __m512i   shifts = _mm512_set1_epi64(0x3036242a1016040alu); // 48, 54, 36, 42, 16, 22, 4, 10
-		
-  if(outlen >= 128+4)
-    for(; op < out+(outlen-(128+4)); op += 128, ip += (128/4)*3) {     PREFETCH(ip,384,0);                  
-      __m512i v0 = _mm512_loadu_si512((__m512i *) ip );
-      __m512i v1 = _mm512_loadu_si512((__m512i *)(ip+48));
-	  
-	          v0 = _mm512_permutexvar_epi8(vf, v0);
-              v0 = _mm512_permutexvar_epi8(_mm512_multishift_epi64_epi8(shifts, v0), vlut);
-	  
-	          v1 = _mm512_permutexvar_epi8(vf, v1);
-              v1 = _mm512_permutexvar_epi8(_mm512_multishift_epi64_epi8(shifts, v1), vlut);
-
-      _mm512_storeu_si512((__m512i*) op,     v0);                                            
-      _mm512_storeu_si512((__m512i*)(op+64), v1);    
-    }
-
-  tb64xenc(ip, inlen-(ip-in), op);
-  return TB64ENCLEN(inlen);
-    #else
-  return tb64v256enc(in,inlen,out);
-    #endif
-}
-#endif
-
 //AVX512_VBMI: https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#expand=1276,5146,5146,5146&text=_mm512_multishift_epi64_epi8&avx512techs=AVX512_VBMI
 //reference: http://0x80.pl/notesen/2016-04-03-avx512-base64.html#avx512vbmi
 #define ES512(_i_) {\
@@ -308,4 +235,5 @@ size_t tb64v512enc(const unsigned char* in, size_t inlen, unsigned char *out) {
   }
   EXTAIL();
   return outlen;
-}	
+}
+

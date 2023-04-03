@@ -133,10 +133,10 @@ unsigned bench(unsigned char *in, unsigned n, unsigned char *out, unsigned char 
       #if defined(__i386__) || defined(__x86_64__)
     case 4:if(cpuini(0)>=0x50) { TMBENCH("",l=tb64v128aenc(in, n, out),m); pr(l,n); TMBENCH2(" 4:tb64v128a avx  ", tb64v128adec(out, l, cpy), l); } break;
     case 5:if(cpuini(0)>=0x60) { TMBENCH("",l=tb64v256enc( in, n, out),m); pr(l,n); TMBENCH2(" 5:tb64v256  avx2 ", tb64v256dec( out, l, cpy), l); } break;
-    case 7:if(cpuini(0)>=0x60) { TMBENCH("",l=_tb64v256enc(in, n, out),m); pr(l,n); TMBENCH2(" 7:_tb64v256  avx2", _tb64v256dec(out, l, cpy), l); } break;
+    case 7:if(cpuini(0)>=0x60) { TMBENCH("",l=_tb64v256enc(in, n, out),m); pr(l,n); TMBENCH2(" 7:_tb64v256 avx2 ", _tb64v256dec(out, l, cpy), l); } break;
         #ifndef NAVX512                                                            // +VBMI
     case 8:{ unsigned c=cpuini(0); 
-      if(c>=(0x800|0x200)) { TMBENCH("",  tb64v512enc(in, n, out),m); pr(l,n); TMBENCH2(" 8:tb64v512  vbmi ", tb64v512dec( out,l,cpy),l); } 
+      if(c>=(0x800|0x200)) { TMBENCH("",  tb64v512enc(in, n, out),m); pr(l,n); TMBENCH2(" 8:tb64v512vbmi   ", tb64v512dec( out,l,cpy),l); } 
       else if(c>=0x800)    { TMBENCH("",  tb64v256enc(in, n, out),m); pr(l,n); TMBENCH2(" 8:tb64v512       ", tb64v512dec0(out, l, cpy),l); } 
     } break;
         #endif 

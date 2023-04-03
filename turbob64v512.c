@@ -110,7 +110,7 @@ size_t tb64v512dec0(const unsigned char *in, size_t inlen, unsigned char *out) {
 }
 
 //----------------------------------------------------------
-#define BITMAP256V8_6(iv, ov) ov = _mm512_permutex2var_epi8(vlut0, iv, vlut1);
+#define BITMAP256V8_6(iv, ov) ov = _mm512_permutex2var_epi8(vlut0, iv, vlut1);  //AVX-512_VBMI
 
 #define BITPACK512V8_6(v) {\
   __m512i merge_ab_bc = _mm512_maddubs_epi16(v,        _mm512_set1_epi32(0x01400140)),\
@@ -120,11 +120,26 @@ size_t tb64v512dec0(const unsigned char *in, size_t inlen, unsigned char *out) {
 
 #define B64CHK(iv, ov, vx) vx = _mm512_ternarylogic_epi32(vx, ov, iv, 0xfe)
 
+#define DS512(_i_) { \
+      __m512i          iv0 = _mm512_loadu_si512((__m512i *)(ip+128+_i_*256)),    \
+                       iv1 = _mm512_loadu_si512((__m512i *)(ip+128+_i_*256+64)); \
+      __m512i ou0; BITMAP256V8_6(iu0, ou0); CHECK0(B64CHK(iu0, ou0, vx)); BITPACK512V8_6(ou0);\
+      __m512i ou1; BITMAP256V8_6(iu1, ou1); CHECK1(B64CHK(iu1, ou1, vx)); BITPACK512V8_6(ou1);\
+	                   iu0 = _mm512_loadu_si512((__m512i *)(ip+128+_i_*256+128)),\
+                       iu1 = _mm512_loadu_si512((__m512i *)(ip+128+_i_*256+192));\
+      _mm512_storeu_si512((__m128i*)(op+_i_*192), ou0);\
+      _mm512_storeu_si512((__m128i*)(op+_i_*192+48), ou1);\
+      __m512i ov0; BITMAP256V8_6(iv0, ov0); CHECK0(B64CHK(iv0, ov0, vx)); BITPACK512V8_6(ov0);\
+      __m512i ov1; BITMAP256V8_6(iv1, ov1); CHECK1(B64CHK(iv1, ov1, vx)); BITPACK512V8_6(ov1);\
+      _mm512_storeu_si512((__m128i*)(op+_i_*192+ 96), ov0);\
+      _mm512_storeu_si512((__m128i*)(op+_i_*192+144), ov1);\
+}
+
 //-----------------------------------------------
 size_t tb64v512dec(const unsigned char *in, size_t inlen, unsigned char *out) {
   const unsigned char *ip = in;
         unsigned char *op = out; 
-  #define DN 256     
+  #define DN 512     
   __m512i vx = _mm512_setzero_si512();
   if(inlen > 56+128) { 																			
     const __m512i vlut0 = _mm512_setr_epi32(0x80808080, 0x80808080, 0x80808080, 0x80808080,
@@ -143,23 +158,15 @@ size_t tb64v512dec(const unsigned char *in, size_t inlen, unsigned char *out) {
       __m512i          iu0 = _mm512_loadu_si512((__m512i *) ip),    
                        iu1 = _mm512_loadu_si512((__m512i *)(ip+64)); 
     for(        ; ip < in+(inlen-(DN+4)); ip += DN, op += (DN/4)*3) {           PREFETCH(ip,384,0);
-      __m512i          iv0 = _mm512_loadu_si512((__m512i *)(ip+128)),    
-                       iv1 = _mm512_loadu_si512((__m512i *)(ip+128+64)); 
- 
-      __m512i ou0; BITMAP256V8_6(iu0, ou0); CHECK0(B64CHK(iu0, ou0, vx)); BITPACK512V8_6(ou0);
-      __m512i ou1; BITMAP256V8_6(iu1, ou1); CHECK1(B64CHK(iu1, ou1, vx)); BITPACK512V8_6(ou1);
-      
-	                   iu0 = _mm512_loadu_si512((__m512i *)(ip+128+128)),    
-                       iu1 = _mm512_loadu_si512((__m512i *)(ip+128+192)); 
-
-      _mm512_storeu_si512((__m128i*)(op    ), ou0);
-      _mm512_storeu_si512((__m128i*)(op+ 48), ou1);
-	  
-      __m512i ov0; BITMAP256V8_6(iv0, ov0); CHECK0(B64CHK(iv0, ov0, vx)); BITPACK512V8_6(ov0);
-      __m512i ov1; BITMAP256V8_6(iv1, ov1); CHECK1(B64CHK(iv1, ov1, vx)); BITPACK512V8_6(ov1);
-      
-      _mm512_storeu_si512((__m128i*)(op+ 96), ov0);
-      _mm512_storeu_si512((__m128i*)(op+144), ov1);
+	  DS512(0);
+	    #if DN > 256
+	  DS512(1);
+		#endif
+    }
+	for(; ip < (in+inlen)-64-4; ip += 64, op += 64*3/4) {
+      __m512i iv = _mm512_loadu_si512((__m512i *) ip), ov;
+      BITMAP256V8_6(iv, ov); CHECK0(B64CHK(iv, ov, vx)); BITPACK512V8_6(ov);
+      _mm512_storeu_si512((__m128i*) op, ov);
     }
   }
   unsigned rc, r = inlen-(ip-in); 
@@ -236,4 +243,3 @@ size_t tb64v512enc(const unsigned char* in, size_t inlen, unsigned char *out) {
   EXTAIL();
   return outlen;
 }
-

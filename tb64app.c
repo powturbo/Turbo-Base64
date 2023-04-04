@@ -260,7 +260,7 @@ int main(int argc, char* argv[]) {
 	    fuzztest(i,_in,insize,_out,outsize,_cpy, fuzz);
     } while(*p++);															    printf("fuzz OK\n");
   } else if(argc - optind < 1) { //------------------ bechmark with predefined sizes (option -k#) -------------------------------------------
-    unsigned _size0[] = { 1*KB, 10*KB, 100*KB, 200*KB, 500*KB, 1*MB, 10*MB, 20*MB, 0 }, 
+    unsigned _size0[] = { 1*KB, 10*KB, 50*KB, 100*KB, 200*KB, 500*KB, 1*MB, 10*MB, 20*MB, 0 }, 
 	         _size1[] = { 1, 3, 7, 15, 31, 67, 127, 255, 511, 1*KB, 0 },
              _size2[] = { 12, 15,16,17, 31,32,33, 47,48,50, 63,64,65, 95,96,97, 120, 180, 250, 500, 1*KB, 10*KB, 50*KB, 100*KB, 500*KB, 1*MB, 0 }, 
              _size3[] = { 100, 200, 1*KB, 100*KB, 1*MB, 0 }, 

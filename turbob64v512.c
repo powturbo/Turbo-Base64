@@ -177,30 +177,20 @@ size_t tb64v512dec(const unsigned char *in, size_t inlen, unsigned char *out) {
 //-------------------- Encode ----------------------------------------------------------------------
 //AVX512_VBMI: https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#expand=1276,5146,5146,5146&text=_mm512_multishift_epi64_epi8&avx512techs=AVX512_VBMI
 //reference: http://0x80.pl/notesen/2016-04-03-avx512-base64.html#avx512vbmi
-#define ES512(_i_) {\
-  __m512i v0 = _mm512_loadu_si512((__m512i *)(ip+96) );\
-  __m512i v1 = _mm512_loadu_si512((__m512i *)(ip+96+48));\
-	                                           \
-	      u0 = _mm512_permutexvar_epi8(vf, u0);\
-          u0 = _mm512_permutexvar_epi8(_mm512_multishift_epi64_epi8(shifts, u0), vlut);\
-	                                           \
-	      u1 = _mm512_permutexvar_epi8(vf, u1);\
-          u1 = _mm512_permutexvar_epi8(_mm512_multishift_epi64_epi8(shifts, u1), vlut);\
-                                                     \
-          _mm512_storeu_si512((__m512i*) op,     u0);\
-          _mm512_storeu_si512((__m512i*)(op+64), u1);\
+#define ES512(_i_) { __m512i v0,v1;\
+  v0 = _mm512_loadu_si512((__m512i *)(ip+96) ),\
+  v1 = _mm512_loadu_si512((__m512i *)(ip+96+48));\
+  u0 = _mm512_permutexvar_epi8(_mm512_multishift_epi64_epi8(shifts, _mm512_permutexvar_epi8(vf, u0)), vlut);\
+  u1 = _mm512_permutexvar_epi8(_mm512_multishift_epi64_epi8(shifts, _mm512_permutexvar_epi8(vf, u1)), vlut);\
+  _mm512_storeu_si512((__m512i*) op,     u0);\
+  _mm512_storeu_si512((__m512i*)(op+64), u1);\
                                                        \
-          u0 = _mm512_loadu_si512((__m512i *)(ip+96+ 96));\
-          u1 = _mm512_loadu_si512((__m512i *)(ip+96+144));\
-                                                \
-	      v0 = _mm512_permutexvar_epi8(vf, v0);\
-          v0 = _mm512_permutexvar_epi8(_mm512_multishift_epi64_epi8(shifts, v0), vlut);\
-	                                           \
-	      v1 = _mm512_permutexvar_epi8(vf, v1);\
-          v1 = _mm512_permutexvar_epi8(_mm512_multishift_epi64_epi8(shifts, v1), vlut);\
-                                                     \
-         _mm512_storeu_si512((__m512i*)(op+128), v0);\
-         _mm512_storeu_si512((__m512i*)(op+192), v1);\
+  u0 = _mm512_loadu_si512((__m512i *)(ip+96+ 96));\
+  u1 = _mm512_loadu_si512((__m512i *)(ip+96+144));\
+  v0 = _mm512_permutexvar_epi8(_mm512_multishift_epi64_epi8(shifts, _mm512_permutexvar_epi8(vf, v0)), vlut);\
+  v1 = _mm512_permutexvar_epi8(_mm512_multishift_epi64_epi8(shifts, _mm512_permutexvar_epi8(vf, v1)), vlut);\
+  _mm512_storeu_si512((__m512i*)(op+128), v0);\
+  _mm512_storeu_si512((__m512i*)(op+192), v1);\
 }
 
 size_t tb64v512enc(const unsigned char* in, size_t inlen, unsigned char *out) {

@@ -23,16 +23,18 @@ jobs:
       
   windows:
     runs-on: windows-latest
-    defaults:
-      run:
-        shell: msys2 {0}
-    steps:
-      - uses: actions/checkout@v3
-      - uses: msys2/setup-msys2v2
-      with:
-        msystem: MINGW64
-        install: make mingw-w64-x86_64-gcc
-        update: true
-      - run: make -v
+ defaults:
+    run:
+      shell: msys2 {0}
+  steps:
+  - uses: msys2/setup-msys2@v2
+    with:
+      update: true
+      install: >-
+        base-devel
+  #- run: git config --global core.autocrlf input
+  #  shell: bash
+  - uses: actions/checkout@v3
+  - run: make -v
       - run: ./tb64app -v1
      

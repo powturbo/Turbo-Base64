@@ -17,11 +17,6 @@
     - twitter  : https://twitter.com/powturbo
     - email    : powturbo [_AT_] gmail [_DOT_] com
 **/
-// SSE + AVX2 Based on:
-// http://0x80.pl/articles/index.html#base64-algorithm-update
-// https://arxiv.org/abs/1704.00605
-// https://gist.github.com/aqrit/a2ccea48d7cac7e9d4d99f19d4759666 (decode)
-
 #include <immintrin.h>
 #include "conf.h"
 #include "turbob64.h"

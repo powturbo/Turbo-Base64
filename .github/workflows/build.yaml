@@ -21,3 +21,13 @@ jobs:
       - run: make
       - run: ./tb64app -v1
       
+  windows:
+    name: MinGW GCC
+    runs-on: windows-2019
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - run: make
+      - run: ./tb64app -v1
+     

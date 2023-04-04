@@ -470,7 +470,7 @@ void tb64ini(unsigned id, unsigned isshort) {
       #ifndef NAVX512
   if(i >= IS_AVX512) {  
     _tb64e = i >= (IS_AVX512|AVX512VBMI)?tb64v512enc:tb64v256enc; 
-    _tb64d = i >= (IS_AVX512|AVX512VBMI)?tb64v512dec:tb64v512dec0;
+    _tb64d = i >= (IS_AVX512|AVX512VBMI)?tb64v512dec:tb64v256dec;
   } else 
       #endif
       #ifndef NAVX2

@@ -22,9 +22,9 @@
 	
 ------------------------------------------------------------------------
 	
-Download Turbo-Base64 executable benchmark from 
-[releases](https://github.com/powturbo/Turbo-Base64/releases/tag/2023.04)
-and extract the files and type "tb64app"</br>
+Download Turbo-Base64 executable benchmark tb64app from 
+[releases](https://github.com/powturbo/Turbo-Base64/releases/tag/2023.04),
+extract the files and type "tb64app"</br>
 
 ## Benchmark incl. the best SIMD Base64 libs:
 - Single thread

@@ -27,8 +27,8 @@ jobs:
       run:
         shell: msys2 {0}
     steps:
-    - uses: actions/checkout@v3
-    - uses: msys2/setup-msys2v2
+      - uses: actions/checkout@v3
+      - uses: msys2/setup-msys2v2
       with:
         msystem: MINGW64
         install: make mingw-w64-x86_64-gcc

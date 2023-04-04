@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [linux, arm64]
+        os: [ubuntu-latest, arm64]
         compiler: ["gcc", "clang"]
     env:      
       CC: ${{ matrix.compiler }}

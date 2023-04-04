@@ -32,7 +32,7 @@
   #else
 #define CHECK1(a)
   #endif
-
+  #if 0 // Not faster than avx2
 #define BITPACK512V8_6_(v) {\
   const __m512i merge_ab_and_bc = _mm512_maddubs_epi16(v,            _mm512_set1_epi32(0x01400140));\
                               v = _mm512_madd_epi16(merge_ab_and_bc, _mm512_set1_epi32(0x00011000));\
@@ -123,7 +123,7 @@ size_t tb64v512dec0(const unsigned char *in, size_t inlen, unsigned char *out) {
   if(r && !(rc=tb64xdec(ip, r, op)) || _mm512_movepi8_mask(vx)) return 0;
   return (op-out)+rc; 
 }
-
+#endif
 //----------------------------------------------------------
 #define BITMAP256V8_6(iv, ov) ov = _mm512_permutex2var_epi8(vlut0, iv, vlut1);  //AVX-512_VBMI
 

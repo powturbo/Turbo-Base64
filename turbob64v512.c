@@ -86,21 +86,19 @@ size_t tb64v512dec0(const unsigned char *in, size_t inlen, unsigned char *out) {
    
       __m512i ou0,su0; BITMAP512V8_6_(iu0, su0, ou0); BITPACK512V8_6_(ou0);
       __m512i ou1,su1; BITMAP512V8_6_(iu1, su1, ou1); BITPACK512V8_6_(ou1);
+      CHECK0(B64CHK_(iu0, su0, vx));
+      CHECK1(B64CHK_(iu1, su1, vx));
       
       _mm_storeu_si128((__m128i*) op,       _mm512_castsi512_si128(   ou0   ));
       _mm_storeu_si128((__m128i*)(op + 12), _mm512_extracti32x4_epi32(ou0, 1));                          
       _mm_storeu_si128((__m128i*)(op + 24), _mm512_extracti32x4_epi32(ou0, 2));                          
       _mm_storeu_si128((__m128i*)(op + 36), _mm512_extracti32x4_epi32(ou0, 3));                          
-
+                      iu0 = _mm512_loadu_si512((__m512i *)(ip+128+128));    
+ 
       _mm_storeu_si128((__m128i*)(op + 48), _mm512_castsi512_si128(   ou1   ));
       _mm_storeu_si128((__m128i*)(op + 60), _mm512_extracti32x4_epi32(ou1, 1));                          
       _mm_storeu_si128((__m128i*)(op + 72), _mm512_extracti32x4_epi32(ou1, 2));                          
-      _mm_storeu_si128((__m128i*)(op + 84), _mm512_extracti32x4_epi32(ou1, 3));                          
- 
-      CHECK0(B64CHK_(iu0, su0, vx));
-      CHECK1(B64CHK_(iu1, su1, vx));
-	  
-                       iu0 = _mm512_loadu_si512((__m512i *)(ip+128+128));    
+      _mm_storeu_si128((__m128i*)(op + 84), _mm512_extracti32x4_epi32(ou1, 3));                           
                        iu1 = _mm512_loadu_si512((__m512i *)(ip+128+192)); 
 	  
 

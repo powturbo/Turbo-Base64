@@ -89,10 +89,9 @@ size_t tb64v128adec( const unsigned char *__restrict in, size_t inlen, unsigned 
 size_t tb64v256enc(  const unsigned char *__restrict in, size_t inlen, unsigned char *__restrict out);
 size_t tb64v256dec(  const unsigned char *__restrict in, size_t inlen, unsigned char *__restrict out);
 
-// avx512
+// avx512_vbmi
 size_t tb64v512enc(  const unsigned char *__restrict in, size_t inlen, unsigned char *__restrict out);
 size_t tb64v512dec(  const unsigned char *__restrict in, size_t inlen, unsigned char *__restrict out);
-size_t tb64v512dec0( const unsigned char *__restrict in, size_t inlen, unsigned char *__restrict out);
 
 // detect cpu && set the default run time functions for tb64enc/tb64dec
 // isshort = 0 : default

@@ -39,7 +39,7 @@
                               v = _mm512_shuffle_epi8(v, cpv);\
 }
 
-#define BITMAP256V8_6_(iv, shifted, ov) { /*map 8-bits ascii to 6-bits bin*/\
+#define BITMAP512V8_6_(iv, shifted, ov) { /*map 8-bits ascii to 6-bits bin*/\
                 shifted    = _mm512_srli_epi32(iv, 3);\
   const __m512i delta_hash = _mm512_avg_epu8(_mm512_shuffle_epi8(delta_asso, iv), shifted);\
                         ov = _mm512_add_epi8(_mm512_shuffle_epi8(delta_values, delta_hash), iv);\
@@ -56,7 +56,7 @@ size_t tb64v512dec0(const unsigned char *in, size_t inlen, unsigned char *out) {
         unsigned char *op = out; 
         
   __m512i vx = _mm512_setzero_si512();
-  if(inlen >= 128+4) {
+  if(inlen >= 120+256) {
     const __m512i delta_asso   = _mm512_set_epi8(0x0f, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x00,   0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
                                                  0x0f, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x00,   0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
 												 0x0f, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x00,   0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
@@ -77,26 +77,48 @@ size_t tb64v512dec0(const unsigned char *in, size_t inlen, unsigned char *out) {
                                                   -1, -1, -1, -1, 12, 13, 14,  8,    9, 10,  4,  5,  6,  0,  1,  2,
 												  -1, -1, -1, -1, 12, 13, 14,  8,    9, 10,  4,  5,  6,  0,  1,  2,
                                                   -1, -1, -1, -1, 12, 13, 14,  8,    9, 10,  4,  5,  6,  0,  1,  2);
-
-    for(        ; ip < in+(inlen-(128+4)); ip += 128, op += (128/4)*3) {           PREFETCH(ip,384,0);
-      __m512i          iv0 = _mm512_loadu_si512((__m512i *) ip);    
-      __m512i          iv1 = _mm512_loadu_si512((__m512i *)(ip+64)); 
+												  
+      __m512i          iu0 = _mm512_loadu_si512((__m512i *) ip);    
+      __m512i          iu1 = _mm512_loadu_si512((__m512i *)(ip+64)); 
+    for(        ; ip < in+(inlen-(256+4)); ip += 256, op += (256/4)*3) {           PREFETCH(ip,384,0);
+      __m512i          iv0 = _mm512_loadu_si512((__m512i *)(ip+128 ));    
+      __m512i          iv1 = _mm512_loadu_si512((__m512i *)(ip+128+64)); 
    
-      __m512i ov0,shifted0; BITMAP256V8_6_(iv0, shifted0, ov0); BITPACK512V8_6_(ov0);
-      __m512i ov1,shifted1; BITMAP256V8_6_(iv1, shifted1, ov1); BITPACK512V8_6_(ov1);
+      __m512i ou0,su0; BITMAP512V8_6_(iu0, su0, ou0); BITPACK512V8_6_(ou0);
+      __m512i ou1,su1; BITMAP512V8_6_(iu1, su1, ou1); BITPACK512V8_6_(ou1);
       
-      _mm_storeu_si128((__m128i*) op,       _mm512_castsi512_si128(   ov0   ));
-      _mm_storeu_si128((__m128i*)(op + 12), _mm512_extracti32x4_epi32(ov0, 1));                          
-      _mm_storeu_si128((__m128i*)(op + 24), _mm512_extracti32x4_epi32(ov0, 2));                          
-      _mm_storeu_si128((__m128i*)(op + 36), _mm512_extracti32x4_epi32(ov0, 3));                          
+      _mm_storeu_si128((__m128i*) op,       _mm512_castsi512_si128(   ou0   ));
+      _mm_storeu_si128((__m128i*)(op + 12), _mm512_extracti32x4_epi32(ou0, 1));                          
+      _mm_storeu_si128((__m128i*)(op + 24), _mm512_extracti32x4_epi32(ou0, 2));                          
+      _mm_storeu_si128((__m128i*)(op + 36), _mm512_extracti32x4_epi32(ou0, 3));                          
 
-      _mm_storeu_si128((__m128i*)(op + 48), _mm512_castsi512_si128(   ov1   ));
-      _mm_storeu_si128((__m128i*)(op + 60), _mm512_extracti32x4_epi32(ov1, 1));                          
-      _mm_storeu_si128((__m128i*)(op + 72), _mm512_extracti32x4_epi32(ov1, 2));                          
-      _mm_storeu_si128((__m128i*)(op + 84), _mm512_extracti32x4_epi32(ov1, 3));                          
+      _mm_storeu_si128((__m128i*)(op + 48), _mm512_castsi512_si128(   ou1   ));
+      _mm_storeu_si128((__m128i*)(op + 60), _mm512_extracti32x4_epi32(ou1, 1));                          
+      _mm_storeu_si128((__m128i*)(op + 72), _mm512_extracti32x4_epi32(ou1, 2));                          
+      _mm_storeu_si128((__m128i*)(op + 84), _mm512_extracti32x4_epi32(ou1, 3));                          
  
-      CHECK0(B64CHK_(iv0, shifted0, vx));
-      CHECK1(B64CHK_(iv1, shifted1, vx));
+      CHECK0(B64CHK_(iu0, su0, vx));
+      CHECK1(B64CHK_(iu1, su1, vx));
+	  
+                       iu0 = _mm512_loadu_si512((__m512i *)(ip+128+128));    
+                       iu1 = _mm512_loadu_si512((__m512i *)(ip+128+192)); 
+	  
+
+      __m512i ov0,sv0; BITMAP512V8_6_(iv0, sv0, ov0); BITPACK512V8_6_(ov0);
+      __m512i ov1,sv1; BITMAP512V8_6_(iv1, sv1, ov1); BITPACK512V8_6_(ov1);
+      
+      _mm_storeu_si128((__m128i*)(op + 96), _mm512_castsi512_si128(   ov0   ));
+      _mm_storeu_si128((__m128i*)(op + 96+12), _mm512_extracti32x4_epi32(ov0, 1));                          
+      _mm_storeu_si128((__m128i*)(op + 96+24), _mm512_extracti32x4_epi32(ov0, 2));                          
+      _mm_storeu_si128((__m128i*)(op + 96+36), _mm512_extracti32x4_epi32(ov0, 3));                          
+
+      _mm_storeu_si128((__m128i*)(op + 96+48), _mm512_castsi512_si128(   ov1   ));
+      _mm_storeu_si128((__m128i*)(op + 96+60), _mm512_extracti32x4_epi32(ov1, 1));                          
+      _mm_storeu_si128((__m128i*)(op + 96+72), _mm512_extracti32x4_epi32(ov1, 2));                          
+      _mm_storeu_si128((__m128i*)(op + 96+84), _mm512_extracti32x4_epi32(ov1, 3));                          
+ 
+      CHECK1(B64CHK_(iv0, sv0, vx));
+      CHECK1(B64CHK_(iv1, sv1, vx));
     }
   }
   unsigned rc, r = inlen-(ip-in); 

@@ -178,19 +178,19 @@ size_t tb64v512dec(const unsigned char *in, size_t inlen, unsigned char *out) {
 //AVX512_VBMI: https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#expand=1276,5146,5146,5146&text=_mm512_multishift_epi64_epi8&avx512techs=AVX512_VBMI
 //reference: http://0x80.pl/notesen/2016-04-03-avx512-base64.html#avx512vbmi
 #define ES512(_i_) { __m512i v0,v1;\
-  v0 = _mm512_loadu_si512((__m512i *)(ip+96) ),\
-  v1 = _mm512_loadu_si512((__m512i *)(ip+96+48));\
+  v0 = _mm512_loadu_si512((__m512i *)(ip+96+_i_*192) ),\
+  v1 = _mm512_loadu_si512((__m512i *)(ip+96+_i_*192+48));\
   u0 = _mm512_permutexvar_epi8(_mm512_multishift_epi64_epi8(vs, _mm512_permutexvar_epi8(vf, u0)), vlut);\
   u1 = _mm512_permutexvar_epi8(_mm512_multishift_epi64_epi8(vs, _mm512_permutexvar_epi8(vf, u1)), vlut);\
-  _mm512_storeu_si512((__m512i*) op,     u0);\
-  _mm512_storeu_si512((__m512i*)(op+64), u1);\
+  _mm512_storeu_si512((__m512i*)(op+_i_*256),     u0);\
+  _mm512_storeu_si512((__m512i*)(op+_i_*256+64), u1);\
                                                   \
-  u0 = _mm512_loadu_si512((__m512i *)(ip+96+ 96));\
-  u1 = _mm512_loadu_si512((__m512i *)(ip+96+144));\
+  u0 = _mm512_loadu_si512((__m512i *)(ip+96+_i_*192+ 96));\
+  u1 = _mm512_loadu_si512((__m512i *)(ip+96+_i_*192+144));\
   v0 = _mm512_permutexvar_epi8(_mm512_multishift_epi64_epi8(vs, _mm512_permutexvar_epi8(vf, v0)), vlut);\
   v1 = _mm512_permutexvar_epi8(_mm512_multishift_epi64_epi8(vs, _mm512_permutexvar_epi8(vf, v1)), vlut);\
-  _mm512_storeu_si512((__m512i*)(op+128), v0);\
-  _mm512_storeu_si512((__m512i*)(op+192), v1);\
+  _mm512_storeu_si512((__m512i*)(op+_i_*256+128), v0);\
+  _mm512_storeu_si512((__m512i*)(op+_i_*256+192), v1);\
 }
 
 size_t tb64v512enc(const unsigned char* in, size_t inlen, unsigned char *out) {
@@ -221,12 +221,12 @@ size_t tb64v512enc(const unsigned char* in, size_t inlen, unsigned char *out) {
       #endif	
   }
   
-  const __m256i vf = _mm256_set_epi8(10,11, 9,10, 7, 8, 6, 7, 4,   5, 3, 4, 1, 2, 0, 1,
+  const __m256i vs = _mm256_set_epi8(10,11, 9,10, 7, 8, 6, 7, 4,   5, 3, 4, 1, 2, 0, 1,
                                      10,11, 9,10, 7, 8, 6, 7, 4,   5, 3, 4, 1, 2, 0, 1);
   for(; op < out+outlen-32; op += 32, ip += 32*3/4) {
     __m256i v = _mm256_castsi128_si256(   _mm_loadu_si128((__m128i *) ip    )  );      
             v = _mm256_inserti128_si256(v,_mm_loadu_si128((__m128i *)(ip+12)),1);   
-            v = _mm256_shuffle_epi8(v, vf); v = bitunpack256v8_6(v); v = bitmap256v8_6(v);                                                                                                           
+            v = _mm256_shuffle_epi8(v, vs); v = bitunpack256v8_6(v); v = bitmap256v8_6(v);                                                                                                           
                 _mm256_storeu_si256((__m256i*) op, v);                                                 
   }
   EXTAIL();

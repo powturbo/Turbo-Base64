@@ -19,6 +19,5 @@ jobs:
       OBJCOPY: ${{ (startsWith(matrix.runner, 'macos') && 'echo') || 'objcopy' }}
     steps:
       - uses: actions/checkout@v2
-      - run: sysctl -a | grep cpu | grep hw 
       - run: make
       - run: ./tb64app -v1

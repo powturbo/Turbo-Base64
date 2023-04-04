@@ -28,6 +28,6 @@ jobs:
       run:
         shell: bash
     steps:
-      - run: make
+      - run: mingw32-make -f makefile
       - run: ./tb64app -v1
      

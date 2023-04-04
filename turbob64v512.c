@@ -129,7 +129,7 @@ size_t tb64v512dec0(const unsigned char *in, size_t inlen, unsigned char *out) {
   iu1 = _mm512_loadu_si512((__m512i *)(ip+128+_i_*256+192));\
   _mm512_storeu_si512((__m128i*)(op+_i_*192), ou0);\
   _mm512_storeu_si512((__m128i*)(op+_i_*192+48), ou1);\
-  BITMAP256V8_6(iv0, ov0); CHECK0(B64CHK(iv0, ov0, vx)); BITPACK512V8_6(ov0);\
+  BITMAP256V8_6(iv0, ov0); CHECK1(B64CHK(iv0, ov0, vx)); BITPACK512V8_6(ov0);\
   BITMAP256V8_6(iv1, ov1); CHECK1(B64CHK(iv1, ov1, vx)); BITPACK512V8_6(ov1);\
   _mm512_storeu_si512((__m128i*)(op+_i_*192+ 96), ov0);\
   _mm512_storeu_si512((__m128i*)(op+_i_*192+144), ov1);\

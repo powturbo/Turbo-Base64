@@ -27,14 +27,14 @@ jobs:
       run:
         shell: msys2 {0}
     steps:
-    - uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # tag=v3
-    - uses: msys2/setup-msys2@5beef6d11f48bba68b9eb503e3adc60b23c0cc36 # tag=v2
+    - uses: actions/checkout@v3
+    - uses: msys2/setup-msys2@v2
       with:
         msystem: MINGW64
-        install: make zlib git p7zip mingw-w64-x86_64-gcc
+        install: make mingw-w64-x86_64-gcc
         update: true
     - name: display versions
       run: |
-        make -v
-        cc -v
-     
+        make
+        ./tb64app -v1
+ 

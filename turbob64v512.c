@@ -221,12 +221,12 @@ size_t tb64v512enc(const unsigned char* in, size_t inlen, unsigned char *out) {
       #endif	
   }
   
-  const __m256i vs = _mm256_set_epi8(10,11, 9,10, 7, 8, 6, 7, 4,   5, 3, 4, 1, 2, 0, 1,
+  const __m256i vh = _mm256_set_epi8(10,11, 9,10, 7, 8, 6, 7, 4,   5, 3, 4, 1, 2, 0, 1,
                                      10,11, 9,10, 7, 8, 6, 7, 4,   5, 3, 4, 1, 2, 0, 1);
   for(; op < out+outlen-32; op += 32, ip += 32*3/4) {
     __m256i v = _mm256_castsi128_si256(   _mm_loadu_si128((__m128i *) ip    )  );      
             v = _mm256_inserti128_si256(v,_mm_loadu_si128((__m128i *)(ip+12)),1);   
-            v = _mm256_shuffle_epi8(v, vs); v = bitunpack256v8_6(v); v = bitmap256v8_6(v);                                                                                                           
+            v = _mm256_shuffle_epi8(v, vh); v = bitunpack256v8_6(v); v = bitmap256v8_6(v);                                                                                                           
                 _mm256_storeu_si256((__m256i*) op, v);                                                 
   }
   EXTAIL();

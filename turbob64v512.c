@@ -180,22 +180,21 @@ size_t tb64v512dec(const unsigned char *in, size_t inlen, unsigned char *out) {
 #define ES512(_i_) { __m512i v0,v1;\
   v0 = _mm512_loadu_si512((__m512i *)(ip+96) ),\
   v1 = _mm512_loadu_si512((__m512i *)(ip+96+48));\
-  u0 = _mm512_permutexvar_epi8(_mm512_multishift_epi64_epi8(shifts, _mm512_permutexvar_epi8(vf, u0)), vlut);\
-  u1 = _mm512_permutexvar_epi8(_mm512_multishift_epi64_epi8(shifts, _mm512_permutexvar_epi8(vf, u1)), vlut);\
+  u0 = _mm512_permutexvar_epi8(_mm512_multishift_epi64_epi8(vs, _mm512_permutexvar_epi8(vf, u0)), vlut);\
+  u1 = _mm512_permutexvar_epi8(_mm512_multishift_epi64_epi8(vs, _mm512_permutexvar_epi8(vf, u1)), vlut);\
   _mm512_storeu_si512((__m512i*) op,     u0);\
   _mm512_storeu_si512((__m512i*)(op+64), u1);\
-                                                       \
+                                                  \
   u0 = _mm512_loadu_si512((__m512i *)(ip+96+ 96));\
   u1 = _mm512_loadu_si512((__m512i *)(ip+96+144));\
-  v0 = _mm512_permutexvar_epi8(_mm512_multishift_epi64_epi8(shifts, _mm512_permutexvar_epi8(vf, v0)), vlut);\
-  v1 = _mm512_permutexvar_epi8(_mm512_multishift_epi64_epi8(shifts, _mm512_permutexvar_epi8(vf, v1)), vlut);\
+  v0 = _mm512_permutexvar_epi8(_mm512_multishift_epi64_epi8(vs, _mm512_permutexvar_epi8(vf, v0)), vlut);\
+  v1 = _mm512_permutexvar_epi8(_mm512_multishift_epi64_epi8(vs, _mm512_permutexvar_epi8(vf, v1)), vlut);\
   _mm512_storeu_si512((__m512i*)(op+128), v0);\
   _mm512_storeu_si512((__m512i*)(op+192), v1);\
 }
 
 size_t tb64v512enc(const unsigned char* in, size_t inlen, unsigned char *out) {
-  const unsigned char *ip = in; 
-        unsigned char *op = out;
+  const unsigned char *ip = in, *op = out;
         unsigned   outlen = TB64ENCLEN(inlen);
 
   static const char *lut = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -204,7 +203,7 @@ size_t tb64v512enc(const unsigned char* in, size_t inlen, unsigned char *out) {
                                              0x0d0e0c0d, 0x10110f10, 0x13141213, 0x16171516,
                                              0x191a1819, 0x1c1d1b1c, 0x1f201e1f, 0x22232122,
                                              0x25262425, 0x28292728, 0x2b2c2a2b, 0x2e2f2d2e);
-  const __m512i   shifts = _mm512_set1_epi64(0x3036242a1016040alu); // 48, 54, 36, 42, 16, 22, 4, 10
+  const __m512i       vs = _mm512_set1_epi64(0x3036242a1016040alu); // 48, 54, 36, 42, 16, 22, 4, 10
 
   #define EN 256		
   if(outlen >= 128+256) {
@@ -212,22 +211,22 @@ size_t tb64v512enc(const unsigned char* in, size_t inlen, unsigned char *out) {
     __m512i u1 = _mm512_loadu_si512((__m512i *)(ip+48));
     for(; op < (out+outlen)-(128+EN); op += EN, ip += EN*3/4) {
       ES512(0); 
-	    #if EN > 256
-	  ES512(1);
-	    #endif
-	  PREFETCH(ip, 384, 0);
+	#if EN > 256
+      ES512(1);
+	#endif
+      PREFETCH(ip, 384, 0);
     }
-	  #if EN > 256
+      #if EN > 256
     if(op < (out+outlen)-(128+256)) { ES256(0); op += 256; ip += 256*3/4; }
       #endif	
   }
   
-  const __m256i shuf = _mm256_set_epi8(10,11, 9,10, 7, 8, 6, 7, 4,   5, 3, 4, 1, 2, 0, 1,
-                                       10,11, 9,10, 7, 8, 6, 7, 4,   5, 3, 4, 1, 2, 0, 1);
+  const __m256i vf = _mm256_set_epi8(10,11, 9,10, 7, 8, 6, 7, 4,   5, 3, 4, 1, 2, 0, 1,
+                                     10,11, 9,10, 7, 8, 6, 7, 4,   5, 3, 4, 1, 2, 0, 1);
   for(; op < out+outlen-32; op += 32, ip += 32*3/4) {
     __m256i v = _mm256_castsi128_si256(   _mm_loadu_si128((__m128i *) ip    )  );      
             v = _mm256_inserti128_si256(v,_mm_loadu_si128((__m128i *)(ip+12)),1);   
-            v = _mm256_shuffle_epi8(v, shuf); v = bitunpack256v8_6(v); v = bitmap256v8_6(v);                                                                                                           
+            v = _mm256_shuffle_epi8(v, vf); v = bitunpack256v8_6(v); v = bitmap256v8_6(v);                                                                                                           
                 _mm256_storeu_si256((__m256i*) op, v);                                                 
   }
   EXTAIL();

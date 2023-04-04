@@ -194,7 +194,8 @@ size_t tb64v512dec(const unsigned char *in, size_t inlen, unsigned char *out) {
 }
 
 size_t tb64v512enc(const unsigned char* in, size_t inlen, unsigned char *out) {
-  const unsigned char *ip = in, *op = out;
+  const unsigned char *ip = in;
+        unsigned char *op = out;
         unsigned   outlen = TB64ENCLEN(inlen);
 
   static const char *lut = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";

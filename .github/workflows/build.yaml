@@ -12,27 +12,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, arm64]
+        os: [ubuntu-latest, macos-latest]
         compiler: ["gcc", "clang"]
     env:      
       CC: ${{ matrix.compiler }}
     steps:
       - uses: actions/checkout@v3
-      - run: lscpu
       - run: make
       - run: ./tb64app -v1
       
-  macos:
-    runs-on: '${{ matrix.os }}'
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-latest]
-        compiler: ["clang"]
-    env:      
-      CC: ${{ matrix.compiler }}
-      OBJCOPY: ${{ (startsWith(matrix.runner, 'macos') && 'echo') || 'objcopy' }}
-    steps:
-      - uses: actions/checkout@v3
-      - run: make
-      - run: ./tb64app -v1      

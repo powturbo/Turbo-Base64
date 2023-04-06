@@ -23,8 +23,8 @@
 **/
 // Turbo-Base64: Scalar decode 
 //------------- TurboBase64 : Base64 decoding -------------------
-#include "turbob64_.h"
 #include "turbob64.h"
+#include "turbob64_.h"
 
 //--------------------- Decoding with small lut (only 64 bytes used)------------------------------------
 

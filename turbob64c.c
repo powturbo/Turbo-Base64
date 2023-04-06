@@ -314,15 +314,15 @@ const unsigned short tb64lute[1<<12] = {
 }
 
 size_t tb64xenc(const unsigned char *in, size_t inlen, unsigned char *out) {
-  const  unsigned char *ip    = in;
-         unsigned char *op    = out;
          size_t        outlen = TB64ENCLEN(inlen);
+  const  unsigned char *ip    = in, *out_ = out + outlen;
+         unsigned char *op    = out;
   
   if(outlen > 4+8) {
 	unsigned u = ctou32(ip);
-    for(; op < (out+outlen)-(4+64); op += 64, ip += (64/4)*3) { EX(0); EX(1); EX( 2); EX( 3); EX( 4); EX( 5); EX( 6); EX( 7); PREFETCH(ip,384, 0); }
-    for(; op < (out+outlen)-(4+ 8); op +=  8, ip += ( 8/4)*3)   EX(0);
+    for(; op < out_-(4+64); op += 64, ip += (64/4)*3) { EX(0); EX(1); EX( 2); EX( 3); EX( 4); EX( 5); EX( 6); EX( 7); PREFETCH(ip,384, 0); }
+    for(; op < out_-(4+ 8); op +=  8, ip += ( 8/4)*3)   EX(0);
   }
-  EXTAIL();
+  EXTAIL(1);
   return outlen;
 }

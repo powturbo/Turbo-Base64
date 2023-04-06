@@ -186,37 +186,33 @@ size_t tb64v128enc(const unsigned char* in, size_t inlen, unsigned char *out) {
 
 #elif defined(__SSSE3__) //----------------- SSSE3 / SSE4.1 / AVX (derived from the AVX2 functions ) -----------------------------------------------------------------
                 //--------------- decode -------------------
-#define DS128(_i_) {\
-  __m128i iv2 = _mm_loadu_si128((__m128i *)(ip+32+_i_*64   )),\
-          iv3 = _mm_loadu_si128((__m128i *)(ip+32+_i_*64+16));\
-\
-  __m128i ov0,shifted0; BITMAP128V8_6(iv0, shifted0,delta_asso, delta_values, ov0); BITPACK128V8_6(ov0, cpv);\
-  __m128i ov1,shifted1; BITMAP128V8_6(iv1, shifted1,delta_asso, delta_values, ov1); BITPACK128V8_6(ov1, cpv);\
-  _mm_storeu_si128((__m128i*)(op+_i_*48)   , ov0);\
-  _mm_storeu_si128((__m128i*)(op+_i_*48+12), ov1);\
-  CHECK0(B64CHK128(iv0, shifted0, check_asso, check_values, vx));\
-  CHECK1(B64CHK128(iv1, shifted1, check_asso, check_values, vx));\
-\
-          iv0 = _mm_loadu_si128((__m128i *)(ip+32+_i_*64+32));\
-          iv1 = _mm_loadu_si128((__m128i *)(ip+32+_i_*64+48));\
-\
-  __m128i ov2,shifted2; BITMAP128V8_6(iv2, shifted2,delta_asso, delta_values, ov2); BITPACK128V8_6(ov2, cpv);\
-  __m128i ov3,shifted3; BITMAP128V8_6(iv3, shifted3,delta_asso, delta_values, ov3); BITPACK128V8_6(ov3, cpv);\
+#define DS64(_i_) {\
+  __m128i iv0 = _mm_loadu_si128((__m128i *)(ip+32+_i_*64   )),\
+          iv1 = _mm_loadu_si128((__m128i *)(ip+32+_i_*64+16));\
+  \
+  __m128i ou0,shifted0; BITMAP128V8_6(iu0, shifted0,delta_asso, delta_values, ou0); BITPACK128V8_6(ou0, cpv);\
+  __m128i ou1,shifted1; BITMAP128V8_6(iu1, shifted1,delta_asso, delta_values, ou1); BITPACK128V8_6(ou1, cpv);\
+  _mm_storeu_si128((__m128i*)(op+_i_*48)   , ou0);\
+  _mm_storeu_si128((__m128i*)(op+_i_*48+12), ou1);\
+  CHECK0(B64CHK128(iu0, shifted0, check_asso, check_values, vx));\
+  CHECK1(B64CHK128(iu1, shifted1, check_asso, check_values, vx));\
+  \
+          iu0 = _mm_loadu_si128((__m128i *)(ip+32+_i_*64+32));\
+          iu1 = _mm_loadu_si128((__m128i *)(ip+32+_i_*64+48));\
+  \
+  __m128i ov2,shifted2; BITMAP128V8_6(iv0, shifted2,delta_asso, delta_values, ov2); BITPACK128V8_6(ov2, cpv);\
+  __m128i ov3,shifted3; BITMAP128V8_6(iv1, shifted3,delta_asso, delta_values, ov3); BITPACK128V8_6(ov3, cpv);\
   _mm_storeu_si128((__m128i*)(op+_i_*48+24), ov2);\
   _mm_storeu_si128((__m128i*)(op+_i_*48+36), ov3);\
-  CHECK1(B64CHK128(iv2, shifted2, check_asso, check_values, vx));\
-  CHECK1(B64CHK128(iv3, shifted3, check_asso, check_values, vx));\
+  CHECK1(B64CHK128(iv0, shifted2, check_asso, check_values, vx));\
+  CHECK1(B64CHK128(iv1, shifted3, check_asso, check_values, vx));\
 }	
 
 size_t T2(FUNPREF, dec)(const unsigned char *__restrict in, size_t inlen, unsigned char *__restrict out) {
-  if(!inlen || (inlen&3)) 
-	return 0; 
-  if(inlen <= 28) 
-	return _tb64xd(in, inlen, out);
+  if(inlen&3) return 0;                                              
 
-  const unsigned char *ip = in;									
+  const unsigned char *ip = in, *in_ = in+inlen;									  
         unsigned char *op = out;		
-  #define DN 128
   __m128i vx = _mm_setzero_si128();	  
   const __m128i delta_asso   = _mm_setr_epi8(0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,  0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x0f);
   const __m128i delta_values = _mm_setr_epi8(0x00, 0x00, 0x00, 0x13, 0x04, 0xbf, 0xbf, 0xb9,  0xb9, 0x00, 0x10, 0xc3, 0xbf, 0xbf, 0xb9, 0xb9);
@@ -225,28 +221,30 @@ size_t T2(FUNPREF, dec)(const unsigned char *__restrict in, size_t inlen, unsign
   const __m128i check_values = _mm_setr_epi8(0x80, 0x80, 0x80, 0x80, 0xcf, 0xbf, 0xd5, 0xa6,  0xb5, 0x86, 0xd1, 0x80, 0xb1, 0x80, 0x91, 0x80);    
     #endif
   const __m128i          cpv = _mm_set_epi8( -1, -1, -1, -1, 12, 13, 14,  8,    9, 10,  4,  5,  6,  0,  1,  2);
-  if(inlen > 28+64) { 																			
-    __m128i iv0 = _mm_loadu_si128((__m128i *) ip);
-    __m128i iv1 = _mm_loadu_si128((__m128i *)(ip+16));	     									
-    for(; ip < in+inlen-(32+DN); ip += DN, op += DN*3/4) { DS128(0); DS128(1);  PREFETCH(ip,384,0);	}
-	for(; ip < in+inlen-(28+64); ip += 64, op += 64*3/4)   DS128(0); 						
-  }
-  for(; ip < (in+inlen)-16-4; ip += 16, op += 16*3/4) { 											
+  
+  if(inlen >= 32+64+4) {
+    __m128i iu0 = _mm_loadu_si128((__m128i *) ip    ),
+            iu1 = _mm_loadu_si128((__m128i *)(ip+16));	     									
+    for(; ip < in_-(32+2*64+4); ip += 128, op += 128*3/4) { DS64(0); DS64(1); }						
+    if(   ip < in_-(32+  64+4)) { DS64(0); ip += 64, op += 64*3/4; }						
+  } else if(!inlen) return 0;
+  
+  for(; ip < in_-(16+4); ip += 16, op += 16*3/4) { 											
     __m128i iv = _mm_loadu_si128((__m128i *)ip), ov, shifted0;     								
-	BITMAP128V8_6(iv, shifted0,delta_asso, delta_values, ov);
+	BITMAP128V8_6(iv, shifted0, delta_asso, delta_values, ov);
 	BITPACK128V8_6(ov, cpv);
     _mm_storeu_si128((__m128i*) op, ov); 														                                              
-    CHECK1(B64CHK128(iv, shifted0, check_asso, check_values, vx));
+    CHECK0(B64CHK128(iv, shifted0, check_asso, check_values, vx));
   } 
 
-  size_t rc=0, r = inlen-(ip-in); 
+  size_t rc = 0, r = in_ - ip; 
   if(r && !(rc = _tb64xd(ip, r, op)) || _mm_movemask_epi8(vx)) 
-	return 0; 
-  return (op - out) + rc;
+	return 0;
+  return (op - out)+rc;
 }
 
                          //---------------------- encode ------------------
-#define ES128(_i_) {\
+#define ES64(_i_) {\
       __m128i v0 = _mm_loadu_si128((__m128i*)(ip+24+_i_*48+ 0)),\
               v1 = _mm_loadu_si128((__m128i*)(ip+24+_i_*48+12));\
 \
@@ -270,33 +268,34 @@ size_t T2(FUNPREF, dec)(const unsigned char *__restrict in, size_t inlen, unsign
               v1 = bitmap128v8_6(v1);\
       _mm_storeu_si128((__m128i*)(op+_i_*64+32), v0);\
       _mm_storeu_si128((__m128i*)(op+_i_*64+48), v1);\
-}
+}  
 
 size_t T2(FUNPREF, enc)(const unsigned char *__restrict in, size_t inlen, unsigned char *__restrict out) { 
-  const unsigned char *ip = in; 
+  const size_t        outlen = TB64ENCLEN(inlen); 
+  const unsigned char *ip = in, *out_ = out+outlen; 
         unsigned char *op = out;
-          size_t   outlen = TB64ENCLEN(inlen); 
 
-  #define EN 128
   const __m128i shuf = _mm_set_epi8(10,11,  9,10,  7, 8, 6, 7,    4, 5, 3, 4, 1, 2, 0, 1);
-  if(outlen > 32+64) {
-      __m128i u0 = _mm_loadu_si128((__m128i*) ip),   
+  
+  if(outlen >= (24+48+4)*4/3) {
+      __m128i u0 = _mm_loadu_si128((__m128i*) ip),
               u1 = _mm_loadu_si128((__m128i*)(ip+12)); 
-    for(; op < (out+outlen)-(32+EN); op += EN, ip += EN*3/4) { ES128(0); ES128(1); /*PREFETCH(ip,256,0);*/ }
-    for(; op < (out+outlen)-(32+64); op += 64, ip += 64*3/4)   ES128(0); 
+    for(; op < out_-(24+2*48+4)*4/3; op += 128, ip += 128*3/4) { ES64(0); ES64(1); }  
+    if(   op < out_-(24+  48+4)*4/3) { ES64(0); op +=  64; ip +=  64*3/4; }		          						   
   }
-  for(; op < out+(outlen-16); op += 16, ip += 16*3/4) {
+  
+  for(; op < out_- (12+4)*4/3; op += 16, ip += 16*3/4) {
 	__m128i v = _mm_loadu_si128((__m128i*)ip);
             v = _mm_shuffle_epi8(v, shuf);
             v =  bitunpack128v8_6(v);
             v =  bitmap128v8_6(v);
     _mm_storeu_si128((__m128i*)op, v);
-  }
-  EXTAIL();
+  }					
+  
+  EXTAIL(3); 															 							 
   return outlen;
 }
 #endif
-
 //-------------------------------------------------------------------------------------------------------------------
 #ifndef __AVX__ //include only 1 time
 size_t tb64memcpy(const unsigned char* in, size_t inlen, unsigned char *out) {

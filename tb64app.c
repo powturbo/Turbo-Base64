@@ -215,7 +215,7 @@ void fuzztest(unsigned id, unsigned char *_in, unsigned insize, unsigned char *_
 	    return;
 	}                                                                           
 	if(l && memcheck(in,n,cpy)) exit(-1); 	                                    									
-  }                                                                             printf(" OK]", id);fflush(stdout);
+  }                                                                             printf(" OK]");fflush(stdout);
 }
 
 int verbose=3;

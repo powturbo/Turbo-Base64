@@ -59,7 +59,7 @@ extern unsigned char tb64lutse[];
                    tb64lutse[(_u_>>26) & 0x3f])
 
 #define ETAIL()\
-  unsigned _l = (in+inlen) - ip;   AS(ip <= in+inlen, "ETAIL:Fatal %d\n", ip - (in+inlen));\
+  unsigned _l = (in+inlen) - ip;   AS(ip <= in+inlen, "ETAIL:Fatal %d\n", (unsigned)(ip - (in+inlen)));\
        if(_l == 3) { unsigned _u = ip[0]<<24 | ip[1]<<16 | ip[2]<<8; stou32(op, SU32(_u)); op+=4; }\
   else if(_l == 2) { op[0] = tb64lutse[(ip[0]>>2)&0x3f]; op[1] = tb64lutse[(ip[0] & 0x3) << 4 | (ip[1] & 0xf0) >> 4]; op[2] = tb64lutse[(ip[1] & 0xf) << 2]; op[3] = '='; op+=4; }\
   else if(_l)      { op[0] = tb64lutse[(ip[0]>>2)&0x3f]; op[1] = tb64lutse[(ip[0] & 0x3) << 4],                       op[2] = '=';                           op[3] = '='; op+=4; }

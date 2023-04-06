@@ -116,7 +116,7 @@ int memcheck(unsigned char *in, unsigned n, unsigned char *cpy) {
     }
   return 0;
 }
-
+ 
 #define ID_MEMCPY 10
 unsigned bench(unsigned char *in, unsigned n, unsigned char *out, unsigned char *cpy, int id) { 
   unsigned l = 0,m=tb64enclen(n);
@@ -173,16 +173,26 @@ void usage(char *pgm) {
   exit(0);
 } 
 
+void fuzzcheck(unsigned char *_in, unsigned insize, unsigned char *_out, unsigned outsize, unsigned char *_cpy, unsigned fuzz) {
+  unsigned char *in = _in, *out = _out, *cpy = _cpy;                            printf(" Fuzz OK ");
+  unsigned      n;
+  for(n = 0; n <= 10099; n++) {  												
+    unsigned m = tb64enclen(n); 
+    if(fuzz & 2) { cpy = (_cpy+insize) - n, out = (_out+outsize) - m;           printf("O%x ", out[m]);fflush(stdout);  printf("C%x ", cpy[n]); fflush(stdout); }
+    if(fuzz & 1) { in  = (_in +insize) - n;                                     printf("I%x ", in[n]); fflush(stdout); }
+  }                      														printf("Fuzz-access incomplete. Reapeat until this message is not displayed\n");fflush(stdout);  
+}
+
 void fuzztest(unsigned id, unsigned char *_in, unsigned insize, unsigned char *_out, unsigned outsize, unsigned char *_cpy, unsigned fuzz) {
   unsigned char *in = _in, *out = _out, *cpy = _cpy;
   unsigned      s,n,i,l = 0;
-                                                                                printf(".");fflush(stdout);
-  for(n = 0; n <= 10000; n++) {  												
+                                                                                printf("[id=%u", id);fflush(stdout);
+  for(n = 0; n <= 10099; n++) {  																					
     unsigned m = tb64enclen(n); 
-    if(fuzz & 1) in  = (_in +insize) - n;                                       // move the i/o buffers to the end, this will normally cause a seg fault
-    if(fuzz & 2) out = (_out+outsize) - m, cpy = (_cpy+insize) - n;             // by reading/writing beyond the buffer end
+    if(fuzz & 1) in  = (_in +insize) - n;                                       // move the i/o buffers to the end, this will normally (but not always) cause a seg fault
+    if(fuzz & 2) cpy = (_cpy+insize) - n, out = (_out+outsize) - m;             // by reading/writing beyond the buffer end
     			
-    srand(time(0));
+    srand(time(0));                                                             
 	for(i = 0; i < n; i++)                                                      // Generate a random string 
 	  in[i] = rand()&0xff;  
     memrcpy(cpy, in, n);   														// copy input reversed 
@@ -190,19 +200,22 @@ void fuzztest(unsigned id, unsigned char *_in, unsigned insize, unsigned char *_
     switch(id) {
       case  1:                       l = tb64senc(    in, n, out); if(l != m) die("Fatal error n=%u\n", n); tb64sdec(    out, l, cpy);   break;
       case  2:                       l = tb64xenc(    in, n, out); if(l != m) die("Fatal error n=%u\n", n); tb64xdec(    out, l, cpy);   break;
-      case  3: if(cpuini(0)>=0x33) { l = tb64v128enc( in, n, out); if(l != m) die("Fatal error n=%u\n", n); tb64v128dec( out, l, cpy); } break;
+      case  3: if(cpuini(0)>=0x33) { l = tb64v128enc( in, n, out); if(l != m) die("Fatal error n=%u\n", n); tb64v128dec( out, l, cpy);} break;
       case  4: if(cpuini(0)>=0x50) { l = tb64v128aenc(in, n, out); if(l != m) die("Fatal error n=%u\n", n); tb64v128adec(out, l, cpy); } break;
       case  5: if(cpuini(0)>=0x60) { l = tb64v256enc( in, n, out); if(l != m) die("Fatal error n=%u\n", n); tb64v256dec( out, l, cpy); } break;
-      case  7: if(cpuini(0)>=0x60) { l = _tb64v256enc(in, n, out); if(l != m) die("Fatal error n=%u\n", n); _tb64v256dec(out, l, cpy); } break;
-      case  8: if(cpuini(0)>=(0x800|0x200)) { l = tb64v512enc(in, n, out); if(l != m) die("Fatal error n=%u\n", n); tb64v512dec( out, l, cpy); } break;
+      case  8: if(cpuini(0)>=(0x800|0x200)) { l = tb64v512enc( in, n, out); if(l != m) die("Fatal error n=%u\n", n); tb64v512dec( out, l, cpy); } break;
+      case  11: if(cpuini(0)>=0x60) { l = _tb64v256enc(in, n, out); if(l != m) die("Fatal error n=%u\n", n); _tb64v256dec(out, l, cpy); } break;//safe mode only (OVHD=4)
         #ifdef BASE64
       case 28: l = crzy64_encode(out, in, n);/*if(l != m) die("Fatal error n=%u\n",n);*/ crzy64_decode(cpy, out, l); break;
+	      #ifndef WIN32
 	  case 19: if(cpuini(0)>=0x60) { size_t outlen; base64_encode((const char*)in, n, (char*)out, &outlen, BASE64_FORCE_AVX2); base64_decode((const char*)out, l, (char*)cpy, &outlen, BASE64_FORCE_AVX2);} break;
+	      #endif
 	    #endif
-	  default: return;
+	  default:                                                                  printf("]"); 
+	    return;
 	}                                                                           
-	if(l && memcheck(in,n,cpy)) exit(-1); 										
-  }                                                                             printf("id=%u OK ", id);fflush(stdout);
+	if(l && memcheck(in,n,cpy)) exit(-1); 	                                    									
+  }                                                                             printf(" OK]", id);fflush(stdout);
 }
 
 int verbose=3;
@@ -244,10 +257,13 @@ int main(int argc, char* argv[]) {
   tm_init(tm_Rep, verbose);  
   sprintf(_scmd, "1-%d", ID_MEMCPY);
   tb64ini(0,0); 																printf("detected simd (id=%x->'%s')\n\n", cpuini(0), cpustr(cpuini(0))); 
-
-  if(!(_in  = (unsigned char*)_valloc(insize, 0))) die("malloc error in size=%u\n",  insize);  in  = cpy = _in;
+  unsigned char *tmp1,*tmp2;
+  if(!(_in  = (unsigned char*)_valloc(insize, 0))) die("malloc error in size=%u\n",  insize);  in  = _in;
+  if(!(tmp1 = (unsigned char*)_valloc(insize, 0))) die("malloc error cpy size=%u\n", insize);  
   if(!(_cpy = (unsigned char*)_valloc(insize, 0))) die("malloc error cpy size=%u\n", insize);  cpy = _cpy;
+  if(!(tmp2 = (unsigned char*)_valloc(outsize,0))) die("malloc error cpy size=%u\n", insize);  
   if(!(_out = (unsigned char*)_valloc(outsize,0))) die("malloc error out size=%u\n", outsize); out = _out;
+  _vfree(tmp1, insize); _vfree(tmp2, outsize);
                                                                                 
   if(tst) {	//------------------------ test + fuzzer (option -T) ----------------------------------------------------------------------------
     char *p = scmd?scmd:_scmd;
@@ -258,6 +274,8 @@ int main(int argc, char* argv[]) {
 	    idx = id;  
       for(i = id; i <= idx; i++) 
 	    fuzztest(i,_in,insize,_out,outsize,_cpy, fuzz);
+	  fuzzcheck(_in,insize,_out,outsize,_cpy, fuzz);
+	
     } while(*p++);															    printf("fuzz OK\n");
   } else if(argc - optind < 1) { //------------------ bechmark with predefined sizes (option -k#) -------------------------------------------
     unsigned _size0[] = { 1*KB, 10*KB, 50*KB, 100*KB, 200*KB, 500*KB, 1*MB, 10*MB, 20*MB, 0 }, 

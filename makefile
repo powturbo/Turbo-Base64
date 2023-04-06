@@ -11,10 +11,12 @@ CXX ?= g++
 #NAVX512=1
 
 #CC=powerpc64le-linux-gnu-gcc
-#DEBUG=-DDEBUG -g
 #DEFS=$(DEBUG)
 #CFLAGS=$(DEBUG)
 #UAMEMCPY=1
+
+#DEFS+=-DDEBUG -g
+DEFS+=-DNDEBUG
 
 #------- OS/ARCH -------------------
 ifneq (,$(filter Windows%,$(OS)))
@@ -57,6 +59,7 @@ endif
 ifeq ($(OS),$(filter $(OS),Linux GNU/kFreeBSD GNU OpenBSD FreeBSD DragonFly NetBSD MSYS_NT Haiku))
 LDFLAGS+=-lrt
 endif
+
 ifeq ($(STATIC),1)
 LDFLAGS+=-static
 endif

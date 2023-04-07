@@ -237,8 +237,9 @@ size_t T2(FUNPREF, dec)(const unsigned char *__restrict in, size_t inlen, unsign
     CHECK0(B64CHK128(iv, shifted0, check_asso, check_values, vx));
   } 
 
-  size_t rc = 0, r = in_ - ip; 
-  if(r && !(rc = _tb64xd(ip, r, op)) || _mm_movemask_epi8(vx)) 
+  unsigned cx =  _mm_movemask_epi8(vx);
+  size_t rc = 0, r = in_ - ip;
+  if(r && !(rc = _tb64xd(ip, r, op)) || cx) 
 	return 0;
   return (op - out)+rc;
 }

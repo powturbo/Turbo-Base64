@@ -20,6 +20,7 @@ jobs:
       - uses: actions/checkout@v3
       - run: make
       - run: ./tb64app -v1
+      - run: ./tb64app -T -f3
       
   windows:
     runs-on: windows-latest
@@ -33,8 +34,8 @@ jobs:
         msystem: MINGW64
         install: make mingw-w64-x86_64-gcc
         update: true
-    - name: make
-      run: |
-        make
-        ./tb64app -v1
+      - run: make
+      - run: ./tb64app -v1
+      - run: ./tb64app -T -f3
+
  

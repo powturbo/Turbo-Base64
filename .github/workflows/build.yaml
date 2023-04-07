@@ -21,7 +21,22 @@ jobs:
       - run: make
       - run: ./tb64app -v1
       - run: ./tb64app -T -f3
-      
+
+  macos:
+    runs-on: '${{ matrix.os }}'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest]
+        compiler: ["clang"]
+    env:      
+      CC: ${{ matrix.compiler }}
+    steps:
+      - uses: actions/checkout@v3
+      - run: make
+      - run: ./tb64app -v1
+      - run: ./tb64app -T -f3
+
   windows:
     runs-on: windows-latest
     defaults:
@@ -34,8 +49,8 @@ jobs:
         msystem: MINGW64
         install: make mingw-w64-x86_64-gcc
         update: true
-      - run: make
-      - run: ./tb64app -v1
-      - run: ./tb64app -T -f3
+    - run: make
+    - run: ./tb64app -v1
+    - run: ./tb64app -T -f3
 
  

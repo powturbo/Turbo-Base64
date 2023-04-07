@@ -142,10 +142,10 @@ unsigned bench(unsigned char *in, unsigned n, unsigned char *out, unsigned char 
         #endif 
 	  #endif
     case 9:                      TMBENCH("",l=tb64xenc(    in, n, out),m); pr(l,n); TMBENCH2(" 9:_tb64x         ", _tb64xd(     out, l, cpy), l);   break;
-      #ifdef BASE64
-    #include "xtb64test.c"
-	  #endif
     case ID_MEMCPY:              TMBENCH( "", memcpy(out,in,m) ,m);        pr(n,n); TMBENCH2("10:memcpy         ", memcpy(cpy,out,n), n);  l = n;   break;
+      #ifdef BASE64
+    #include "xtb64test_.c"
+      #endif
     default: return 0;
   }
   if(l) { printf(" %10d\n", n); memcheck(in,n,cpy); }
@@ -207,13 +207,9 @@ void fuzztest(unsigned id, unsigned char *_in, unsigned insize, unsigned char *_
       case  4: if(cpuini(0)>=0x50) { l = tb64v128aenc(in, n, out); if(l != m) die("Error n=%u\n", n); tb64v128adec(out, l, cpy); } break;
       case  5: if(cpuini(0)>=0x60) { l = tb64v256enc( in, n, out); if(l != m) die("Error n=%u\n", n); tb64v256dec( out, l, cpy); } break;
       case  8: if(cpuini(0)>=(0x800|0x200)) { l = tb64v512enc( in, n, out); if(l != m) die("Error n=%u\n", n); tb64v512dec( out, l, cpy); } break;
-      case  11: if(cpuini(0)>=0x60) { l = _tb64v256enc(in, n, out); if(l != m) die("Error n=%u\n", n);_tb64v256dec(out, l, cpy); } break; //safe mode only (when OVHD=4)
+      case  11: if(cpuini(0)>=0x60) { l = _tb64v256enc(in, n, out); if(l != m) die("Error n=%u\n", n);_tb64v256dec(out, l, cpy); } break; //unsafe when OVHD=0
         #ifdef BASE64 // fastbase is unsafe, can reads/writes beyound i/o buffers
-      case 38: if(cpuini(0) >= 60) { TMBENCH("",l=fast_avx2_base64_encode((char*)out, (const char*)in, n),n); pr(l,n); TMBENCH2("fb64avx2",  fast_avx2_base64_decode((char*)cpy,(const char*)out,l),  l); } break;
-      case 39: l = crzy64_encode(out, in, n);/*if(l != m) die("Fatal error n=%u\n",n);*/ crzy64_decode(cpy, out, l); break; // ok
-	  #ifndef WIN32
-      case 34: if(cpuini(0)>=0x60) { size_t outlen; base64_encode((const char*)in, n, (char*)out, &outlen, BASE64_FORCE_AVX2); base64_decode((const char*)out, l, (char*)cpy, &outlen, BASE64_FORCE_AVX2);} break;
-	  #endif
+      #include "xtb64fuzz_.c"  
 	#endif
       default:                                                                  printf("]");fflush(stdout);
 	return;

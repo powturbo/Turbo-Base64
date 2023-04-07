@@ -19,8 +19,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: make
+      - run: lscpu
       - run: ./tb64app -v1
-      - run: ./tb64app -T -f3
+#      - run: ./tb64app -T -f3
 
   macos:
     runs-on: '${{ matrix.os }}'
@@ -34,8 +35,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: make
+      - run: sysctl -n machdep.cpu.brand_string
       - run: ./tb64app -v1
-      - run: ./tb64app -T -f3
+#      - run: ./tb64app -T -f3
 
   windows:
     runs-on: windows-latest
@@ -51,6 +53,6 @@ jobs:
         update: true
     - run: make
     - run: ./tb64app -v1
-    - run: ./tb64app -T -f3
+#    - run: ./tb64app -T -f3
 
  

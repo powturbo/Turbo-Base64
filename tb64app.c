@@ -175,7 +175,7 @@ void usage(char *pgm) {
 
 
 void fuzzcheck(unsigned char *_in, unsigned insize, unsigned char *_out, unsigned outsize, unsigned char *_cpy, unsigned fuzz) {
-  unsigned char *in = _in, *out = _out, *cpy = _cpy;                            printf(" Fuzz OK. Waiting seg. fault");fflush(stdout);
+  unsigned char *in = _in, *out = _out, *cpy = _cpy;                            printf(" Fuzz OK. Waiting seg. fault\n");fflush(stdout);
   unsigned      n;
   for(n = 0; n <= 10099; n++) {  												
     unsigned m = tb64enclen(n); 

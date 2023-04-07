@@ -79,13 +79,6 @@ size_t tb64v512enc(const unsigned char *__restrict in, size_t inlen, unsigned ch
 }
 
 //--------------------- Decode ----------------------------------------------------------------------
-#define CHECK0(a) a
-  #ifdef B64CHECK
-#define CHECK1(a) a
-  #else
-#define CHECK1(a)
-  #endif
-
 #define BITMAP256V8_6(iv, ov) ov = _mm512_permutex2var_epi8(vlut0, iv, vlut1);  //AVX-512_VBMI
 
 #define BITPACK512V8_6(v) {\
@@ -96,7 +89,7 @@ size_t tb64v512enc(const unsigned char *__restrict in, size_t inlen, unsigned ch
 
 #define B64CHK(iv, ov, vx) vx = _mm512_ternarylogic_epi32(vx, ov, iv, 0xfe)
 
-#define DS512(_i_) { __m512i iv0,iv1,ou0,ou1,ov0,ov1;      \
+#define DS256(_i_) { __m512i iv0,iv1,ou0,ou1,ov0,ov1;      \
   iv0 = _mm512_loadu_si512((__m512i *)(ip+128+_i_*256)),   \
   iv1 = _mm512_loadu_si512((__m512i *)(ip+128+_i_*256+64));\
   \
@@ -122,31 +115,32 @@ size_t tb64v512dec(const unsigned char *in, size_t inlen, unsigned char *out) {
   if(inlen&3) return 0;                                  
 
   __m512i vx = _mm512_setzero_si512();
-  if(inlen >= 128) {
-    const __m512i vlut0 = _mm512_setr_epi32(0x80808080, 0x80808080, 0x80808080, 0x80808080,
-                                            0x80808080, 0x80808080, 0x80808080, 0x80808080,
-                                            0x80808080, 0x80808080, 0x3e808080, 0x3f808080,
-                                            0x37363534, 0x3b3a3938, 0x80803d3c, 0x80808080),
-                  vlut1 = _mm512_setr_epi32(0x02010080, 0x06050403, 0x0a090807, 0x0e0d0c0b,
-                                            0x1211100f, 0x16151413, 0x80191817, 0x80808080,
-                                            0x1c1b1a80, 0x201f1e1d, 0x24232221, 0x28272625,
-                                            0x2c2b2a29, 0x302f2e2d, 0x80333231, 0x80808080),
-                     vp = _mm512_setr_epi32(0x06000102, 0x090a0405, 0x0c0d0e08, 0x16101112,
-                                            0x191a1415, 0x1c1d1e18, 0x26202122, 0x292a2425,
-                                            0x2c2d2e28, 0x36303132, 0x393a3435, 0x3c3d3e38,
-                                            0x00000000, 0x00000000, 0x00000000, 0x00000000);												  
-
+  const __m512i vlut0 = _mm512_setr_epi32(0x80808080, 0x80808080, 0x80808080, 0x80808080,
+                                          0x80808080, 0x80808080, 0x80808080, 0x80808080,
+                                          0x80808080, 0x80808080, 0x3e808080, 0x3f808080,
+                                          0x37363534, 0x3b3a3938, 0x80803d3c, 0x80808080),
+                vlut1 = _mm512_setr_epi32(0x02010080, 0x06050403, 0x0a090807, 0x0e0d0c0b,
+                                          0x1211100f, 0x16151413, 0x80191817, 0x80808080,
+                                          0x1c1b1a80, 0x201f1e1d, 0x24232221, 0x28272625,
+                                          0x2c2b2a29, 0x302f2e2d, 0x80333231, 0x80808080),
+                   vp = _mm512_setr_epi32(0x06000102, 0x090a0405, 0x0c0d0e08, 0x16101112,
+                                          0x191a1415, 0x1c1d1e18, 0x26202122, 0x292a2425,
+                                          0x2c2d2e28, 0x36303132, 0x393a3435, 0x3c3d3e38,
+                                          0x00000000, 0x00000000, 0x00000000, 0x00000000);												  
+  if(inlen >= 128+  256+4) {
     __m512i iu0 = _mm512_loadu_si512((__m512i *) ip),    
             iu1 = _mm512_loadu_si512((__m512i *)(ip+64)); 
-    for(; ip < in_-(128-4+512); ip += 512, op += (512/4)*3) { DS512(0); DS512(1); }
-    for(; ip < in_-(64+16+4); ip += 64, op += 64*3/4) {
-      __m512i iv = _mm512_loadu_si512((__m512i *) ip), ov;
-      BITMAP256V8_6(iv, ov); 
-	  CHECK0(B64CHK(iv, ov, vx)); 
-	  BITPACK512V8_6(ov);
-      _mm512_storeu_si512((__m128i*) op, ov);
-    }
+    for(; ip < in_-(128+2*256+4); ip += 512, op += (512/4)*3) { DS256(0); DS256(1); }
+    if(   ip < in_-(128+  256+4)) { DS256(0); ip += 256; op += (256/4)*3; }
   } else if(!inlen) return 0;
+  
+  for(; ip < in_-(64+16+4); ip += 64, op += 64*3/4) {
+    __m512i iv = _mm512_loadu_si512((__m512i *) ip), ov;
+    BITMAP256V8_6(iv, ov); 
+	CHECK0(B64CHK(iv, ov, vx)); 
+	BITPACK512V8_6(ov);
+    _mm512_storeu_si512((__m128i*) op, ov);
+  }
   
   unsigned rc = 0, r = in_ - ip; 
   if(r && !(rc=_tb64xd(ip, r, op)) || _mm512_movepi8_mask(vx)) 

@@ -173,6 +173,7 @@ void usage(char *pgm) {
   exit(0);
 } 
 
+
 void fuzzcheck(unsigned char *_in, unsigned insize, unsigned char *_out, unsigned outsize, unsigned char *_cpy, unsigned fuzz) {
   unsigned char *in = _in, *out = _out, *cpy = _cpy;                            printf(" Fuzz OK ");
   unsigned      n;
@@ -180,7 +181,7 @@ void fuzzcheck(unsigned char *_in, unsigned insize, unsigned char *_out, unsigne
     unsigned m = tb64enclen(n); 
     if(fuzz & 2) { cpy = (_cpy+insize) - n, out = (_out+outsize) - m;           printf("O%x ", out[m]);fflush(stdout);  printf("C%x ", cpy[n]); fflush(stdout); }
     if(fuzz & 1) { in  = (_in +insize) - n;                                     printf("I%x ", in[n]); fflush(stdout); }
-  }                      														printf("Fuzz-access incomplete. Reapeat until this message is not displayed\n");fflush(stdout);  
+  }                      														printf("Fuzztest not reliable. Reapeat until seg. fault\n");fflush(stdout);
 }
 
 void fuzztest(unsigned id, unsigned char *_in, unsigned insize, unsigned char *_out, unsigned outsize, unsigned char *_cpy, unsigned fuzz) {
@@ -204,9 +205,10 @@ void fuzztest(unsigned id, unsigned char *_in, unsigned insize, unsigned char *_
       case  4: if(cpuini(0)>=0x50) { l = tb64v128aenc(in, n, out); if(l != m) die("Fatal error n=%u\n", n); tb64v128adec(out, l, cpy); } break;
       case  5: if(cpuini(0)>=0x60) { l = tb64v256enc( in, n, out); if(l != m) die("Fatal error n=%u\n", n); tb64v256dec( out, l, cpy); } break;
       case  8: if(cpuini(0)>=(0x800|0x200)) { l = tb64v512enc( in, n, out); if(l != m) die("Fatal error n=%u\n", n); tb64v512dec( out, l, cpy); } break;
-      case  11: if(cpuini(0)>=0x60) { l = _tb64v256enc(in, n, out); if(l != m) die("Fatal error n=%u\n", n); _tb64v256dec(out, l, cpy); } break;//safe mode only (OVHD=4)
-        #ifdef BASE64
-      case 28: l = crzy64_encode(out, in, n);/*if(l != m) die("Fatal error n=%u\n",n);*/ crzy64_decode(cpy, out, l); break;
+      case  11: if(cpuini(0)>=0x60) { l = _tb64v256enc(in, n, out); if(l != m) die("Fatal error n=%u\n", n); _tb64v256dec(out, l, cpy); } break; //safe mode only (when OVHD=4)
+        #ifdef BASE64 // fastbase is unsafe, can reads/writes beyound i/o buffers
+      case 15: if(cpuini(0) >= 60) { TMBENCH("",l=fast_avx2_base64_encode((char*)out, (const char*)in, n),n); pr(l,n); TMBENCH2("fb64avx2",  fast_avx2_base64_decode((char*)cpy,(const char*)out,l),  l); } break;
+      case 28: l = crzy64_encode(out, in, n);/*if(l != m) die("Fatal error n=%u\n",n);*/ crzy64_decode(cpy, out, l); break; // ok
 	      #ifndef WIN32
 	  case 19: if(cpuini(0)>=0x60) { size_t outlen; base64_encode((const char*)in, n, (char*)out, &outlen, BASE64_FORCE_AVX2); base64_decode((const char*)out, l, (char*)cpy, &outlen, BASE64_FORCE_AVX2);} break;
 	      #endif

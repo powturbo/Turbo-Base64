@@ -10,7 +10,7 @@
  * TurboBase64 AVX2 decoding up to ~2x faster than other AVX2 libs.
  * TurboBase64 is 3-4 times faster than other libs for short strings
  * Fastest **ARM Neon** base64
- * :new:(2023.04) avx512
+ * :new:(2023.04) avx512 - 2x faster than avx2, faster than any other implementation
  * :+1: Dynamic CPU detection and **JIT scalar/sse/avx/avx2/avx512** switching
  * Base64 robust **error checking**, optimized for **long+short** strings
  * Portable library, 32/64 bits, **SSE/AVX/AVX2/AVX512**, **ARM Neon**, **Power9 Altivec**
@@ -33,10 +33,10 @@ extract the files and type "tb64app"</br>
 - Unlike other benchmarks, the best of the best scalar+simd libraries are included
 - all libraries with the latest version
 
-#### Benchmark AMD CPU: AMD Ryzen 9 7950X @ 4,50 GHz with DDR5 6000 CL30 - gcc-12.2
+#### Benchmark AMD CPU: AMD Ryzen 9 7950X @ 4,50 GHz, DDR5 6000 CL30 - gcc-12.2
 |E Size|ratio%|E MB/s|D MB/s|Name|10,000 bytes - 2023.07 |
 |--------:|-----:|--------:|--------:|----------------|----------------|
-|13336|133.36%|89079|  92006| 8:tb64v512vbmi      |
+|13336|133.36%|**89079**|**92006**|**8:tb64v512vbmi**|
 |10000|100.00%|84418|  85703|10:memcpy            |
 |13336|133.36%|34963|  46216| 7:_tb64v256 avx2    |
 |13336|133.36%|40722|  44552| 5:tb64v256  avx2    |

@@ -33,6 +33,20 @@ extract the files and type "tb64app"</br>
 - Unlike other benchmarks, the best of the best scalar+simd libraries are included
 - all libraries with the latest version
 
+#### Benchmark AMD CPU: AMD Ryzen 9 7950X @ 4,50 GHz with DDR5 6000 CL30 - gcc-12.2
+|E Size|ratio%|E MB/s|D MB/s|Name|10,000 bytes - 2023.07 |
+|--------:|-----:|--------:|--------:|----------------|----------------|
+|13336|133.36%|89079|  92006| 8:tb64v512vbmi      |
+|10000|100.00%|84418|  85703|10:memcpy            |
+|13336|133.36%|34963|  46216| 7:_tb64v256 avx2    |
+|13336|133.36%|40722|  44552| 5:tb64v256  avx2    |
+|13336|133.36%|22601|  27298| 4:tb64v128a avx     |
+|13336|133.36%|21113|  26930| 3:tb64v128          |
+|13336|133.36%| 9648|   6809| 2:tb64x             |
+|13336|133.36%| 9626|   5599| 9:_tb64x            |
+|13336|133.36%| 4937|   5184| 1:tb64s             |
+
+
 #### Benchmark Intel CPU: i7-9700k 3.6GHz gcc 11.2
 |E Size|ratio%|E MB/s|D MB/s|Name|50,000 bytes - 2022.02 |
 |--------:|-----:|--------:|--------:|----------------|----------------|
@@ -153,5 +167,5 @@ extract the files and type "tb64app"</br>
   * :green_book:[Faster Base64 Encoding and Decoding Using AVX2 Instructions](https://arxiv.org/abs/1704.00605)
   * :green_book:[RFC 4648:The Base16, Base32, and Base64 Data Encodings](https://tools.ietf.org/html/rfc4648)
 
-Last update: 3 APR 2023
+Last update: 20 JUN 2023
 

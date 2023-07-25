@@ -68,7 +68,7 @@ extern const unsigned short tb64lute[];
 #define XU32(_u_) (tb64lute[(_u_ >>  8) & 0xfff] << 16 |\
                    tb64lute[ _u_ >> 20])
 
-#define EXTAIL(_n_) for(; op < out_-4; op += 4, ip += 3) { unsigned _u = BSWAP32(ctou32(ip)); stou32(op, XU32(_u)); } ETAIL()
+#define EXTAIL(_n_) for(; op < out-4; op += 4, ip += 3) { unsigned _u = BSWAP32(ctou32(ip)); stou32(op, XU32(_u)); } ETAIL()
 
 //------- Decode: scalar helper macros & functions ----------------------------------------------------------
 extern const unsigned tb64lutd0[];

@@ -36,6 +36,7 @@ typedef unsigned long long uint64_t;
 #include <stdint.h>
 #endif
 #include <stddef.h>
+#include <stdlib.h>
 
 //------------------------- Compiler ------------------------------------------
   #if defined(__GNUC__)

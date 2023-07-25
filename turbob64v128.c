@@ -131,7 +131,7 @@ size_t tb64v128dec(const unsigned char *in, size_t inlen, unsigned char *out) {
 	CHECK0(xv = vorrq_u8(xv, vorrq_u8(vorrq_u8(iv.val[0], iv.val[1]), vorrq_u8(iv.val[2], iv.val[3]))));
   }
   size_t rc = 0, r = inlen&(64-1); 
-  if(r && !(rc=tb64xdec(ip, r, op)) || vaddvq_u8(vshrq_n_u8(xv,7))) return 0; }//decode all
+  if(r && !(rc=tb64xdec(ip, r, op)) || vaddvq_u8(vshrq_n_u8(xv,7))) { return 0; }//decode all
   return (op - out) + rc; 
 }
 

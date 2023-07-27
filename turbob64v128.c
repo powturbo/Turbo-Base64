@@ -21,7 +21,7 @@
     - twitter  : https://twitter.com/powturbo
     - email    : powturbo [_AT_] gmail [_DOT_] com
 **/
-// Turbo-Base64: ssse3 + arm neon functions (see also turbob64v256)
+//  Turbo-Base64: ssse3 + arm neon functions (see also turbob64v256)
 
 #include <string.h>
 

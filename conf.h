@@ -22,7 +22,7 @@
     - email    : powturbo [_AT_] gmail [_DOT_] com
 **/
 
-// conf.h - config & common
+//  conf.h - config & common
 #ifndef CONF_H_
 #define CONF_H_
 #if defined(_MSC_VER) && (_MSC_VER < 1600)

@@ -74,7 +74,7 @@ size_t tb64v512enc(const unsigned char *__restrict in, size_t inlen, unsigned ch
             _mm256_storeu_si256((__m256i*) op, v);                                                 
   }
   
-  EXTAIL(7);
+  EXTAIL(7); //TODO: replace by using avx512 mask intrinsics 
   return outlen;
 }
 
@@ -142,7 +142,7 @@ size_t tb64v512dec(const unsigned char *in, size_t inlen, unsigned char *out) {
     _mm512_storeu_si512((__m128i*) op, ov);
   }
   
-  unsigned rc = 0, r = in_ - ip; 
+  unsigned rc = 0, r = in_ - ip;                              //replace by using avx512 mask intrinsics
   if(r && !(rc=_tb64xd(ip, r, op)) || _mm512_movepi8_mask(vx)) 
 	return 0;
   return (op-out)+rc; 

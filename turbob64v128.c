@@ -92,7 +92,7 @@ static inline uint8x16x4_t vld1q_u8_x4(const uint8_t *lut) {
 #define _B64CHK128(iv, xv) xv = vorrq_u8(xv, vorrq_u8(vorrq_u8(iv.val[0], iv.val[1]), vorrq_u8(iv.val[2], iv.val[3])))
 
 size_t tb64v128dec(const unsigned char *in, size_t inlen, unsigned char *out) {
-  const unsigned char *ip, *out_ = out+outlen;
+  const unsigned char *ip;
         unsigned char *op; 
   const uint8x16x4_t vlut0 = vld1q_u8_x4( lut),
                      vlut1 = vld1q_u8_x4(&lut[64]);
@@ -150,9 +150,9 @@ size_t tb64v128dec(const unsigned char *in, size_t inlen, unsigned char *out) {
 
 size_t tb64v128enc(const unsigned char* in, size_t inlen, unsigned char *out) {
   static unsigned char lut[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-  const unsigned char *ip; 
-        unsigned char *op;
   const size_t      outlen = TB64ENCLEN(inlen);
+  const unsigned char *ip, *out_ = out+outlen; 
+        unsigned char *op;
   const uint8x16x4_t  vlut = vld1q_u8_x4(lut);
   const uint8x16_t    cv3f = vdupq_n_u8(0x3f);
 

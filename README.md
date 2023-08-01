@@ -8,7 +8,7 @@
  * **SSE** faster than other SSE/AVX/AVX2! base64 library
  * Fastest **AVX2** implementation 
  * TurboBase64 AVX2 decoding up to ~2x faster than other AVX2 libs.
- * TurboBase64 is 3-4 times faster than other libs for short strings
+ * TurboBase64 is 3,5-4 times faster than other libs for short strings
  * Fastest **ARM Neon** base64
  * :new:(2023.04) avx512 - 2x faster than avx2, faster than any other implementation
  * :+1: Dynamic CPU detection and **JIT scalar/sse/avx/avx2/avx512** switching
@@ -179,5 +179,5 @@ extract the files and type "tb64app"</br>
   * :green_book:[Faster Base64 Encoding and Decoding Using AVX2 Instructions](https://arxiv.org/abs/1704.00605)
   * :green_book:[RFC 4648:The Base16, Base32, and Base64 Data Encodings](https://tools.ietf.org/html/rfc4648)
 
-Last update: 20 JUN 2023
+Last update: 01 AUG 2023
 

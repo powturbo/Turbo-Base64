@@ -49,7 +49,7 @@ size_t tb64s256dec( unsigned char *in, size_t inlen, unsigned char *out) { _TB64
 size_t _tb64s256enc(unsigned char *in, size_t inlen, unsigned char *out) { _TB64ENC; oplen = _tb64v256enc(ip,iplen,op); TB64ENC_; }
 size_t _tb64s256dec(unsigned char *in, size_t inlen, unsigned char *out) { _TB64DEC;         _tb64v256dec(ip,iplen,op); TB64DEC_; }
 
-  #ifndef _WIN32
+  #ifdef _BASE64
 size_t  b64ssseenc(  unsigned char *in, size_t inlen, unsigned char *out) { _TB64ENC; base64_encode((const char*)ip, iplen, (char*)op, &oplen, BASE64_FORCE_SSSE3); TB64ENC_; }
 size_t  b64sssedec(  unsigned char *in, size_t inlen, unsigned char *out) { _TB64DEC; base64_decode((const char*)ip, iplen, (char*)op, &_oplen, BASE64_FORCE_SSSE3); TB64DEC_; }
 
@@ -59,9 +59,12 @@ size_t  b64savxdec(  unsigned char *in, size_t inlen, unsigned char *out) { _TB6
 size_t  b64savx2enc( unsigned char *in, size_t inlen, unsigned char *out) { _TB64ENC; base64_encode((const char*)ip, iplen, (char*)op, &oplen, BASE64_FORCE_AVX2); TB64ENC_; }
 size_t  b64savx2dec( unsigned char *in, size_t inlen, unsigned char *out) { _TB64DEC; base64_decode((const char*)ip, iplen, (char*)op, &_oplen, BASE64_FORCE_AVX2); TB64DEC_; }
   #endif
+  
+  #ifdef _FASTBASE64
 size_t fb64savx2enc( unsigned char *in, size_t inlen, unsigned char *out) { _TB64ENC; oplen = fast_avx2_base64_encode((char*)op, (const char*)ip, iplen); TB64ENC_; }
 size_t fb64savx2dec( unsigned char *in, size_t inlen, unsigned char *out) { _TB64DEC;         fast_avx2_base64_decode((char*)op, (const char*)ip, iplen); TB64DEC_; }
-
+  #endif
+  
 size_t check_tb64v256dec(unsigned char *in, size_t inlen, unsigned char *out) { 
   _TB64DEC;
   for(size_t i = 0; i < iplen; i++) {

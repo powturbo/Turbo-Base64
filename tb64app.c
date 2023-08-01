@@ -67,7 +67,7 @@ int getpagesize_() {
 
 #include "turbob64_.h"
 
-  #ifdef BASE64
+  #ifdef XBASE64
 #define FAC 2
 #include "crzy64/crzy64.h"
 #include "xb64test.h"
@@ -143,7 +143,7 @@ unsigned bench(unsigned char *in, unsigned n, unsigned char *out, unsigned char 
 	  #endif
     case 9:                      TMBENCH("",l=tb64xenc(    in, n, out),m); pr(l,n); TMBENCH2(" 9:_tb64x         ", _tb64xd(     out, l, cpy), l);   break;
     case ID_MEMCPY:              TMBENCH( "", memcpy(out,in,m) ,m);        pr(n,n); TMBENCH2("10:memcpy         ", memcpy(cpy,out,n), n);  l = n;   break;
-      #ifdef BASE64
+      #ifdef XBASE64
     #include "xtb64test_.c"
       #endif
     default: return 0;
@@ -204,11 +204,13 @@ void fuzztest(unsigned id, unsigned char *_in, unsigned insize, unsigned char *_
       case  1:                       l = tb64senc(    in, n, out); if(l != m) die("Error n=%u\n", n); tb64sdec(    out, l, cpy);   break;
       case  2:                       l = tb64xenc(    in, n, out); if(l != m) die("Error n=%u\n", n); tb64xdec(    out, l, cpy);   break;
       case  3: if(cpuini(0)>=0x33) { l = tb64v128enc( in, n, out); if(l != m) die("Error n=%u\n", n); tb64v128dec( out, l, cpy); } break;
+        #if defined(__i386__) || defined(__x86_64__)
       case  4: if(cpuini(0)>=0x50) { l = tb64v128aenc(in, n, out); if(l != m) die("Error n=%u\n", n); tb64v128adec(out, l, cpy); } break;
       case  5: if(cpuini(0)>=0x60) { l = tb64v256enc( in, n, out); if(l != m) die("Error n=%u\n", n); tb64v256dec( out, l, cpy); } break;
       case  8: if(cpuini(0)>=(0x800|0x200)) { l = tb64v512enc( in, n, out); if(l != m) die("Error n=%u\n", n); tb64v512dec( out, l, cpy); } break;
       case  11: if(cpuini(0)>=0x60) { l = _tb64v256enc(in, n, out); if(l != m) die("Error n=%u\n", n);_tb64v256dec(out, l, cpy); } break; //unsafe when OVHD=0
-        #ifdef BASE64 // fastbase is unsafe, can reads/writes beyound i/o buffers
+        #endif
+        #ifdef XBASE64F // fastbase is unsafe, can reads/writes beyound i/o buffers
       #include "xtb64fuzz_.c"  
 	#endif
       default:                                                                  printf("]");fflush(stdout);
@@ -238,7 +240,7 @@ int main(int argc, char* argv[]) {
       case 'e': scmd = optarg;                                        break;
       case 'I': if((tm_Rep  = atoi(optarg))<=0) tm_rep = tm_Rep  = 1; break;
       case 'J': if((tm_Rep2 = atoi(optarg))<=0) tm_rep = tm_Rep2 = 1; break;
-        #ifdef BASE64
+        #ifdef XBASE64
       case 'm': if(!(smin = atoi(optarg))) smin = 1;                  break;
       case 'M': smask = atoi(optarg); if(smask&(smask-1)) die("Range must be power of 2"); smask--; break;
         #endif	  
@@ -308,17 +310,19 @@ int main(int argc, char* argv[]) {
     } 
   } else { //------------------------------------ file benchmark -----------------------------------------------------------------------------
     for(fno = optind; fno < argc; fno++) {
-      unsigned flen,m,n,i;    
-      char *inname = argv[fno];                                     
-      FILE *fi = fopen(inname, "rb");                                           if(!fi ) { perror(inname); continue; }  
-      fseek(fi, 0, SEEK_END); 
-      flen = ftell(fi); 													 	
-      fseek(fi, 0, SEEK_SET);
+      unsigned flen,m,n=bsize,i;    
+      char *inname = argv[fno];
+	  if(strcmp(inname, "NULL")) {
+        FILE *fi = fopen(inname, "rb");                                           if(!fi ) { perror(inname); continue; }  
+        fseek(fi, 0, SEEK_END); 
+        flen = ftell(fi); 													 	
+        fseek(fi, 0, SEEK_SET);
     
-      if(flen > bsize) flen = bsize;                                           
-      n = flen;
-      n = fread(in, 1, n, fi);                                                  printf("File='%s' Length=%u\n", inname, n);            
-      fclose(fi);
+        if(flen > bsize) flen = bsize;                                           
+        n = flen;
+        n = fread(in, 1, n, fi);                                                  printf("File='%s' Length=%u\n", inname, n);            
+        fclose(fi);
+	  }
 	  m = tb64enclen(n);
       if(!n) exit(0);
 																				printf("  E MB/s    size     ratio    D MB/s   function\n");  

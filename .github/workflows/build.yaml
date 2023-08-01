@@ -18,10 +18,9 @@ jobs:
       CC: ${{ matrix.compiler }}
     steps:
       - uses: actions/checkout@v3
-      - run: make XBASE1=1 
+      - run: make 
       - run: lscpu
-#     - run: ./tb64app -v1
-      - run: ./tb64app -e34,35,39 -B50K NULL -I16 -J16
+      - run: ./tb64app -v1
 
   macos:
     runs-on: '${{ matrix.os }}'

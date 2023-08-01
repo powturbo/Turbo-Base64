@@ -5,14 +5,15 @@
     case 13: if(cpuini(0)>=0x50) { size_t outlen; TMBENCH("",base64_encode((const char*)in, n, (char*)out, &outlen, BASE64_FORCE_AVX),  n); l=outlen; pr(l,n); TMBENCH2("13:b64avx",   base64_decode((const char*)out, l, (char*)cpy, &outlen, BASE64_FORCE_AVX),   l);}  break; 
     case 14: if(cpuini(0)>=0x41) { size_t outlen; TMBENCH("",base64_encode((const char*)in, n, (char*)out, &outlen, BASE64_FORCE_SSE41),n); l=outlen; pr(l,n); TMBENCH2("14:b64sse41", base64_decode((const char*)out, l, (char*)cpy, &outlen, BASE64_FORCE_SSE41), l);}  break; 
     case 15: if(cpuini(0)>=0x33) { size_t outlen; TMBENCH("",base64_encode((const char*)in, n, (char*)out, &outlen, BASE64_FORCE_SSSE3),n); l=outlen; pr(l,n); TMBENCH2("15:b64ssse3", base64_decode((const char*)out, l, (char*)cpy, &outlen, BASE64_FORCE_SSSE3), l);}  break; 
-
-    case 16: {                     TMBENCH("",l=crzy64_encode(out, in, n),n);  pr(l,n); TMBENCH2("16:crzy",     crzy64_decode(cpy, out, l),  l); } break;
         #elif defined(__ARM_NEON)
    //case  8: { size_t outlen=0; TMBENCH("",base64_encode((const char*)in, n, (char*)out, &outlen, BASE64_FORCE_NEON32),n); l=outlen; pr(l,n); TMBENCH2("b64neon64", base64_decode((const char*)out, l, (char*)cpy, &outlen, BASE64_FORCE_NEON32), l);  break; }
-    case 17: { size_t outlen=0; TMBENCH("",base64_encode((const char*)in, n, (char*)out, &outlen, BASE64_FORCE_NEON64),n); l=outlen; pr(l,n); TMBENCH2("17:b64neon64", base64_decode((const char*)out, l, (char*)cpy, &outlen, BASE64_FORCE_NEON64), l); } break;
+    case 16: { size_t outlen=0; TMBENCH("",base64_encode((const char*)in, n, (char*)out, &outlen, BASE64_FORCE_NEON64),n); l=outlen; pr(l,n); TMBENCH2("16:b64neon64", base64_decode((const char*)out, l, (char*)cpy, &outlen, BASE64_FORCE_NEON64), l); } break;
 	#endif
       #endif
-      
+      #ifdef _CRZY  
+    case 17: {                     TMBENCH("",l=crzy64_encode(out, in, n),n);  pr(l,n); TMBENCH2("17:crzy",     crzy64_decode(cpy, out, l),  l); } break;
+      #endif
+  
       #ifdef _FASTBASE64
         #if defined(__i386__) || defined(__x86_64__)
     case 18: if(cpuini(0)>=0x60) { TMBENCH("",l=fast_avx2_base64_encode((char*)out, (const char*)in, n),n);                pr(l,n); TMBENCH2("18:fb64avx2",  fast_avx2_base64_decode((char*)cpy,(const char*)out,l),  l);  break; }

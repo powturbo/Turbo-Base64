@@ -69,12 +69,14 @@ int getpagesize_() {
 
   #ifdef XBASE64
 #define FAC 2
-#include "crzy64/crzy64.h"
 #include "xb64test.h"
   #else
 #define FAC 1
   #endif
-
+  
+  #ifdef CRZY
+#include "crzy64/crzy64.h"
+  #endif
 //------------------------------- malloc ------------------------------------------------
 #define USE_MMAP
   #if __WORDSIZE == 64

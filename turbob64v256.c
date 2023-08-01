@@ -45,7 +45,28 @@
   const __m256i delta_hash = _mm256_avg_epu8(_mm256_shuffle_epi8(delta_asso, iv), shifted);\
                         ov = _mm256_add_epi8(_mm256_shuffle_epi8(delta_values, delta_hash), iv);\
 }
+//----------------------------
+#define BITPACK256V8_6x(v0,v1,cpv) {\
+  const __m256i merge_ab_bc0 = _mm256_maddubs_epi16(v0,        _mm256_set1_epi32(0x01400140));\
+  const __m256i merge_ab_bc1 = _mm256_maddubs_epi16(v1,        _mm256_set1_epi32(0x01400140));\
+                          v0 = _mm256_madd_epi16(merge_ab_bc0, _mm256_set1_epi32(0x00011000));\
+                          v1 = _mm256_madd_epi16(merge_ab_bc1, _mm256_set1_epi32(0x00011000));\
+                          v0 = _mm256_shuffle_epi8(v0, cpv);\
+                          v1 = _mm256_shuffle_epi8(v1, cpv);\
+}
 
+#define BITMAP256V8_6x(iv0, shifted0, iv1, shifted1, delta_asso, delta_values, ov0, ov1) { /*map 8-bits ascii to 6-bits bin*/\
+  __m256i delta_hash0 = _mm256_shuffle_epi8(delta_asso, iv0);\
+  __m256i delta_hash1 = _mm256_shuffle_epi8(delta_asso, iv1);\
+          shifted0    = _mm256_srli_epi32(iv0, 3);\
+          delta_hash0 = _mm256_avg_epu8(delta_hash0, shifted0);\
+          shifted1    = _mm256_srli_epi32(iv1, 3);\
+          delta_hash1 = _mm256_avg_epu8(delta_hash1, shifted1);\
+                  ov0 = _mm256_add_epi8(_mm256_shuffle_epi8(delta_values, delta_hash0), iv0);\
+                  ov1 = _mm256_add_epi8(_mm256_shuffle_epi8(delta_values, delta_hash1), iv1);\
+}
+
+//--------------------------
 #define B64CHK256(iv, shifted, check_asso, check_values, vx) {\
   const __m256i check_hash = _mm256_avg_epu8( _mm256_shuffle_epi8(check_asso, iv), shifted);\
   const __m256i        chk = _mm256_adds_epi8(_mm256_shuffle_epi8(check_values, check_hash), iv);\
@@ -56,9 +77,10 @@
   __m256i iv0 = _mm256_loadu_si256((__m256i *)(ip+64+_i_*128+0)), \
           iv1 = _mm256_loadu_si256((__m256i *)(ip+64+_i_*128+32));\
                                                                   \
-  __m256i ou0,shiftedu0; BITMAP256V8_6(iu0, shiftedu0, delta_asso, delta_values, ou0); BITPACK256V8_6(ou0, cpv);\
-  __m256i ou1,shiftedu1; BITMAP256V8_6(iu1, shiftedu1, delta_asso, delta_values, ou1); BITPACK256V8_6(ou1, cpv);\
-                                                                  \
+  __m256i ou0,shiftedu0; /*BITMAP256V8_6(iu0, shiftedu0, delta_asso, delta_values, ou0); BITPACK256V8_6(ou0, cpv);*/\
+  __m256i ou1,shiftedu1; /*BITMAP256V8_6(iu1, shiftedu1, delta_asso, delta_values, ou1); BITPACK256V8_6(ou1, cpv);*/\
+  BITMAP256V8_6x(iu0, shiftedu0, iu1, shiftedu1, delta_asso, delta_values, ou0, ou1);\
+  BITPACK256V8_6x(ou0, ou1, cpv);\
   CHECK0(B64CHK256(iu0,shiftedu0, check_asso, check_values, vx)); \
           iu0 = _mm256_loadu_si256((__m256i *)(ip+64+_i_*128+64));\
   CHECK1(B64CHK256(iu1,shiftedu1, check_asso, check_values, vx)); \
@@ -68,8 +90,10 @@
   _mm_storeu_si128((__m128i*)(op+_i_*96+24), _mm256_castsi256_si128(  ou1   ));\
   _mm_storeu_si128((__m128i*)(op+_i_*96+36), _mm256_extracti128_si256(ou1, 1));\
                                                                                \
-  __m256i ov0,shiftedv0; BITMAP256V8_6(iv0, shiftedv0, delta_asso, delta_values, ov0); BITPACK256V8_6(ov0, cpv);\
-  __m256i ov1,shiftedv1; BITMAP256V8_6(iv1, shiftedv1, delta_asso, delta_values, ov1); BITPACK256V8_6(ov1, cpv);\
+  __m256i ov0,shiftedv0; /*BITMAP256V8_6(iv0, shiftedv0, delta_asso, delta_values, ov0); BITPACK256V8_6(ov0, cpv);*/\
+  __m256i ov1,shiftedv1; /*BITMAP256V8_6(iv1, shiftedv1, delta_asso, delta_values, ov1); BITPACK256V8_6(ov1, cpv);*/\
+  BITMAP256V8_6x(iv0, shiftedv0, iv1, shiftedv1, delta_asso, delta_values, ov0, ov1);\
+  BITPACK256V8_6x(ov0, ov1, cpv);\
                                                                   \
   CHECK1(B64CHK256(iv0, shiftedv0, check_asso, check_values, vx));\
   CHECK1(B64CHK256(iv1, shiftedv1, check_asso, check_values, vx));\
@@ -100,7 +124,7 @@ size_t tb64v256dec(const unsigned char *__restrict in, size_t inlen, unsigned ch
                                                 -1, -1, -1, -1, 12, 13, 14,  8,    9, 10,  4,  5,  6,  0,  1,  2);												  
         __m128i          _vx;	
 											
-  if(inlen >= 64+128+4) { 																			
+  if(likely(inlen >= 64+128+4)) { 																			
     __m256i iu0 = _mm256_loadu_si256((__m256i *) ip    ),   
 	        iu1 = _mm256_loadu_si256((__m256i *)(ip+32));    
     for(;ip < in_-(64+2*128+4); ip += 256, op += 256*3/4) { DS128(0); DS128(1); }	

@@ -47,9 +47,7 @@ ifeq ($(ARCH),ppc64le)
 else ifeq ($(ARCH),aarch64)
   CFLAGS+=-march=armv8-a 
 ifneq (,$(findstring clang, $(CC)))
-  CFLAGS+=-march=armv8-a -falign-loops -fomit-frame-pointer
-else
-  CFLAGS+=-march=armv8-a 
+  CFLAGS+=-fomit-frame-pointer
 endif
   MSSE=-march=armv8-a
 else ifeq ($(ARCH),$(filter $(ARCH),x86_64 ppc64le))

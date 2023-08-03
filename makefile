@@ -18,7 +18,7 @@ CXX ?= g++
 #RDTSC=1
 #XBASE64=1
 
-CC=aarch64-linux-gnu-gcc
+#CC=aarch64-linux-gnu-gcc
 #CC=powerpc64le-linux-gnu-gcc
 
 #CFLAGS+=-DDEBUG -g

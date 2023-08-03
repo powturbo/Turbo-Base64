@@ -103,6 +103,16 @@ extract the files and type "tb64app"</br>
 | 32 - 128    |**10946**|**8880**|[**TB64avx2**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx2**|
 |             |4902|2777|[b64avx2](https://github.com/aklomp/base64)|Base64 avx2|
 
+###### Benchmark ARM Neon: Apple M1 3,5GHz (clang 12.0)
+|E MB/s|size|ratio| D MB/s| 50,000 bytes (2023.08) |
+|--------|-----------:|------:|----------:|-----------------------------|
+|24012.43|66668|133.34%|15352.09|tb64v128 (turbo-base64)|
+|19087.55|66668|133.34%|12515.17|b64neon64 (aklomp/base64)|
+|5611.48|66668|133.34%|5092.64|tb64s|
+|9782.45|66668|133.34%|3919.52|tb64x|
+|6181.37|66668|133.34%|3108.54|b64plain|
+|45566.16|50000|100.00%|45484.13|memcpy|
+
 ###### Benchmark ARM Neon: ARMv8 A73-ODROID-N2 1.8GHz (clang 6.0)
 |E Size|ratio%|E MB/s|D MB/s|Name|30MB binary 2019.12|
 |--------:|-----:|--------:|--------:|----------------|----------------|
@@ -179,5 +189,4 @@ extract the files and type "tb64app"</br>
   * :green_book:[Faster Base64 Encoding and Decoding Using AVX2 Instructions](https://arxiv.org/abs/1704.00605)
   * :green_book:[RFC 4648:The Base16, Base32, and Base64 Data Encodings](https://tools.ietf.org/html/rfc4648)
 
-Last update: 01 AUG 2023
-
+Last update: 03 AUG 2023

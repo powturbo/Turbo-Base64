@@ -1,8 +1,12 @@
+  #ifdef _BASE64
 #include "base64/include/libbase64.h"
+  #endif
+  #ifdef _FASTBASE64
 #include "fastbase64/include/chromiumbase64.h"
 #include "fastbase64/include/scalarbase64.h"
 #include "fastbase64/include/linuxbase64.h"
 #include "fastbase64/include/fastavxbase64.h"
+  #endif
   #ifdef HAVE_AVX512BW
 //#include "fastbase64/include/fastavxbase64.h"
   #endif // HAVE_AVX512BW
@@ -29,6 +33,7 @@ unsigned smin = 16, smask = 0xff;
 	oplen = smin+(i&smask); iplen = TB64ENCLEN(oplen); if(iplen > ie-ip) iplen = ie-ip
 #define TB64DEC_\
   }\
+  return op - out;\
 }
 
 size_t tb64ssenc(    unsigned char *in, size_t inlen, unsigned char *out) { _TB64ENC; oplen =  tb64senc(   ip,iplen,op); TB64ENC_; }
@@ -59,6 +64,7 @@ size_t check_tb64v256dec(unsigned char *in, size_t inlen, unsigned char *out) {
     TB64DEC_;
   }
   printf("OK,");fflush(stdout);
+  return inlen;
 }
   #endif
   

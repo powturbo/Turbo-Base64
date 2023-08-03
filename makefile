@@ -146,5 +146,6 @@ clean:
 	del *.so
 else
 clean:
-	@find . -type f -name "*\.o" -delete -or -name "*\~" -delete -or -name "core" -delete -or -name "tb64app" -delete -or -name "_tb64.so" -delete -or -name "_tb64.c" -delete -or -name "xlibtb64.so"  -delete -or -name "libtb64.a"
+	@find . -type f -name "*\.o" -delete -or -name "*\~" -delete -or -name "core" -delete -or -name "tb64app" -delete -or -name "_tb64.so" \
+	-delete -or -name "_tb64.c" -delete -or -name "xlibtb64.so" -delete -or -name "libtb64.a" -delete -or -name "libtb64.so"
 endif

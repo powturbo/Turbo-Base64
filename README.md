@@ -103,7 +103,7 @@ extract the files and type "tb64app"</br>
 | 32 - 128    |**10946**|**8880**|[**TB64avx2**](https://github.com/powturbo/TurboBase64)|**Turbo Base64 avx2**|
 |             |4902|2777|[b64avx2](https://github.com/aklomp/base64)|Base64 avx2|
 
-###### Benchmark ARM Neon: Apple M1 (clang)
+###### Benchmark ARM Neon: Apple M1 3,5GHz (clang 12.0)
 |E MB/s|size|ratio| D MB/s| 50,000 bytes (2023.08) |
 |--------|-----------:|------:|----------:|-----------------------------|
 |24012.43|66668|133.34%|15352.09|tb64v128 (turbo-base64)|

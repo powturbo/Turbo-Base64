@@ -12,7 +12,6 @@ fn decode_block(indata: &[u8]) -> Vec<u8> {
     if indata.len() == 0 {
         return vec![];
     }
-
     unsafe {
       let inlen = tb64declen(indata.as_ptr() as *mut ::std::os::raw::c_uchar, indata.len() );
       let mut decoded_data = vec![0u8; inlen ];

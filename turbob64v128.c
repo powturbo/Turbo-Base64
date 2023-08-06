@@ -148,7 +148,7 @@ size_t tb64v128dec(const unsigned char *in, size_t inlen, unsigned char *out) {
   ov.val[3] = vqtbl4q_u8(vlut, ov.val[3]);\
 }
 
-size_t tb64v128enc(const unsigned char* in, size_t inlen, unsigned char *out) {
+size_t tb64v128enc(const unsigned char *__restrict in, size_t inlen, unsigned char *__restrict out) {
   static unsigned char lut[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
   const size_t      outlen = TB64ENCLEN(inlen);
   const unsigned char *ip, *out_ = out+outlen; 

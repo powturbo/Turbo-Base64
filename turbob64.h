@@ -60,7 +60,7 @@ size_t tb64dec(const unsigned char *in, size_t inlen, unsigned char *out);
 //------ Direct call to tb64enc + tb64dec ---------------------------------------
 // Direct call to tb64enc + tb64dec saving a function call + a check instruction
 // call tb64ini, then call _tb64e(in, inlen, out) or _tb64d(in, inlen, out)
-typedef size_t (*TB64FUNC)(const unsigned char *in, size_t n, unsigned char *out);
+typedef size_t (*TB64FUNC)(const unsigned char *__restrict in, size_t n, unsigned char *__restrict out);
 
 extern TB64FUNC _tb64e;
 extern TB64FUNC _tb64d;

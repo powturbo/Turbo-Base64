@@ -109,7 +109,7 @@ extract the files and type "tb64app"</br>
 |24012.43|66668|133.34%|15352.09|tb64v128 (turbo-base64)|
 |19087.55|66668|133.34%|12515.17|b64neon64 (aklomp/base64)|
 |5611.48|66668|133.34%|5092.64|tb64s|
-|9782.45|66668|133.34%|3919.52|tb64x|
+|9782.45|66668|133.34%|6798.98|tb64x|
 |6181.37|66668|133.34%|3108.54|b64plain|
 |45566.16|50000|100.00%|45484.13|memcpy|
 
@@ -189,4 +189,4 @@ extract the files and type "tb64app"</br>
   * :green_book:[Faster Base64 Encoding and Decoding Using AVX2 Instructions](https://arxiv.org/abs/1704.00605)
   * :green_book:[RFC 4648:The Base16, Base32, and Base64 Data Encodings](https://tools.ietf.org/html/rfc4648)
 
-Last update: 03 AUG 2023
+Last update: 06 AUG 2023

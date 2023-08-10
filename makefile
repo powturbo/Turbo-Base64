@@ -2,6 +2,8 @@
 # Linux: "export CC=clang" "export CXX=clang". windows mingw: "set CC=gcc" "set CXX=g++" or uncomment the CC,CXX lines
 CC ?= gcc
 CXX ?= g++
+#CC=aarch64-linux-gnu-gcc
+#CC=powerpc64le-linux-gnu-gcc
 
 # uncomment to disable checking for more faster decoding
 #NCHECK=1
@@ -18,8 +20,6 @@ CXX ?= g++
 #RDTSC=1
 #XBASE64=1
 
-#CC=aarch64-linux-gnu-gcc
-#CC=powerpc64le-linux-gnu-gcc
 
 #CFLAGS+=-DDEBUG -g
 CFLAGS+=-DNDEBUG
@@ -138,6 +138,9 @@ tb64test: $(LIB) tb64test.o
 	
 .c.o:
 	$(CC) -O3 $(CFLAGS) $< -c -o $@
+
+.cc.o:
+	$(CXX) -O3 $(CXXFLAGS) $< -c -o $@
 
 ifeq ($(OS),Windows)
 clean:

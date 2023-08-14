@@ -2,7 +2,7 @@
 # Linux: "export CC=clang" "export CXX=clang". windows mingw: "set CC=gcc" "set CXX=g++" or uncomment the CC,CXX lines
 CC ?= gcc
 CXX ?= g++
-#CC=aarch64-linux-gnu-gcc
+CC=aarch64-linux-gnu-gcc
 #CC=powerpc64le-linux-gnu-gcc
 
 # uncomment to disable checking for more faster decoding
@@ -19,7 +19,6 @@ CXX ?= g++
 
 #RDTSC=1
 #XBASE64=1
-
 
 #CFLAGS+=-DDEBUG -g
 CFLAGS+=-DNDEBUG

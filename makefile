@@ -52,7 +52,10 @@ endif
 else ifeq ($(ARCH),$(filter $(ARCH),x86_64 ppc64le))
   MSSE=-mssse3
 endif
-
+ifeq (,$(findstring clang, $(CC)))
+  CFLAGS+=-falign-loops
+endif
+#---------------------------------------------------
 ifeq ($(OS),$(filter $(OS),Linux GNU/kFreeBSD GNU OpenBSD FreeBSD DragonFly NetBSD MSYS_NT Haiku))
 LDFLAGS+=-lrt
 endif
@@ -62,9 +65,6 @@ LDFLAGS+=-static
 endif
 
 FPIC=-fPIC
-ifeq (,$(findstring clang, $(CC)))
-  CFLAGS+=-falign-loops
-endif
 
 ifeq ($(NCHECK),1)
 DEFS+=-DNB64CHECK

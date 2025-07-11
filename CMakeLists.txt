@@ -47,12 +47,7 @@ elseif(ARCH_AARCH64)
     set(MARCH "-march=armv8-a")
 else()
     set(MARCH "-march=native")
-    if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
-        ## apple m not support sse
-    else ()
-        ## only x86_64 support
-       set(MSSE "-mssse3")
-    endif ()
+    set(MSSE "-mssse3")
 endif()
 
 # Object library is just a bunch of object files.
